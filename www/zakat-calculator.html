@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zakat calculator</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<style>
+  .lay{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:18px;align-items:start}
+  .f{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #f0f2f6}
+  .f:last-child{border-bottom:0}
+  .f label{font-size:14px;color:var(--ink);font-weight:600}
+  .f label small{display:block;font-weight:400;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+  .f input,.f select{width:100% !important;text-align:right}
+  .f .two{display:flex;gap:6px}
+  .f .two input{flex:1;min-width:0}
+  .f .two select{flex:0 0 74px;width:74px !important;text-align:left}
+  .top{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .top label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .seg{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:9px 14px !important;background:#fff;font-size:13.5px !important}
+  .seg button.on{background:#087f5b;color:#fff}
+  .res{position:sticky;top:76px}
+  .card{border-radius:14px;padding:16px 18px;border:1px solid var(--line);background:#fff;margin-bottom:10px}
+  .card small{display:block;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:22px;margin-top:4px;color:var(--ink)}
+  .card.due{background:linear-gradient(135deg,#0ca678,#087f5b);border:0}
+  .card.due small{color:rgba(255,255,255,.8)} .card.due b{color:#fff;font-size:30px}
+  .card.due.no{background:linear-gradient(135deg,#868e96,#5c636b)}
+  .msg{font-size:14px;color:var(--ink-2);margin:4px 0 12px;line-height:1.5}
+  .need{color:#c92a2a;font-weight:650}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.res{position:static}.f{grid-template-columns:1fr 150px}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="top">
+    <label>Currency
+      <select id="cur"><option>SAR</option><option>AED</option><option>QAR</option><option>KWD</option><option>BHD</option><option>OMR</option><option>BDT</option><option>USD</option><option>EUR</option><option>GBP</option><option>INR</option><option>PKR</option></select>
+    </label>
+    <label>Gold price today (24K, per gram)
+      <input type="number" id="pGold" min="0" step="0.01" placeholder="e.g. 400">
+    </label>
+    <label>Silver price today (per gram)
+      <input type="number" id="pSilver" min="0" step="0.01" placeholder="e.g. 5">
+    </label>
+    <label>Nisab based on
+      <span class="seg" id="basis"><button data-b="gold" class="on">Gold (85 g)</button><button data-b="silver">Silver (595 g)</button></span>
+    </label>
+  </div>
+  <p class="note">Check today's gold and silver price at a local jeweller or bank, and type it in. Nothing is sent anywhere; your figures stay in this browser.</p>
+</div>
+
+<div class="lay">
+  <div>
+    <div class="box">
+      <h3>What you own</h3>
+      <div class="f"><label>Cash at home and in your wallet</label><input type="number" min="0" data-a="cash"></div>
+      <div class="f"><label>Money in bank accounts<small>Current and savings accounts</small></label><input type="number" min="0" data-a="bank"></div>
+      <div class="f"><label>Gold<small>Weight in grams and its karat</small></label>
+        <div class="two"><input type="number" min="0" id="gGold" placeholder="g"><select id="kGold"><option value="24">24K</option><option value="22">22K</option><option value="21" selected>21K</option><option value="18">18K</option></select></div></div>
+      <div class="f"><label>Silver<small>Weight in grams</small></label><input type="number" min="0" id="gSilver" placeholder="grams"></div>
+      <div class="f"><label>Money others owe you<small>Only what you expect to be paid back</small></label><input type="number" min="0" data-a="owed"></div>
+      <div class="f"><label>Shares, funds and investments<small>Today's market value</small></label><input type="number" min="0" data-a="inv"></div>
+      <div class="f"><label>Business goods for sale<small>Stock valued at today's selling price</small></label><input type="number" min="0" data-a="goods"></div>
+      <div class="f"><label>Other savings<small>Committee money, money kept for a plan, etc.</small></label><input type="number" min="0" data-a="other"></div>
+    </div>
+    <div class="box">
+      <h3>What you owe now</h3>
+      <div class="f"><label>Debts and bills due now<small>Loans, rent or salaries you must pay soon</small></label><input type="number" min="0" data-d="debt"></div>
+    </div>
+  </div>
+  <div class="res">
+    <div class="card"><small>Total zakatable wealth</small><b id="net">—</b></div>
+    <div class="card"><small>Nisab (minimum)</small><b id="nisab">—</b></div>
+    <div class="card due" id="dueCard"><small>Zakat to pay (2.5%)</small><b id="due">—</b></div>
+    <p class="msg" id="msg"></p>
+    <button id="copy" style="width:100%">📋 Copy summary</button>
+    <button id="reset" style="width:100%;margin-top:8px">↺ Clear all</button>
+  </div>
+</div>
+<p class="note">Zakat is due on wealth that stays at or above the nisab for one full lunar year (hawl). Scholars differ on some
+points, such as gold jewellery that is worn, so ask a scholar you trust if you are unsure. This calculator is a guide only.</p>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let basis = "gold";
+const dec = c => (["KWD", "BHD", "OMR"].includes(c)) ? 3 : 2;
+const fmt = n => $("cur").value + " " + n.toLocaleString("en-US", {minimumFractionDigits: dec($("cur").value), maximumFractionDigits: dec($("cur").value)});
+const num = el => Math.max(0, Number(el.value) || 0);
+const KEY = "dpl_zakat";
+
+function calc(){
+  const pg = num($("pGold")), ps = num($("pSilver"));
+  let assets = 0;
+  document.querySelectorAll("[data-a]").forEach(i => assets += num(i));
+  const goldVal = num($("gGold")) * Number($("kGold").value) / 24 * pg;
+  const silverVal = num($("gSilver")) * ps;
+  assets += goldVal + silverVal;
+  let debts = 0; document.querySelectorAll("[data-d]").forEach(i => debts += num(i));
+  const net = Math.max(0, assets - debts);
+  const nisab = basis === "gold" ? 85 * pg : 595 * ps;
+  $("net").textContent = fmt(net);
+  const missing = [];
+  if(basis === "gold" && !pg) missing.push(TT("gold price"));
+  if(basis === "silver" && !ps) missing.push(TT("silver price"));
+  if(num($("gGold")) && !pg && !missing.length) missing.push(TT("gold price"));
+  if(num($("gSilver")) && !ps && !missing.length) missing.push(TT("silver price"));
+  const card = $("dueCard");
+  if(missing.length){
+    $("nisab").textContent = "—"; $("due").textContent = "—"; card.classList.add("no");
+    $("msg").innerHTML = '<span class="need"></span>'; $("msg").firstChild.textContent = TT("Type today's") + " " + missing.join(", ") + " " + TT("above to work out the nisab.");
+    return null;
+  }
+  $("nisab").textContent = fmt(nisab);
+  const due = net >= nisab && net > 0 ? net * 0.025 : 0;
+  $("due").textContent = fmt(due);
+  card.classList.toggle("no", !due);
+  $("msg").textContent = !assets ? TT("Enter what you own to see your zakat.")
+    : due ? TT("Your wealth is above the nisab. If it has been so for a full lunar year, this amount is due.")
+          : TT("Your wealth is below the nisab, so no zakat is due on it now.");
+  return {net, nisab, due};
+}
+function saveState(){
+  const s = {cur: $("cur").value, basis: basis, kGold: $("kGold").value};
+  document.querySelectorAll("input").forEach(i => { if(i.id || i.dataset.a || i.dataset.d) s[i.id || i.dataset.a || i.dataset.d] = i.value; });
+  try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){}
+}
+function loadState(){
+  let s = null; try{ s = JSON.parse(localStorage.getItem(KEY) || "null"); }catch(e){}
+  if(!s) return;
+  if(s.cur) $("cur").value = s.cur; if(s.kGold) $("kGold").value = s.kGold;
+  if(s.basis){ basis = s.basis; document.querySelectorAll("#basis button").forEach(b => b.classList.toggle("on", b.dataset.b === basis)); }
+  document.querySelectorAll("input").forEach(i => { const k = i.id || i.dataset.a || i.dataset.d; if(k && s[k] != null) i.value = s[k]; });
+}
+document.querySelectorAll("input,select").forEach(el => el.addEventListener("input", () => { calc(); saveState(); }));
+document.querySelectorAll("#basis button").forEach(b => b.onclick = () => {
+  basis = b.dataset.b; document.querySelectorAll("#basis button").forEach(x => x.classList.toggle("on", x === b)); calc(); saveState();
+});
+$("copy").onclick = () => {
+  const r = calc(); if(!r) return;
+  const t = TT("Total zakatable wealth") + ": " + fmt(r.net) + "\n" + TT("Nisab (minimum)") + ": " + fmt(r.nisab) + "\n" + TT("Zakat to pay (2.5%)") + ": " + fmt(r.due);
+  try{ navigator.clipboard.writeText(t); $("copy").textContent = "✓ " + TT("Copied"); setTimeout(() => $("copy").textContent = "📋 " + TT("Copy summary"), 1500); }catch(e){}
+};
+$("reset").onclick = () => {
+  document.querySelectorAll("input[data-a],input[data-d],#gGold,#gSilver").forEach(i => i.value = "");
+  calc(); saveState();
+};
+loadState(); calc();
+</script>
+</body>
+</html>

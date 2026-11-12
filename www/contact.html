@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — DailyPdfLife</title>
+<meta name="description" content="Contact DailyPdfLife with questions, feedback or tool requests.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+</head>
+<body>
+<article class="legal">
+<div class="crumb">DailyPdfLife</div>
+<h1>Contact us</h1>
+<p class="lead">Questions, feedback, a bug to report or a tool you would like to see? Send us a message.</p>
+
+<div class="cgrid">
+  <form class="cform" id="cform">
+    <label>Your name<input id="cName" required></label>
+    <label>Your email<input id="cMail" type="email" required></label>
+    <label>Topic
+      <select id="cTopic">
+        <option>General question</option>
+        <option>Report a problem</option>
+        <option>Suggest a new tool</option>
+        <option>Advertising &amp; business</option>
+      </select>
+    </label>
+    <label>Message<textarea id="cMsg" rows="6" required></textarea></label>
+    <button type="submit" class="send">Send message</button>
+    <p class="small">This opens your email app with the message ready to send.</p>
+  </form>
+  <aside class="cside">
+    <b>Email</b>
+    <p><a href="mailto:contact@dailypdflife.com">contact@dailypdflife.com</a></p>
+    <b>Reply time</b>
+    <p>We usually reply within two working days.</p>
+    <b>Please don't send files</b>
+    <p>Our tools never need your documents. If you report a problem, describe it instead of attaching private files.</p>
+  </aside>
+</div>
+<script>
+document.getElementById("cform").onsubmit = function (e) {
+  e.preventDefault();
+  var v = function (id) { return document.getElementById(id).value.trim(); };
+  var subject = "[DailyPdfLife] " + v("cTopic") + " — " + v("cName");
+  var body = v("cMsg") + "\n\n— " + v("cName") + " (" + v("cMail") + ")";
+  location.href = "mailto:contact@dailypdflife.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+};
+</script>
+
+</article>
+<script src="nav.js"></script>
+</body>
+</html>

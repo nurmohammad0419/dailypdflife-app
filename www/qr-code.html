@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Generator</title>
+<script src="vendor/qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:20px}
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .panel{background:#fff;padding:22px;border-radius:12px;box-shadow:0 2px 10px #0002;width:430px;max-width:100%}
+  h2{color:#212529;margin-top:0}
+  h3{margin:16px 0 6px;color:#444;font-size:15px}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tabs button{flex:1 1 30%;padding:9px 4px;border:2px solid #212529;background:#fff;border-radius:8px;cursor:pointer;font-size:13px}
+  .tabs button.on{background:#212529;color:#fff}
+  input,textarea,select{width:100%;padding:9px;margin:4px 0;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit}
+  .row{display:flex;gap:8px;align-items:center}
+  .row input[type=color]{height:40px;padding:2px}
+  .f{display:none}
+  .f.on{display:block}
+  #qr{max-width:100%;width:320px;border-radius:8px;box-shadow:0 2px 10px #0002}
+  .dl{width:100%;color:#fff;border:none;padding:13px;font-size:15px;border-radius:8px;cursor:pointer;margin-top:8px;background:#212529}
+  .tip{font-size:13px;color:#777}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="panel" id="form">
+  <h2>🔳 QR Code Generator</h2>
+  <div class="tabs">
+    <button data-t="url" class="on">🔗 Link</button>
+    <button data-t="text">📝 Text</button>
+    <button data-t="wa">💬 WhatsApp</button>
+    <button data-t="wifi">📶 WiFi</button>
+    <button data-t="card">👤 Contact</button>
+    <button data-t="mail">✉ Email</button>
+  </div>
+  <div class="f on" id="f-url"><h3>Website link</h3><input id="url" placeholder="https://example.com"></div>
+  <div class="f" id="f-text"><h3>Any text</h3><textarea id="text" rows="3" placeholder="Bangla, English, Arabic — all work"></textarea></div>
+  <div class="f" id="f-wa"><h3>WhatsApp</h3>
+    <input id="waNum" placeholder="Number with country code, e.g. 9665XXXXXXXX">
+    <textarea id="waMsg" rows="2" placeholder="Pre-filled message (optional)"></textarea></div>
+  <div class="f" id="f-wifi"><h3>WiFi</h3>
+    <input id="ssid" placeholder="WiFi name">
+    <input id="wpass" placeholder="Password">
+    <select id="wsec"><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">No password</option></select>
+    <p class="tip">Scanning it connects the phone to the WiFi.</p></div>
+  <div class="f" id="f-card"><h3>Contact card</h3>
+    <input id="cName" placeholder="Name"><input id="cPhone" placeholder="Phone">
+    <input id="cEmail" placeholder="Email"><input id="cOrg" placeholder="Company">
+    <p class="tip">Scanning it saves the number straight to the phone.</p></div>
+  <div class="f" id="f-mail"><h3>Email</h3>
+    <input id="mTo" placeholder="Email address"><input id="mSub" placeholder="Subject">
+    <textarea id="mBody" rows="2" placeholder="Message"></textarea></div>
+  <h3>Design</h3>
+  <div class="row">
+    <label>Colour <input type="color" id="fg" value="#000000"></label>
+    <label>Background <input type="color" id="bg" value="#ffffff"></label>
+    <select id="style"><option value="sq">Square</option><option value="dot">Round dots</option><option value="rd">Rounded</option></select>
+  </div>
+  <h3>Logo in the middle (optional)</h3>
+  <div class="row"><input type="file" id="logo" accept="image/*"><button onclick="logo=null;$('logo').value='';draw()" style="width:auto;padding:8px">✕</button></div>
+  <h3>Size</h3>
+  <select id="size"><option value="512">Small (512 px)</option><option value="1024" selected>Medium (1024 px)</option><option value="2048">Large, for printing (2048 px)</option></select>
+</div>
+<div class="panel" style="text-align:center">
+  <canvas id="qr"></canvas>
+  <p class="tip" id="info"></p>
+  <button class="dl" onclick="dl()">⬇ Download PNG</button>
+  <p class="tip">Scan it with your phone once before you download it.</p>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+let type = "url", logo = null;
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  type = b.dataset.t;
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".f").forEach(x => x.classList.toggle("on", x.id === "f-" + type));
+  draw();
+});
+const v = id => $(id).value.trim();
+const wesc = s => s.replace(/([\\;,:"])/g, "\\$1");
+function content(){
+  switch(type){
+    case "url": { let u = v("url"); if(u && !/^[a-z]+:/i.test(u)) u = "https://" + u; return u; }
+    case "text": return $("text").value;
+    case "wa": { const n = v("waNum").replace(/\D/g, ""); if(!n) return "";
+                 return "https://wa.me/" + n + (v("waMsg") ? "?text=" + encodeURIComponent(v("waMsg")) : ""); }
+    case "wifi": return v("ssid") ? "WIFI:T:" + $("wsec").value + ";S:" + wesc(v("ssid")) + ";" +
+                 ($("wsec").value !== "nopass" ? "P:" + wesc(v("wpass")) + ";" : "") + ";" : "";
+    case "card": return v("cName") || v("cPhone") ? ["BEGIN:VCARD", "VERSION:3.0", "FN:" + v("cName"),
+                 v("cPhone") && "TEL:" + v("cPhone"), v("cEmail") && "EMAIL:" + v("cEmail"),
+                 v("cOrg") && "ORG:" + v("cOrg"), "END:VCARD"].filter(Boolean).join("\n") : "";
+    case "mail": { if(!v("mTo")) return ""; const p = [];
+                   if(v("mSub")) p.push("subject=" + encodeURIComponent(v("mSub")));
+                   if(v("mBody")) p.push("body=" + encodeURIComponent(v("mBody")));
+                   return "mailto:" + v("mTo") + (p.length ? "?" + p.join("&") : ""); }
+  }
+}
+function draw(){
+  const data = content() || "https://example.com";
+  const qr = qrcode(0, logo ? "H" : "M");
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+  try{ qr.addData(data, "Byte"); qr.make(); }
+  catch(e){ $("info").textContent = "That text is too long — shorten it a little."; return; }
+  const n = qr.getModuleCount(), size = Number($("size").value);
+  const quiet = 4, cell = size / (n + quiet * 2);
+  const c = $("qr"); c.width = c.height = size;
+  const g = c.getContext("2d");
+  g.fillStyle = $("bg").value; g.fillRect(0, 0, size, size);
+  g.fillStyle = $("fg").value;
+  const st = $("style").value;
+  for(let r = 0; r < n; r++) for(let col = 0; col < n; col++){
+    if(!qr.isDark(r, col)) continue;
+    const x = (col + quiet) * cell, y = (r + quiet) * cell;
+    const finder = (r < 7 && col < 7) || (r < 7 && col >= n - 7) || (r >= n - 7 && col < 7);
+    if(st === "dot" && !finder){
+      g.beginPath(); g.arc(x + cell / 2, y + cell / 2, cell * 0.45, 0, Math.PI * 2); g.fill();
+    }else if(st === "rd" && !finder && g.roundRect){
+      g.beginPath(); g.roundRect(x + cell * 0.05, y + cell * 0.05, cell * 0.9, cell * 0.9, cell * 0.3); g.fill();
+    }else g.fillRect(x, y, cell + 0.5, cell + 0.5);
+  }
+  if(logo){
+    const L = size * 0.22, lx = (size - L) / 2;
+    g.fillStyle = $("bg").value;
+    if(g.roundRect){ g.beginPath(); g.roundRect(lx - cell, lx - cell, L + cell * 2, L + cell * 2, cell * 2); g.fill(); }
+    else g.fillRect(lx - cell, lx - cell, L + cell * 2, L + cell * 2);
+    const s = Math.min(L / logo.naturalWidth, L / logo.naturalHeight);
+    const w = logo.naturalWidth * s, h = logo.naturalHeight * s;
+    g.drawImage(logo, (size - w) / 2, (size - h) / 2, w, h);
+  }
+  $("info").textContent = content() ? "" : "Fill in the details above and the QR code updates instantly.";
+}
+$("logo").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const i = new Image(); i.onload = () => { logo = i; draw(); }; i.src = URL.createObjectURL(f);
+};
+$("form").addEventListener("input", draw);
+$("form").addEventListener("change", draw);
+function dl(){
+  $("qr").toBlob(b => DPLResult.file(b, "qr-" + type + ".png"));
+}
+draw();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

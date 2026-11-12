@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice & Quotation Maker</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#eef1f6;margin:0}
+  .wrap{display:flex;gap:20px;padding:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .form{background:#fff;width:440px;max-width:100%;padding:20px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  .form h2{color:#0b7285;margin-top:0}
+  .form h3{margin:18px 0 8px;color:#444;border-bottom:1px solid #eee;padding-bottom:5px}
+  .form input,.form textarea,.form select{width:100%;padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit}
+  .row{display:flex;gap:6px}
+  .tabs{display:flex;gap:6px}
+  .tabs button{flex:1;padding:10px;border:2px solid #0b7285;background:#fff;color:#0b7285;border-radius:8px;cursor:pointer;font-weight:bold}
+  .tabs button.on{background:#0b7285;color:#fff}
+  .item{display:flex;gap:5px;align-items:center}
+  .item input:nth-child(1){flex:3} .item input:nth-child(2),.item input:nth-child(3){flex:1}
+  .del{border:none;background:none;color:#e5322d;cursor:pointer;font-size:16px}
+  .add{background:#eee;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+  .dl{width:100%;background:#0b7285;color:#fff;border:none;padding:14px;font-size:16px;border-radius:8px;cursor:pointer;margin-top:18px}
+  #doc{--c:#0b7285;background:#fff;width:794px;min-height:1123px;padding:45px;box-shadow:0 2px 15px #0003;color:#222}
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .logo{max-width:150px;max-height:80px;display:block;margin-bottom:8px}
+  .biz b{font-size:20px;color:var(--c)}
+  .biz p,.cl p{margin:3px 0;font-size:13px;color:#555;white-space:pre-line}
+  .ttl{text-align:right}
+  .ttl h1{margin:0;font-size:38px;color:var(--c);letter-spacing:2px}
+  .ttl p{margin:4px 0;font-size:13px}
+  .cl{margin:35px 0 25px}
+  .cl h4{margin:0 0 5px;color:var(--c);font-size:13px;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{background:var(--c);color:#fff;padding:10px;text-align:left}
+  td{padding:10px;border-bottom:1px solid #eee}
+  .n{text-align:right}
+  .tot{width:300px;margin-left:auto;margin-top:15px;font-size:14px}
+  .tot div{display:flex;justify-content:space-between;padding:6px 10px}
+  .tot .big{background:var(--c);color:#fff;font-weight:bold;font-size:17px;border-radius:6px}
+  .notes{margin-top:40px;font-size:13px;color:#555;white-space:pre-line}
+  .notes h4{color:var(--c);margin:0 0 5px}
+  @media print{
+    body{background:#fff} .form{display:none} .wrap{padding:0}
+    #doc{box-shadow:none;width:100%;min-height:auto}
+    @page{size:A4;margin:0}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="form">
+  <h2>Invoice & Quotation Maker</h2>
+  <div class="tabs">
+    <button id="tInv" class="on" onclick="setType('INVOICE')">Invoice</button>
+    <button id="tQuo" onclick="setType('QUOTATION')">Quotation</button>
+  </div>
+  <h3>Your business details</h3>
+  <input id="bName" placeholder="Company name">
+  <textarea id="bInfo" placeholder="Address, phone, email, VAT number" rows="3"></textarea>
+  Logo: <input type="file" id="logo" accept="image/*">
+  <h3>Client details</h3>
+  <input id="cName" placeholder="Client name">
+  <textarea id="cInfo" placeholder="Address, phone" rows="2"></textarea>
+  <h3>Document details</h3>
+  <div class="row"><input id="num" placeholder="Number, e.g. INV-001"><input type="date" id="date"></div>
+  <label id="dueLbl">Due date:</label><input type="date" id="due">
+  <div class="row">
+    <select id="cur">
+      <option>SAR</option><option>USD</option><option>AED</option><option>BDT</option><option>EUR</option>
+    </select>
+    <input type="number" id="vat" value="15" placeholder="VAT %">
+    <input type="number" id="disc" value="0" placeholder="Discount">
+  </div>
+  <small>Left to right: currency, VAT %, discount (as an amount)</small>
+  <h3>Items</h3>
+  <div class="item" style="font-size:12px;color:#777"><span style="flex:3">Description</span><span style="flex:1">Qty</span><span style="flex:1">Price</span><span style="width:20px"></span></div>
+  <div id="items"></div>
+  <button class="add" onclick="addItem()">+ Add item</button>
+  <h3>Notes / terms</h3>
+  <textarea id="notes" placeholder="e.g. payment terms, bank details"></textarea>
+  <h3>Colour</h3>
+  <input type="color" id="color" value="#0b7285" style="height:40px">
+  <button class="dl" onclick="window.print()">⬇ Download as PDF</button>
+  <p style="font-size:12px;color:#777">In the print window choose "Save as PDF" and tick "Background graphics".</p>
+</div>
+<div id="doc">
+  <div class="top">
+    <div class="biz"><img id="vLogo" class="logo" style="display:none"><b id="vBName">Your Company</b><p id="vBInfo"></p></div>
+    <div class="ttl"><h1 id="vType">INVOICE</h1>
+      <p id="vNum"></p><p id="vDate"></p><p id="vDue"></p></div>
+  </div>
+  <div class="cl"><h4 id="vTo">Bill To</h4><p><b id="vCName"></b></p><p id="vCInfo"></p></div>
+  <table>
+    <thead><tr><th>#</th><th>Description</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead>
+    <tbody id="vItems"></tbody>
+  </table>
+  <div class="tot">
+    <div><span>Subtotal</span><span id="vSub"></span></div>
+    <div id="rowDisc"><span>Discount</span><span id="vDisc"></span></div>
+    <div><span id="vVatL">VAT</span><span id="vVat"></span></div>
+    <div class="big"><span>Total</span><span id="vTotal"></span></div>
+  </div>
+  <div class="notes" id="vNotesBox"><h4>Notes</h4><div id="vNotes"></div></div>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let type = "INVOICE";
+function setType(t){
+  type = t;
+  $("tInv").classList.toggle("on", t === "INVOICE");
+  $("tQuo").classList.toggle("on", t === "QUOTATION");
+  $("dueLbl").textContent = t === "INVOICE" ? "Due date:" : "Valid until (date):";
+  render();
+}
+function addItem(d = "", q = 1, p = 0){
+  const div = document.createElement("div"); div.className = "item";
+  div.innerHTML = '<input placeholder="Description" value="' + d + '"><input type="number" value="' + q + '">' +
+                  '<input type="number" value="' + p + '"><button class="del" onclick="this.parentNode.remove();render()">✕</button>';
+  $("items").appendChild(div);
+}
+const money = n => $("cur").value + " " + n.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fdate = v => v ? new Date(v).toLocaleDateString("en-GB") : "";
+function render(){
+  $("doc").style.setProperty("--c", $("color").value);
+  $("vType").textContent = type;
+  $("vTo").textContent = type === "INVOICE" ? "Bill To" : "Quotation For";
+  $("vBName").textContent = $("bName").value || "Your Company";
+  $("vBInfo").textContent = $("bInfo").value;
+  $("vCName").textContent = $("cName").value;
+  $("vCInfo").textContent = $("cInfo").value;
+  $("vNum").innerHTML = $("num").value ? "<b>No:</b> " + esc($("num").value) : "";
+  $("vDate").innerHTML = $("date").value ? "<b>Date:</b> " + fdate($("date").value) : "";
+  $("vDue").innerHTML = $("due").value ? "<b>" + (type === "INVOICE" ? "Due Date" : "Valid Until") + ":</b> " + fdate($("due").value) : "";
+  let sub = 0, rows = "", i = 0;
+  $("items").querySelectorAll(".item").forEach(it => {
+    const [d, q, p] = it.querySelectorAll("input");
+    const qty = Number(q.value) || 0, price = Number(p.value) || 0, line = qty * price;
+    if(!d.value && !line) return;
+    sub += line; i++;
+    rows += "<tr><td>" + i + "</td><td>" + esc(d.value) + '</td><td class="n">' + qty +
+            '</td><td class="n">' + money(price) + '</td><td class="n">' + money(line) + "</td></tr>";
+  });
+  $("vItems").innerHTML = rows;
+  const disc = Math.min(Number($("disc").value) || 0, sub);
+  const vatP = Number($("vat").value) || 0;
+  const vat = (sub - disc) * vatP / 100;
+  $("vSub").textContent = money(sub);
+  $("rowDisc").style.display = disc ? "flex" : "none";
+  $("vDisc").textContent = "- " + money(disc);
+  $("vVatL").textContent = "VAT (" + vatP + "%)";
+  $("vVat").textContent = money(vat);
+  $("vTotal").textContent = money(sub - disc + vat);
+  $("vNotes").textContent = $("notes").value;
+  $("vNotesBox").style.display = $("notes").value ? "block" : "none";
+  saveBiz();
+}
+function saveBiz(){
+  try{
+    localStorage.setItem("biz", JSON.stringify({n: $("bName").value, i: $("bInfo").value,
+      c: $("color").value, cur: $("cur").value, vat: $("vat").value, logo: $("vLogo").src || ""}));
+  }catch(e){}
+}
+function loadBiz(){
+  let b = null; try{ b = JSON.parse(localStorage.getItem("biz") || "null"); }catch(e){}
+  if(!b) return;
+  $("bName").value = b.n; $("bInfo").value = b.i; $("color").value = b.c; $("cur").value = b.cur; $("vat").value = b.vat;
+  if(b.logo && b.logo.startsWith("data:")){ $("vLogo").src = b.logo; $("vLogo").style.display = "block"; }
+}
+$("logo").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("vLogo").src = r.result; $("vLogo").style.display = "block"; saveBiz(); };
+  r.readAsDataURL(f);
+};
+document.querySelector(".form").addEventListener("input", render);
+document.querySelector(".form").addEventListener("change", render);
+$("date").valueAsDate = new Date();
+loadBiz(); addItem(); render();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

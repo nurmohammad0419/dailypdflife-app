@@ -1,0 +1,12 @@
+{
+  "appId": "com.dailypdflife.app",
+  "appName": "DailyPdfLife",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 0 }
+  }
+}

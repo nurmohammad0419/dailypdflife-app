@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF viewer</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<style>
+  .drop{display:block;text-align:center;cursor:pointer}
+  .vtop{position:sticky;top:58px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;
+        box-shadow:0 4px 16px rgba(20,25,40,.08);margin-bottom:12px}
+  .vbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .vbar button{padding:7px 10px !important;font-size:14px !important;min-width:38px}
+  .vbar .nm{font-weight:700;font-size:14px;color:var(--ink);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vbar .sp{flex:1}
+  .vbar .pg{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:650;color:var(--ink-2)}
+  .vbar .pg input{width:54px !important;text-align:center;padding:6px !important}
+  .vbar .zm{font-size:13px;font-weight:700;color:var(--ink-2);width:46px;text-align:center}
+  .vbar button.on{background:#1b2030;color:#fff;border-color:#1b2030}
+  .find{display:none;gap:6px;align-items:center;margin-top:8px}
+  .find.open{display:flex}
+  .find input{flex:1;min-width:0}
+  .find span{font-size:13px;color:var(--ink-2);white-space:nowrap}
+  .pages{background:#e9ecf3;border-radius:12px;padding:14px 8px;overflow-x:auto;touch-action:pan-x pan-y;min-height:60vh}
+  .pages .in{transform-origin:0 0;display:flex;flex-direction:column;align-items:center;gap:12px;width:max-content;min-width:100%}
+  .pw{position:relative;background:#fff;box-shadow:0 2px 10px rgba(20,25,40,.16)}
+  .pw canvas{display:block;width:100%;height:100%}
+  .pw .no{position:absolute;left:50%;bottom:-2px;transform:translate(-50%,100%);font-size:11.5px;color:var(--ink-3)}
+  .pw .hl{position:absolute;background:rgba(255,212,59,.45);border-radius:2px;pointer-events:none}
+  .pw .hl.cur{background:rgba(250,82,82,.45)}
+  .night .pw canvas{filter:invert(1) hue-rotate(180deg)}
+  .night .pages{background:#1b1f2a}
+  .pwbox{display:none;max-width:420px;margin:30px auto;text-align:center}
+  .pwbox.open{display:block}
+  .pwbox input{width:100%;margin:10px 0}
+  .recent{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+  .recent:empty{display:none}
+  @media(max-width:700px){.vtop{top:52px;padding:6px;margin:0 -10px 8px;border-radius:0}
+    .vbar{flex-wrap:nowrap;overflow-x:auto;gap:4px;scrollbar-width:none}.vbar::-webkit-scrollbar{display:none}
+    .vbar button{padding:6px 8px !important;min-width:34px;flex:none}.vbar .nm{display:none}.vbar .sp{display:none}
+    .vbar .pg input{width:44px !important}.pages{padding:10px 4px;margin:0 -10px;border-radius:0}}
+</style>
+</head>
+<body>
+<div class="box" id="pick">
+  <label class="drop" id="drop">📖 Open a PDF to read, or drag it here
+    <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+  </label>
+  <p class="note">The PDF opens right here on your device. Pinch or use + and − to zoom, and search for any word.</p>
+</div>
+<div id="viewer" style="display:none">
+  <div class="vtop"><div class="vbar">
+    <span class="nm" id="nm"></span>
+    <span class="pg"><button id="prev" title="Previous page">▲</button><input type="number" id="pno" min="1" value="1"><span id="pct">/ 0</span><button id="next" title="Next page">▼</button></span>
+    <span class="sp"></span>
+    <button id="zout" title="Zoom out">−</button><span class="zm" id="zv">100%</span><button id="zin" title="Zoom in">＋</button>
+    <button id="fit" title="Fit width">↔</button>
+    <button id="srch" title="Search">🔍</button>
+    <button id="night" title="Night mode">🌙</button>
+    <button id="open" title="Open another PDF">📂</button>
+    <button id="dl" title="Save or share">⬇</button>
+  </div>
+    <div class="find" id="find"><input type="search" id="q" placeholder="Search in this PDF" dir="auto"><span id="qn"></span><button id="qp">▲</button><button id="qnx">▼</button><button id="qx">✕</button></div>
+  </div>
+  <div class="box pwbox" id="pwbox">
+    <h3>🔒 This PDF is protected</h3>
+    <p class="note" id="pwmsg">Type the password to open it.</p>
+    <input type="password" id="pw" autocomplete="off">
+    <button id="pwgo" class="pri" style="background:#1b2030;color:#fff;border:0;width:100%">Unlock &amp; open</button>
+  </div>
+  <div class="pages" id="pages"><div class="in" id="inner"></div></div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let pdf = null, bytes = null, name = "document.pdf", zoom = 1, baseW = 600, pages = [], texts = [], night = false;
+let hits = [], hitI = -1, renderGen = 0;
+const DPR = Math.min(2.5, window.devicePixelRatio || 1);
+
+function key(){ return "dpl_view_" + name + "_" + (bytes ? bytes.length : 0); }
+function availW(){ return Math.max(240, $("pages").clientWidth - 16); }
+
+async function openBytes(b, n){
+  bytes = b; name = n || "document.pdf";
+  $("pick").style.display = "none"; $("viewer").style.display = "";
+  $("nm").textContent = name; document.title = name;
+  $("inner").innerHTML = ""; $("pwbox").classList.remove("open");
+  const task = pdfjsLib.getDocument({data: b.slice()});
+  task.onPassword = (update, reason) => {
+    $("pwbox").classList.add("open");
+    $("pwmsg").textContent = reason === 2 ? TT("Wrong password. Try again.") : TT("Type the password to open it.");
+    $("pw").value = ""; $("pw").focus();
+    $("pwgo").onclick = () => { $("pwbox").classList.remove("open"); update($("pw").value); };
+    $("pw").onkeydown = e => { if(e.key === "Enter") $("pwgo").click(); };
+  };
+  try{ pdf = await task.promise; }
+  catch(err){ $("inner").innerHTML = '<p class="note" style="padding:30px">' + TT("This PDF could not be opened. It may be damaged.") + "</p>"; return; }
+  texts = []; hits = []; hitI = -1; $("qn").textContent = "";
+  const first = await pdf.getPage(1);
+  baseW = first.getViewport({scale: 1}).width;
+  $("pct").textContent = "/ " + pdf.numPages; $("pno").max = pdf.numPages;
+  zoom = 1; layout();
+  let last = 1; try{ last = Number(localStorage.getItem(key())) || 1; }catch(e){}
+  if(last > 1 && last <= pdf.numPages) setTimeout(() => go(last, true), 50);
+}
+
+/* page frames at the right size; canvases are drawn only when they scroll into view */
+async function layout(){
+  const gen = ++renderGen, inner = $("inner"), keepPage = curPage();
+  inner.innerHTML = ""; pages = [];
+  const fitScale = availW() / baseW;
+  for(let i = 1; i <= pdf.numPages; i++){
+    const pg = await pdf.getPage(i); if(gen !== renderGen) return;
+    const vp = pg.getViewport({scale: fitScale * zoom});
+    const d = document.createElement("div"); d.className = "pw"; d.dataset.p = i;
+    d.style.width = Math.floor(vp.width) + "px"; d.style.height = Math.floor(vp.height) + "px";
+    d.innerHTML = '<span class="no">' + i + "</span>";
+    inner.appendChild(d); pages.push({el: d, page: pg, vp: vp, done: false});
+    io.observe(d);
+  }
+  $("zv").textContent = Math.round(zoom * 100) + "%";
+  if(keepPage > 1) go(keepPage, true);
+  showHits();
+}
+async function draw(p){
+  if(p.done) return; p.done = true;
+  const c = document.createElement("canvas"), vp = p.page.getViewport({scale: p.vp.scale * DPR});
+  c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+  p.el.insertBefore(c, p.el.firstChild);
+  try{ await p.page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise; }catch(e){}
+}
+const io = new IntersectionObserver(es => es.forEach(e => {
+  const p = pages[Number(e.target.dataset.p) - 1];
+  if(!p) return;
+  if(e.isIntersecting) draw(p);
+  else if(p.done && Math.abs(Number(e.target.dataset.p) - curPage()) > 6){  /* free memory far away */
+    const c = p.el.querySelector("canvas"); if(c) c.remove(); p.done = false;
+  }
+}), {rootMargin: "800px 0px"});
+
+function curPage(){
+  if(!pages.length) return 1;
+  const mid = window.innerHeight * 0.4;
+  for(const p of pages){ const r = p.el.getBoundingClientRect(); if(r.bottom > mid) return Number(p.el.dataset.p); }
+  return pages.length;
+}
+function go(n, instant){
+  n = Math.max(1, Math.min(pdf.numPages, n));
+  const p = pages[n - 1]; if(!p) return;
+  const y = p.el.getBoundingClientRect().top + window.scrollY - 130;
+  window.scrollTo({top: y, behavior: instant ? "auto" : "smooth"});
+}
+let tick = null;
+window.addEventListener("scroll", () => {
+  if(!pdf) return;
+  clearTimeout(tick);
+  tick = setTimeout(() => {
+    const n = curPage();
+    if(document.activeElement !== $("pno")) $("pno").value = n;
+    try{ localStorage.setItem(key(), n); }catch(e){}
+  }, 120);
+}, {passive: true});
+
+function setZoom(z){ zoom = Math.max(0.5, Math.min(4, z)); layout(); }
+$("zin").onclick = () => setZoom(zoom * 1.25);
+$("zout").onclick = () => setZoom(zoom / 1.25);
+$("fit").onclick = () => setZoom(1);
+$("prev").onclick = () => go(curPage() - 1);
+$("next").onclick = () => go(curPage() + 1);
+$("pno").onchange = () => go(Number($("pno").value));
+$("night").onclick = () => { night = !night; $("viewer").classList.toggle("night", night); $("night").classList.toggle("on", night); };
+$("open").onclick = () => $("file").click();
+$("dl").onclick = () => { if(bytes) DPLResult.save(new Blob([bytes], {type: "application/pdf"}), name); };
+let resizeT = null;
+window.addEventListener("resize", () => { if(!pdf) return; clearTimeout(resizeT); resizeT = setTimeout(layout, 250); });
+
+/* pinch to zoom */
+let pinch = null;
+$("pages").addEventListener("touchstart", e => {
+  if(e.touches.length !== 2 || !pdf) return;
+  const [a, b] = e.touches;
+  pinch = {d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), k: 1};
+}, {passive: true});
+$("pages").addEventListener("touchmove", e => {
+  if(!pinch || e.touches.length !== 2) return;
+  e.preventDefault();
+  const [a, b] = e.touches;
+  pinch.k = Math.max(0.5 / zoom, Math.min(4 / zoom, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d));
+  $("inner").style.transform = "scale(" + pinch.k + ")";
+}, {passive: false});
+$("pages").addEventListener("touchend", e => {
+  if(!pinch || e.touches.length) return;
+  const k = pinch.k; pinch = null; $("inner").style.transform = "";
+  if(Math.abs(k - 1) > 0.05) setZoom(zoom * k);
+});
+$("pages").addEventListener("wheel", e => {            /* ctrl + wheel on a computer */
+  if(!e.ctrlKey || !pdf) return; e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+}, {passive: false});
+
+/* search */
+$("srch").onclick = () => { $("find").classList.toggle("open"); if($("find").classList.contains("open")) $("q").focus(); };
+$("qx").onclick = () => { $("find").classList.remove("open"); $("q").value = ""; hits = []; hitI = -1; $("qn").textContent = ""; showHits(); };
+async function textOf(i){
+  if(!texts[i]){ const tc = await (await pdf.getPage(i + 1)).getTextContent(); texts[i] = tc.items; }
+  return texts[i];
+}
+async function search(){
+  const q = $("q").value.trim().toLowerCase(); hits = []; hitI = -1;
+  if(!q){ $("qn").textContent = ""; showHits(); return; }
+  $("qn").textContent = TT("Searching...");
+  for(let i = 0; i < pdf.numPages; i++){
+    (await textOf(i)).forEach(it => { if(it.str && it.str.toLowerCase().includes(q)) hits.push({p: i + 1, it: it}); });
+  }
+  if(!hits.length){ $("qn").textContent = TT("Not found"); showHits(); return; }
+  const cp = curPage(); hitI = Math.max(0, hits.findIndex(h => h.p >= cp));
+  showHit();
+}
+function showHits(){
+  document.querySelectorAll(".pw .hl").forEach(n => n.remove());
+  hits.forEach((h, k) => {
+    const p = pages[h.p - 1]; if(!p) return;
+    const t = h.it.transform, fh = Math.hypot(t[2], t[3]) || 10;
+    const r = p.vp.convertToViewportRectangle([t[4], t[5] - fh * 0.2, t[4] + (h.it.width || fh), t[5] + fh * 0.85]);
+    const d = document.createElement("div"); d.className = "hl" + (k === hitI ? " cur" : "");
+    d.style.left = Math.min(r[0], r[2]) + "px"; d.style.top = Math.min(r[1], r[3]) + "px";
+    d.style.width = Math.abs(r[2] - r[0]) + "px"; d.style.height = Math.abs(r[3] - r[1]) + "px";
+    p.el.appendChild(d);
+  });
+}
+function showHit(){
+  if(!hits.length) return;
+  $("qn").textContent = (hitI + 1) + " / " + hits.length;
+  showHits();
+  const h = hits[hitI], p = pages[h.p - 1], cur = p.el.querySelector(".hl.cur");
+  if(cur){ const y = cur.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.35; window.scrollTo({top: y, behavior: "smooth"}); }
+}
+$("q").onkeydown = e => { if(e.key === "Enter"){ if(hits.length && $("q").dataset.last === $("q").value){ hitI = (hitI + 1) % hits.length; showHit(); } else { $("q").dataset.last = $("q").value; search(); } } };
+$("qnx").onclick = () => { if(!hits.length){ $("q").dataset.last = $("q").value; search(); return; } hitI = (hitI + 1) % hits.length; showHit(); };
+$("qp").onclick = () => { if(!hits.length) return; hitI = (hitI - 1 + hits.length) % hits.length; showHit(); };
+
+/* keyboard on a computer */
+document.addEventListener("keydown", e => {
+  if(!pdf || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if(e.key === "ArrowRight" || e.key === "PageDown"){ go(curPage() + 1); e.preventDefault(); }
+  if(e.key === "ArrowLeft" || e.key === "PageUp"){ go(curPage() - 1); e.preventDefault(); }
+  if((e.ctrlKey || e.metaKey) && e.key === "f"){ e.preventDefault(); $("find").classList.add("open"); $("q").focus(); }
+});
+
+async function load(f){
+  if(!f) return;
+  if(!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)){ alert(TT("Please choose a PDF file.")); return; }
+  openBytes(new Uint8Array(await f.arrayBuffer()), f.name);
+}
+$("file").onchange = e => { load(e.target.files[0]); e.target.value = ""; };
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => { if(e.target.closest && e.target.closest("#drop")) return; e.preventDefault(); load(e.dataTransfer.files[0]); });
+
+/* opened from another app: pdf-viewer.html?src=...&name=... */
+(async () => {
+  const qs = new URLSearchParams(location.search), src = qs.get("src");
+  if(!src) return;
+  try{
+    const r = await fetch(src); if(!r.ok) throw 0;
+    openBytes(new Uint8Array(await r.arrayBuffer()), qs.get("name") || "document.pdf");
+  }catch(e){ alert(TT("This PDF could not be opened. It may be damaged.")); }
+})();
+</script>
+</body>
+</html>

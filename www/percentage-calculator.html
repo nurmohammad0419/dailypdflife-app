@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Percentage calculator</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<style>
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  .q{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15.5px;color:var(--ink);font-weight:600}
+  .q input{width:120px !important;font-size:17px !important;font-weight:700;text-align:center}
+  .ans{margin-top:14px;border-radius:12px;padding:14px 16px;background:#f3f0ff;border:1px solid #d0bfff;font-size:15px;color:var(--ink-2);min-height:52px}
+  .ans b{font-size:24px;color:#5f3dc4;display:block;letter-spacing:-.3px}
+  .ans.up b{color:#2b8a3e} .ans.down b{color:#c92a2a}
+  .ex{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="box">
+    <h3>Percent of a number</h3>
+    <div class="q" data-bn="{b1}-এর {a1}% কত?">What is <input type="number" id="a1" value="15" step="any"> % of <input type="number" id="b1" value="2000" step="any"> ?</div>
+    <div class="ans" id="r1"></div>
+    <p class="ex">Example: 15% VAT on 2,000.</p>
+  </div>
+  <div class="box">
+    <h3>What percent is it?</h3>
+    <div class="q" data-bn="{a2}, {b2}-এর কত %?"><input type="number" id="a2" value="45" step="any"> is what % of <input type="number" id="b2" value="60" step="any"> ?</div>
+    <div class="ans" id="r2"></div>
+    <p class="ex">Example: 45 marks out of 60.</p>
+  </div>
+  <div class="box">
+    <h3>Increase or decrease</h3>
+    <div class="q" data-bn="{a3} থেকে {b3}">From <input type="number" id="a3" value="1500" step="any"> to <input type="number" id="b3" value="1800" step="any"></div>
+    <div class="ans" id="r3"></div>
+    <p class="ex">Example: salary went from 1,500 to 1,800.</p>
+  </div>
+  <div class="box">
+    <h3>Discount</h3>
+    <div class="q" data-bn="দাম {a4}, ছাড় {b4} %">Price <input type="number" id="a4" value="250" step="any"> with <input type="number" id="b4" value="20" step="any"> % off</div>
+    <div class="ans" id="r4"></div>
+    <p class="ex">Example: a 250 item on a 20% sale.</p>
+  </div>
+  <div class="box">
+    <h3>Add a percent</h3>
+    <div class="q" data-bn="{a5} + {b5} %"><input type="number" id="a5" value="1000" step="any"> plus <input type="number" id="b5" value="10" step="any"> %</div>
+    <div class="ans" id="r5"></div>
+    <p class="ex">Example: a 10% raise or markup.</p>
+  </div>
+  <div class="box">
+    <h3>Find the original</h3>
+    <div class="q" data-bn="{a6} হলো কোন সংখ্যার {b6} %?"><input type="number" id="a6" value="80" step="any"> is <input type="number" id="b6" value="40" step="any"> % of what?</div>
+    <div class="ans" id="r6"></div>
+    <p class="ex">Example: 80 is a 40% part — what was the whole?</p>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const f = n => isFinite(n) ? Number(n.toFixed(6)).toLocaleString("en-US", {maximumFractionDigits: 4}) : "—";
+const v = id => $(id).value === "" ? NaN : Number($(id).value);
+/* Bangla puts the words in a different order, so rebuild each question */
+if(window.DPL_LANG === "bn") document.querySelectorAll(".q").forEach(q => {
+  const ins = {}; q.querySelectorAll("input").forEach(i => ins[i.id] = i);
+  q.innerHTML = "";
+  q.dataset.bn.split(/(\{\w+\})/).forEach(part => {
+    const m = part.match(/^\{(\w+)\}$/);
+    if(m) q.appendChild(ins[m[1]]); else if(part) q.appendChild(document.createTextNode(part));
+  });
+  q.setAttribute("data-notr", "");
+});
+function put(id, big, small, cls){
+  const el = $(id); el.className = "ans" + (cls ? " " + cls : "");
+  el.innerHTML = "<b></b><span></span>"; el.querySelector("b").textContent = big; el.querySelector("span").textContent = small || "";
+}
+function calc(){
+  let a = v("a1"), b = v("b1"); put("r1", f(a * b / 100), "");
+  a = v("a2"); b = v("b2"); put("r2", b ? f(a / b * 100) + "%" : "—", "");
+  a = v("a3"); b = v("b3");
+  if(a){ const p = (b - a) / Math.abs(a) * 100; put("r3", (p > 0 ? "▲ +" : p < 0 ? "▼ " : "") + f(p) + "%", (p >= 0 ? TT("Increase of") : TT("Decrease of")) + " " + f(Math.abs(b - a)), p > 0 ? "up" : p < 0 ? "down" : ""); }
+  else put("r3", "—", "");
+  a = v("a4"); b = v("b4"); put("r4", f(a - a * b / 100), TT("You save") + " " + f(a * b / 100));
+  a = v("a5"); b = v("b5"); put("r5", f(a + a * b / 100), TT("Added") + " " + f(a * b / 100));
+  a = v("a6"); b = v("b6"); put("r6", b ? f(a * 100 / b) : "—", "");
+}
+document.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
+calc();
+</script>
+</body>
+</html>

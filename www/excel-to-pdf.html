@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel to PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<style>
+  .opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .opts label.ck{flex-direction:row;align-items:center;gap:7px;padding-bottom:10px}
+  .go{background:#1d6f42;color:#fff;border:0}
+  .sheetbox{background:#e9ecf3 !important;padding:22px !important}
+  #doc{width:794px;min-height:1123px;margin:0 auto;background:#fff;box-shadow:0 4px 18px rgba(20,25,40,.16);
+       padding:57px;color:#111;font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;font-size:10pt;box-sizing:border-box}
+  #doc .sh{margin-bottom:18px}
+  #doc .sh + .sh{break-before:page;page-break-before:always}
+  #doc h4{margin:0 0 8px;font-size:12pt;color:#1d6f42}
+  #doc .tw{transform-origin:top left}
+  #doc table{border-collapse:collapse}
+  #doc td{padding:3px 6px;vertical-align:top;white-space:nowrap}
+  #doc.grid td{border:1px solid #b9bec9}
+  #doc tr:first-child td{font-weight:700;background:#f1f5f2}
+  #doc.nohead tr:first-child td{font-weight:400;background:none}
+  .empty{color:var(--ink-3);text-align:center;padding-top:300px}
+  @media print{
+    .noprint{display:none !important}
+    .sheetbox{background:#fff !important;padding:0 !important;margin:0 !important}
+    .paper{height:auto !important;overflow:visible !important}
+    #doc{width:auto !important;min-height:0 !important;padding:0 !important;box-shadow:none !important;transform:none !important}
+    #doc tr:first-child td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+<style id="pageRule">@page{size:A4 portrait;margin:15mm}</style>
+</head>
+<body>
+<div class="box noprint">
+  <h3>1. Choose a spreadsheet (.xlsx, .xls, .csv, .ods)</h3>
+  <input type="file" id="file" accept=".xlsx,.xlsm,.xls,.csv,.ods">
+  <h3>2. Page setup</h3>
+  <div class="opts">
+    <label>Which sheet <select id="sheet"><option value="*">All sheets</option></select></label>
+    <label>Page size
+      <select id="size"><option value="A4">A4</option><option value="Letter">Letter</option></select>
+    </label>
+    <label>Orientation
+      <select id="orient"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
+    </label>
+    <label class="ck"><input type="checkbox" id="fit" checked> Fit to page width</label>
+    <label class="ck"><input type="checkbox" id="grid" checked> Gridlines</label>
+    <label class="ck"><input type="checkbox" id="head" checked> Bold first row</label>
+    <button class="go" id="save">⬇ Save as PDF</button>
+  </div>
+  <p class="note">In the print window choose "Save as PDF" and tick "Background graphics". Arabic and Bangla text work too.</p>
+</div>
+<div class="box sheetbox">
+  <div id="doc" class="grid" data-notr><p class="empty">Your sheet will appear here.</p></div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let wb = null, fileName = "sheet";
+const PAGE = {A4: [794, 1123], Letter: [816, 1056]}, MARGIN = 57;
+
+function pageW(){
+  const p = PAGE[$("size").value];
+  return $("orient").value === "landscape" ? [p[1], p[0]] : p;
+}
+function render(){
+  const [w, h] = pageW(), d = $("doc");
+  $("pageRule").textContent = "@page{size:" + $("size").value + " " + $("orient").value + ";margin:15mm}";
+  d.style.width = w + "px"; d.style.minHeight = h + "px";
+  d.classList.toggle("grid", $("grid").checked);
+  d.classList.toggle("nohead", !$("head").checked);
+  if(!wb){ if(window.DPL_fitPaper) DPL_fitPaper(); return; }
+  const names = $("sheet").value === "*" ? wb.SheetNames : [$("sheet").value];
+  d.innerHTML = "";
+  let shown = 0;
+  names.forEach(n => {
+    const ws = wb.Sheets[n];
+    if(!ws || !ws["!ref"]) return;
+    const html = XLSX.utils.sheet_to_html(ws, {header: "", footer: ""});
+    const box = document.createElement("div"); box.className = "sh";
+    if(names.length > 1){ const t = document.createElement("h4"); t.textContent = n; box.appendChild(t); }
+    const tw = document.createElement("div"); tw.className = "tw";
+    tw.innerHTML = html;
+    tw.querySelectorAll("td").forEach(td => td.setAttribute("dir", "auto"));
+    box.appendChild(tw); d.appendChild(box); shown++;
+  });
+  if(!shown){ d.innerHTML = '<p class="empty">' + TT("This sheet is empty.") + "</p>"; }
+  /* shrink wide tables so they fit across the page */
+  const avail = w - 2 * MARGIN;
+  d.querySelectorAll(".tw").forEach(tw => {
+    tw.style.zoom = "";
+    const tbl = tw.querySelector("table"); if(!tbl) return;
+    if($("fit").checked && tbl.scrollWidth > avail) tw.style.zoom = Math.max(0.3, avail / tbl.scrollWidth).toFixed(3);
+  });
+  if(window.DPL_fitPaper) DPL_fitPaper();
+}
+["size", "orient", "fit", "grid", "head", "sheet"].forEach(id => $(id).onchange = render);
+
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  fileName = f.name.replace(/\.[^.]+$/, "");
+  try{
+    wb = XLSX.read(await f.arrayBuffer(), {type: "array", cellDates: true});
+  }catch(err){
+    wb = null; alert(TT("This spreadsheet could not be read. It may be damaged or password-protected.")); return;
+  }
+  const s = $("sheet"); s.innerHTML = '<option value="*">' + TT("All sheets") + "</option>";
+  wb.SheetNames.forEach(n => { const o = document.createElement("option"); o.value = n; o.textContent = n; s.appendChild(o); });
+  if(wb.SheetNames.length === 1) s.value = wb.SheetNames[0];
+  /* wide sheets read better on a landscape page */
+  const first = wb.Sheets[wb.SheetNames[0]];
+  if(first && first["!ref"] && XLSX.utils.decode_range(first["!ref"]).e.c >= 7) $("orient").value = "landscape";
+  document.title = fileName;
+  render();
+};
+
+$("save").onclick = () => {
+  if(!wb){ alert(TT("Choose a spreadsheet first")); return; }
+  document.title = fileName;
+  window.print();
+};
+render();
+</script>
+</body>
+</html>

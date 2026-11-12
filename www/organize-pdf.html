@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organize PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<style>
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .bar .sp{flex:1}
+  .pri{background:#2e9d4a;color:#fff;border:0}
+  .drop{display:block;text-align:center;cursor:pointer}
+  #info{margin:12px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .pg{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;
+      text-align:center;cursor:grab;user-select:none;transition:box-shadow .15s,transform .15s}
+  .pg:hover{box-shadow:0 8px 22px rgba(20,25,40,.12)}
+  .pg.drag{opacity:.35}
+  .pg.over{outline:2px dashed #e5322d;outline-offset:3px}
+  .pg .th{height:170px;display:flex;align-items:center;justify-content:center}
+  .pg canvas{max-width:100%;max-height:170px;box-shadow:0 1px 5px rgba(20,25,40,.18);background:#fff}
+  .pg .lb{font-size:12.5px;color:var(--ink-2);margin-top:8px;font-weight:650}
+  .pg .src{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .pg .ops{display:flex;justify-content:center;gap:4px;margin-top:6px}
+  .pg .ops button{padding:4px 8px !important;font-size:13px !important;border-radius:8px !important}
+  .empty{color:var(--ink-3);text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">
+    📁 Choose one or more PDFs, or drag them here
+    <input type="file" id="files" accept="application/pdf" multiple hidden>
+  </label>
+  <p id="info" class="note">Drag pages to change their order. Use the buttons under each page to rotate or remove it.</p>
+</div>
+
+<div class="box">
+  <div class="bar">
+    <button id="add">＋ Add another PDF</button>
+    <button id="rev">⇅ Reverse order</button>
+    <button id="restore">↺ Undo removals</button>
+    <span class="sp"></span>
+    <span id="count" class="note"></span>
+    <button class="pri" id="save">💾 Save PDF</button>
+  </div>
+  <div class="grid" id="grid"><p class="empty">No pages yet — add a PDF above.</p></div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "vendor/pdf.worker.min.js";
+const { PDFDocument, degrees } = PDFLib;
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const COLORS = ["#e5322d","#1c7ed6","#2e9d4a","#f08c00","#7b3fe4","#0ca678","#c2255c","#212529"];
+
+let docs = [];      /* {name, bytes, js} */
+let pages = [];     /* {doc, num, base, rot, removed, el, cv} */
+let removedStack = [];
+let dragFrom = null;
+
+$("files").onchange = e => addFiles([...e.target.files]);
+$("add").onclick = () => $("files").click();
+const drop = $("drop");
+drop.ondragover = e => { e.preventDefault(); };
+drop.ondrop = e => { e.preventDefault(); addFiles([...e.dataTransfer.files].filter(f => /pdf/i.test(f.type) || /\.pdf$/i.test(f.name))); };
+
+async function addFiles(files){
+  for(const f of files){
+    try{
+      const bytes = await f.arrayBuffer();
+      const js = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
+      const d = docs.length;
+      docs.push({name: f.name, bytes: bytes, js: js});
+      for(let i = 1; i <= js.numPages; i++){
+        const po = await js.getPage(i);
+        pages.push({doc: d, num: i - 1, base: po.rotate || 0, rot: 0, removed: false, po: po});
+      }
+    }catch(err){
+      alert(TT("This PDF could not be opened. It may be password-protected.") + "\n" + f.name);
+    }
+  }
+  $("files").value = "";
+  render(true);
+}
+
+async function thumb(p){
+  const v1 = p.po.getViewport({scale: 1, rotation: (p.base + p.rot) % 360});
+  const k = Math.min(140 / v1.width, 170 / v1.height);
+  const vp = p.po.getViewport({scale: k * 1.5, rotation: (p.base + p.rot) % 360});
+  const c = p.cv || document.createElement("canvas");
+  c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+  c.style.width = Math.floor(vp.width / 1.5) + "px";
+  await p.po.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+  p.cv = c;
+}
+
+async function render(redrawAll){
+  const g = $("grid");
+  const live = pages.filter(p => !p.removed);
+  if(!live.length){ g.innerHTML = '<p class="empty">' + TT("No pages yet — add a PDF above.") + "</p>"; count(); return; }
+  g.innerHTML = "";
+  for(const p of live){
+    if(!p.el){
+      const el = document.createElement("div");
+      el.className = "pg"; el.draggable = true;
+      el.innerHTML = '<div class="th"></div><div class="lb"></div>' +
+        '<div class="ops">' +
+          '<button data-a="l" title="Move left">◀</button>' +
+          '<button data-a="r" title="Rotate">↻</button>' +
+          '<button data-a="x" title="Remove page">✕</button>' +
+          '<button data-a="n" title="Move right">▶</button>' +
+        "</div>";
+      el.querySelectorAll("button").forEach(b => b.onclick = ev => { ev.stopPropagation(); act(p, b.dataset.a); });
+      el.addEventListener("dragstart", e => { dragFrom = p; el.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; });
+      el.addEventListener("dragend", () => { el.classList.remove("drag"); document.querySelectorAll(".pg.over").forEach(x => x.classList.remove("over")); });
+      el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("over"); });
+      el.addEventListener("dragleave", () => el.classList.remove("over"));
+      el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("over"); moveTo(dragFrom, p); });
+      p.el = el;
+    }
+    if(!p.cv || redrawAll === p){ await thumb(p); }
+    const th = p.el.querySelector(".th"); if(th.firstChild !== p.cv){ th.innerHTML = ""; th.appendChild(p.cv); }
+    g.appendChild(p.el);
+  }
+  live.forEach((p, i) => {
+    p.el.querySelector(".lb").innerHTML = '<span class="src" style="background:' + COLORS[p.doc % COLORS.length] + '"></span>' +
+      TT("Page") + " " + (i + 1) + (docs.length > 1 ? ' <span style="color:var(--ink-3);font-weight:500">· ' + docs[p.doc].name.replace(/\.pdf$/i, "").slice(0, 14) + " p" + (p.num + 1) + "</span>" : "");
+  });
+  count();
+}
+function count(){
+  const n = pages.filter(p => !p.removed).length;
+  $("count").textContent = n ? n + " " + TT("pages") : "";
+  $("restore").disabled = !removedStack.length;
+}
+
+function act(p, a){
+  const live = pages.filter(x => !x.removed);
+  const i = live.indexOf(p);
+  if(a === "r"){ p.rot = (p.rot + 90) % 360; render(p); return; }
+  if(a === "x"){ p.removed = true; removedStack.push(p); render(); return; }
+  if(a === "l" && i > 0) moveTo(p, live[i - 1], false);
+  if(a === "n" && i < live.length - 1) moveTo(p, live[i + 1], true);
+}
+function moveTo(src, target, after){
+  if(!src || !target || src === target) return;
+  if(after === undefined) after = pages.indexOf(src) < pages.indexOf(target);
+  pages.splice(pages.indexOf(src), 1);
+  pages.splice(pages.indexOf(target) + (after ? 1 : 0), 0, src);
+  render();
+}
+$("rev").onclick = () => { pages.reverse(); render(); };
+$("restore").onclick = () => { const p = removedStack.pop(); if(p){ p.removed = false; render(); } };
+
+$("save").onclick = async () => {
+  const live = pages.filter(p => !p.removed);
+  if(!live.length){ alert(TT("Add a PDF first")); return; }
+  const btn = $("save"), old = btn.textContent; btn.disabled = true; btn.textContent = TT("Saving...");
+  try{
+    const out = await PDFDocument.create();
+    const loaded = {};
+    for(const p of live){
+      if(!loaded[p.doc]) loaded[p.doc] = await PDFDocument.load(docs[p.doc].bytes, {ignoreEncryption: true});
+      const [pg] = await out.copyPages(loaded[p.doc], [p.num]);
+      if(p.rot) pg.setRotation(degrees((pg.getRotation().angle + p.rot) % 360));
+      out.addPage(pg);
+    }
+    const name = (docs[0].name.replace(/\.pdf$/i, "") || "document") + "-organized.pdf";
+    DPLResult.file(new Blob([await out.save()], {type: "application/pdf"}), name);
+  }catch(err){
+    alert(TT("Sorry, this PDF could not be saved. It may be password-protected."));
+  }
+  btn.disabled = false; btn.textContent = old;
+};
+count();
+</script>
+</body>
+</html>

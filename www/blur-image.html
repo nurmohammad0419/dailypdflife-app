@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blur & hide part of an image</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<style>
+  .lay{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  .drop{display:block;text-align:center;cursor:pointer}
+  .side h3:first-child{margin-top:0}
+  .side select{width:100%}
+  .modes{display:grid;grid-template-columns:1fr;gap:6px}
+  .modes button{text-align:left;padding:10px 12px !important;font-size:14px !important}
+  .modes button.on{background:#5f3dc4;color:#fff;border-color:#5f3dc4}
+  .rng{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+  .rng input{flex:1}
+  .row{display:flex;gap:6px;margin-top:12px}
+  .row button{flex:1;padding:8px 4px !important;font-size:13px !important}
+  .pri{background:#5f3dc4;color:#fff;border:0;width:100%;margin-top:16px}
+  .stage{display:flex;justify-content:center;background:#e9ecf3;border-radius:12px;padding:16px}
+  .host{position:relative;touch-action:none;cursor:crosshair;box-shadow:0 3px 14px rgba(20,25,40,.18);line-height:0}
+  #cv{max-width:100%;max-height:72vh;display:block}
+  #sel{position:absolute;border:2px dashed #5f3dc4;background:rgba(95,61,196,.12);pointer-events:none;display:none}
+  .count{font-size:13.5px;color:var(--ink-2);margin-top:10px;font-weight:650}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">🫥 Choose a photo or screenshot, or drag it here
+    <input type="file" id="file" accept="image/*" hidden>
+  </label>
+</div>
+<div class="lay" id="lay" style="display:none">
+  <div class="box side">
+    <h3>How to hide</h3>
+    <div class="modes" id="modes">
+      <button data-m="blur" class="on">🌫 Blur</button>
+      <button data-m="pixel">▦ Pixelate</button>
+      <button data-m="black">⬛ Black box</button>
+      <button data-m="white">⬜ White box</button>
+    </div>
+    <h3>Strength</h3>
+    <div class="rng"><span>🔅</span><input type="range" id="str" min="1" max="10" value="6"><span>🔆</span></div>
+    <p class="note">Drag over the faces, numbers or names you want to hide. For ID numbers and private text, a black box is the safest choice.</p>
+    <div class="row"><button id="undo">↶ Undo</button><button id="clear">✕ Clear all</button></div>
+    <p class="count" id="count"></p>
+    <h3>Save as</h3>
+    <select id="fmt"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select>
+    <button class="pri" id="save">⬇ Save image</button>
+  </div>
+  <div class="box">
+    <div class="stage"><div class="host" id="host"><canvas id="cv"></canvas><div id="sel"></div></div></div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let img = null, name = "image", mode = "blur", boxes = [], type0 = "image/jpeg";
+
+/* hide one rectangle; x, y, w, h are fractions of the picture */
+function hide(g, src, W, H, b){
+  const x = Math.round(b.x * W), y = Math.round(b.y * H), w = Math.max(1, Math.round(b.w * W)), h = Math.max(1, Math.round(b.h * H));
+  if(b.m === "black" || b.m === "white"){ g.fillStyle = b.m === "black" ? "#000" : "#fff"; g.fillRect(x, y, w, h); return; }
+  const s = b.s;                                                    /* 1..10 */
+  if(b.m === "pixel"){
+    const cell = Math.max(4, Math.round(Math.max(W, H) * (0.006 + s * 0.004)));
+    const t = document.createElement("canvas"); t.width = Math.max(1, Math.ceil(w / cell)); t.height = Math.max(1, Math.ceil(h / cell));
+    const tg = t.getContext("2d"); tg.imageSmoothingEnabled = true; tg.drawImage(src, x, y, w, h, 0, 0, t.width, t.height);
+    g.save(); g.imageSmoothingEnabled = false; g.drawImage(t, 0, 0, t.width, t.height, x, y, t.width * cell, t.height * cell); g.restore();
+    return;
+  }
+  /* blur: shrink hard, then grow back smoothly a few times (works in every browser) */
+  const f = Math.max(2, Math.round(Math.max(W, H) * (0.004 + s * 0.003)));
+  const pad = f * 2;
+  const sx = Math.max(0, x - pad), sy = Math.max(0, y - pad), sw = Math.min(W - sx, w + pad * 2), sh = Math.min(H - sy, h + pad * 2);
+  let t = document.createElement("canvas"); t.width = Math.max(1, Math.round(sw / f)); t.height = Math.max(1, Math.round(sh / f));
+  let tg = t.getContext("2d"); tg.imageSmoothingQuality = "high"; tg.drawImage(src, sx, sy, sw, sh, 0, 0, t.width, t.height);
+  for(let i = 0; i < 2; i++){                                         /* soften the blocks */
+    const u = document.createElement("canvas"); u.width = Math.max(1, Math.round(t.width / 2)); u.height = Math.max(1, Math.round(t.height / 2));
+    u.getContext("2d").drawImage(t, 0, 0, u.width, u.height);
+    const v = document.createElement("canvas"); v.width = t.width; v.height = t.height;
+    const vg = v.getContext("2d"); vg.imageSmoothingQuality = "high"; vg.drawImage(u, 0, 0, v.width, v.height);
+    t = v;
+  }
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(t, 0, 0, t.width, t.height, sx, sy, sw, sh);
+  g.restore();
+}
+function compose(c, W, H){
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0, W, H);
+  /* each box reads from a clean copy, so overlapping boxes don't blur twice */
+  const clean = document.createElement("canvas"); clean.width = W; clean.height = H; clean.getContext("2d").drawImage(img, 0, 0, W, H);
+  boxes.forEach(b => hide(g, clean, W, H, b));
+}
+function render(){
+  if(!img) return;
+  const cv = $("cv"), k = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+  cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+  compose(cv, cv.width, cv.height);
+  $("count").textContent = boxes.length ? boxes.length + " " + TT("areas hidden") : TT("Nothing hidden yet");
+}
+function load(f){
+  if(!f || !/^image\//.test(f.type)) return;
+  name = f.name.replace(/\.[^.]+$/, ""); type0 = f.type;
+  $("fmt").value = /png/.test(f.type) ? "image/png" : "image/jpeg";
+  const im = new Image();
+  im.onload = () => { img = im; boxes = []; $("lay").style.display = ""; render(); };
+  im.onerror = () => alert(TT("This image could not be opened:") + " " + f.name);
+  im.src = URL.createObjectURL(f);
+}
+$("file").onchange = e => load(e.target.files[0]);
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+$("modes").querySelectorAll("button").forEach(b => b.onclick = () => {
+  mode = b.dataset.m; $("modes").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+});
+/* changing strength updates the last box, so you can fine-tune it */
+$("str").oninput = () => { const b = boxes[boxes.length - 1]; if(b && (b.m === "blur" || b.m === "pixel")){ b.s = Number($("str").value); render(); } };
+$("undo").onclick = () => { boxes.pop(); render(); };
+$("clear").onclick = () => { boxes = []; render(); };
+
+/* drag to draw a box */
+let start = null;
+function pt(e){
+  const r = $("cv").getBoundingClientRect();
+  return {x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)), r: r};
+}
+$("host").addEventListener("pointerdown", e => { if(!img) return; start = pt(e); $("host").setPointerCapture(e.pointerId); e.preventDefault(); });
+$("host").addEventListener("pointermove", e => {
+  if(!start) return;
+  const p = pt(e), s = $("sel"), r = p.r;
+  s.style.display = "block";
+  s.style.left = Math.min(start.x, p.x) * r.width + "px"; s.style.top = Math.min(start.y, p.y) * r.height + "px";
+  s.style.width = Math.abs(p.x - start.x) * r.width + "px"; s.style.height = Math.abs(p.y - start.y) * r.height + "px";
+});
+$("host").addEventListener("pointerup", e => {
+  if(!start) return;
+  const p = pt(e), w = Math.abs(p.x - start.x), h = Math.abs(p.y - start.y);
+  $("sel").style.display = "none";
+  if(w > 0.005 && h > 0.005) boxes.push({x: Math.min(start.x, p.x), y: Math.min(start.y, p.y), w: w, h: h, m: mode, s: Number($("str").value)});
+  start = null; render();
+});
+
+$("save").onclick = () => {
+  if(!img){ alert(TT("Choose an image first")); return; }
+  if(!boxes.length){ alert(TT("Drag over the part you want to hide first")); return; }
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const type = $("fmt").value;
+  if(type === "image/jpeg"){ const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+  compose(c, c.width, c.height);
+  c.toBlob(b => DPLResult.file(b, name + "-hidden." + (type === "image/png" ? "png" : "jpg")), type, 0.92);
+};
+</script>
+</body>
+</html>

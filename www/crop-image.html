@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crop image</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<script src="cropbox.js"></script>
+<style>
+  .lay{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  .drop{display:block;text-align:center;cursor:pointer}
+  .ratios{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .ratios button:first-child{grid-column:span 3}
+  .ratios button{padding:8px 4px !important;font-size:13px !important}
+  .ratios button.on{background:#1b2030;color:#fff;border-color:#1b2030}
+  .row{display:flex;gap:6px}
+  .row button{flex:1;padding:8px 4px !important;font-size:13px !important}
+  .side select{width:100%}
+  .pri{background:#2e9d4a;color:#fff;border:0;width:100%;margin-top:14px}
+  .stage{display:flex;justify-content:center;background:#e9ecf3;border-radius:12px;padding:16px;min-height:300px;align-items:center}
+  .host{position:relative;overflow:hidden;touch-action:none;box-shadow:0 3px 14px rgba(20,25,40,.18)}
+  .host canvas{display:block}
+  .dims{font-size:13.5px;color:var(--ink-2);margin-top:10px;font-weight:650}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop">🖼 Choose an image (JPG, PNG, WEBP), or drag it here
+    <input type="file" id="file" accept="image/*" hidden>
+  </label>
+</div>
+<div class="lay" id="lay" style="display:none">
+  <div class="box side">
+    <h3>Shape</h3>
+    <div class="ratios" id="ratios">
+      <button data-r="0" class="on">Any shape</button>
+      <button data-r="1">1:1</button>
+      <button data-r="1.3333">4:3</button>
+      <button data-r="1.7778">16:9</button>
+      <button data-r="0.75">3:4</button>
+      <button data-r="0.5625">9:16</button>
+    </div>
+    <h3>Turn</h3>
+    <div class="row">
+      <button id="rl">↺ Left</button><button id="rr">↻ Right</button>
+      <button id="fh">⇋ Flip</button>
+    </div>
+    <h3>Save as</h3>
+    <select id="fmt"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
+    <p class="dims" id="dims"></p>
+    <button class="pri" id="save">✂ Crop &amp; save</button>
+  </div>
+  <div class="box">
+    <div class="stage"><div class="host" id="host"><canvas id="cv"></canvas></div></div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let img = null, rot = 0, flip = false, crop = null, name = "image", ratio = 0;
+
+function base(){
+  /* the image after rotate/flip, at full resolution */
+  const r = rot % 180 !== 0;
+  const c = document.createElement("canvas");
+  c.width = r ? img.naturalHeight : img.naturalWidth; c.height = r ? img.naturalWidth : img.naturalHeight;
+  const g = c.getContext("2d");
+  g.translate(c.width / 2, c.height / 2); g.rotate(rot * Math.PI / 180); if(flip) g.scale(-1, 1);
+  g.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+  return c;
+}
+function show(){
+  const b = base(), cv = $("cv");
+  const maxW = Math.min(900, $("host").parentNode.clientWidth - 32), maxH = window.innerHeight * 0.7;
+  const k = Math.min(1, maxW / b.width, maxH / b.height);
+  cv.width = b.width; cv.height = b.height;
+  cv.style.width = Math.round(b.width * k) + "px"; cv.style.height = Math.round(b.height * k) + "px";
+  cv.getContext("2d").drawImage(b, 0, 0);
+  $("host").style.width = cv.style.width; $("host").style.height = cv.style.height;
+  if(!crop) crop = new DPLCrop($("host"), {onchange: dims});
+  crop.setRatio(ratio); crop.reset(); dims();
+}
+function dims(){
+  if(!crop) return;
+  const r = crop.get(), cv = $("cv");
+  $("dims").textContent = TT("Size") + ": " + Math.round(r.w * cv.width) + " × " + Math.round(r.h * cv.height) + " px";
+}
+function load(f){
+  if(!f || !/^image\//.test(f.type)) return;
+  name = f.name.replace(/\.[^.]+$/, "");
+  const im = new Image();
+  im.onload = () => { img = im; rot = 0; flip = false; $("lay").style.display = ""; show(); };
+  im.onerror = () => alert(TT("This image could not be opened:") + " " + f.name);
+  im.src = URL.createObjectURL(f);
+}
+$("file").onchange = e => load(e.target.files[0]);
+document.querySelector(".drop").ondragover = e => e.preventDefault();
+document.querySelector(".drop").ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+document.querySelectorAll("#ratios button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x === b));
+  ratio = Number(b.dataset.r); if(crop){ crop.setRatio(ratio); dims(); }
+});
+$("rl").onclick = () => { rot = (rot + 270) % 360; show(); };
+$("rr").onclick = () => { rot = (rot + 90) % 360; show(); };
+$("fh").onclick = () => { flip = !flip; show(); };
+$("save").onclick = () => {
+  if(!img){ alert(TT("Choose an image first")); return; }
+  const r = crop.get(), cv = $("cv");
+  const sx = Math.round(r.x * cv.width), sy = Math.round(r.y * cv.height);
+  const sw = Math.max(1, Math.round(r.w * cv.width)), sh = Math.max(1, Math.round(r.h * cv.height));
+  const out = document.createElement("canvas"); out.width = sw; out.height = sh;
+  const g = out.getContext("2d");
+  const type = $("fmt").value;
+  if(type === "image/jpeg"){ g.fillStyle = "#fff"; g.fillRect(0, 0, sw, sh); }
+  g.drawImage(cv, sx, sy, sw, sh, 0, 0, sw, sh);
+  const ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[type];
+  out.toBlob(b => DPLResult.file(b, name + "-cropped." + ext), type, 0.92);
+};
+</script>
+</body>
+</html>
