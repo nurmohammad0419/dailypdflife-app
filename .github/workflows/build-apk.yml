@@ -3,6 +3,8 @@ name: Build Android app
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "wrangler.jsonc"
   workflow_dispatch:
 
 permissions:
