@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Word to PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>
+<style>
+  .opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .go{background:#2b579a;color:#fff;border:0}
+  .sheetbox{background:#e9ecf3 !important;padding:22px !important}
+  #doc{width:794px;min-height:1123px;margin:0 auto;background:#fff;box-shadow:0 4px 18px rgba(20,25,40,.16);
+       padding:96px 96px;color:#111;font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.45}
+  #doc h1{font-size:20pt;margin:0 0 10pt}
+  #doc h2{font-size:15pt;margin:14pt 0 6pt}
+  #doc h3{font-size:12.5pt;margin:12pt 0 4pt}
+  #doc p{margin:0 0 8pt}
+  #doc table{border-collapse:collapse;width:100%;margin:8pt 0}
+  #doc td,#doc th{border:1px solid #999;padding:4pt 6pt;vertical-align:top}
+  #doc img{max-width:100%;height:auto}
+  #doc ul,#doc ol{margin:0 0 8pt 18pt;padding:0}
+  .empty{color:var(--ink-3);text-align:center;padding-top:300px}
+  .warn{font-size:13px;color:#a05a00}
+  @media print{
+    .noprint{display:none !important}
+    .sheetbox{background:#fff !important;padding:0 !important;margin:0 !important}
+    .paper{height:auto !important;overflow:visible !important}
+    #doc{width:auto !important;min-height:0 !important;padding:0 !important;box-shadow:none !important;transform:none !important}
+  }
+</style>
+<style id="pageRule">@page{size:A4;margin:25mm}</style>
+</head>
+<body>
+<div class="box noprint">
+  <h3>1. Choose a Word file (.docx)</h3>
+  <input type="file" id="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+  <h3>2. Page setup</h3>
+  <div class="opts">
+    <label>Page size
+      <select id="size"><option value="A4">A4</option><option value="Letter">Letter</option><option value="Legal">Legal</option></select>
+    </label>
+    <label>Margins
+      <select id="margin"><option value="25mm">Normal</option><option value="15mm">Narrow</option><option value="35mm">Wide</option></select>
+    </label>
+    <button class="go" id="save">⬇ Save as PDF</button>
+  </div>
+  <p class="note">In the print window choose "Save as PDF" and tick "Background graphics". Text stays sharp and selectable, in any language.</p>
+  <p class="warn" id="warn"></p>
+</div>
+<div class="box sheetbox">
+  <div id="doc" data-notr><p class="empty">Your document will appear here.</p></div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let loaded = false, fileName = "document";
+
+function pageRule(){
+  const sz = $("size").value, m = $("margin").value;
+  $("pageRule").textContent = "@page{size:" + sz + ";margin:" + m + "}";
+  const px = {"25mm": 96, "15mm": 57, "35mm": 132}[m];
+  $("doc").style.padding = px + "px";
+  $("doc").style.width = (sz === "A4" ? 794 : 816) + "px";
+  if(window.DPL_fitPaper) window.DPL_fitPaper();
+}
+$("size").onchange = pageRule; $("margin").onchange = pageRule;
+
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  $("warn").textContent = "";
+  if(!/\.docx$/i.test(f.name)){
+    alert(TT("Please choose a .docx file. Older .doc files must first be saved as .docx in Word.")); return;
+  }
+  fileName = f.name.replace(/\.docx$/i, "");
+  try{
+    const res = await mammoth.convertToHtml({arrayBuffer: await f.arrayBuffer()});
+    const d = $("doc");
+    d.innerHTML = res.value || "<p></p>";
+    d.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6,td,th").forEach(n => n.setAttribute("dir", "auto"));
+    loaded = true;
+    document.title = fileName;
+    const warns = (res.messages || []).filter(m => m.type === "warning").length;
+    if(warns) $("warn").textContent = TT("Some formatting (such as text boxes, headers or special layouts) could not be carried over. Check the preview before saving.");
+    pageRule();
+  }catch(err){
+    alert(TT("This Word file could not be read. It may be damaged or password-protected."));
+  }
+};
+
+$("save").onclick = () => {
+  if(!loaded){ alert(TT("Choose a Word file first")); return; }
+  document.title = fileName;
+  window.print();
+};
+pageRule();
+</script>
+</body>
+</html>

@@ -53,6 +53,24 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
   }
 
+  /* iPhone / iPad: the share sheet has "Save to Files", which works better than a download,
+     especially when the site is added to the Home Screen */
+  var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function asFile(blob, name) {
+    try { return new File([blob], name, { type: blob.type || guess(name) }); } catch (e) { return null; }
+  }
+  function canShare(files) {
+    if (!IOS || window.DPLNative || !navigator.share || !navigator.canShare) return false;
+    try { return files.every(Boolean) && navigator.canShare({ files: files }); } catch (e) { return false; }
+  }
+  function saveSmart(blob, name) {
+    var f = asFile(blob, name);
+    if (canShare([f])) {
+      navigator.share({ files: [f] }).catch(function (e) { if (!e || e.name !== "AbortError") saveBlob(blob, name); });
+    } else saveBlob(blob, name);
+  }
+  var T = function (s) { return window.T ? window.T(s) : s; };
+
   /* pdf.js is used for the preview so no browser ever treats it as a download */
   var pdfjsPromise = null;
   function ensurePdfJs() {
@@ -181,8 +199,8 @@
       pick.appendChild(nm); pick.appendChild(sz);
       pick.onclick = function () { render(i); };
       var dlb = document.createElement("button");
-      dlb.className = "dplr-btn"; dlb.textContent = "Download";
-      dlb.onclick = function () { saveBlob(it.blob, it.name); };
+      dlb.className = "dplr-btn"; dlb.textContent = canShare([asFile(it.blob, it.name)]) ? T("Save / Share") : "Download";
+      dlb.onclick = function () { saveSmart(it.blob, it.name); };
       row.appendChild(pick); row.appendChild(dlb);
       body.appendChild(row);
       rows.push(row);
@@ -193,8 +211,14 @@
     if (items.length > 1) {
       var all = document.createElement("button");
       all.className = "dplr-btn";
-      all.textContent = "Download all";
+      var allFiles = items.map(function (it) { return asFile(it.blob, it.name); });
+      var shareAll = canShare(allFiles);
+      all.textContent = shareAll ? T("Save / Share all") : "Download all";
       all.onclick = function () {
+        if (shareAll) {
+          navigator.share({ files: allFiles }).catch(function () {});
+          return;
+        }
         items.forEach(function (it, i) {
           setTimeout(function () { saveBlob(it.blob, it.name); }, i * 450);
         });
@@ -229,7 +253,7 @@
       show([{ blob: blob, name: name }]);
     },
     files: function (list, title) { show(list, title); },
-    save: saveBlob
+    save: saveSmart
   };
 
   function guess(name) {

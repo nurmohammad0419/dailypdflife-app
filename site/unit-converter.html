@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Unit converter</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .cats{display:flex;gap:6px;flex-wrap:wrap}
+  .cats button{padding:8px 13px !important;font-size:13.5px !important}
+  .cats button.on{background:#1971c2;color:#fff;border-color:#1971c2}
+  .inp{display:flex;gap:8px;margin-top:14px}
+  .inp input{flex:1 1 auto;min-width:0;width:auto !important;font-size:22px !important;font-weight:700;padding:12px 14px !important}
+  .inp select{flex:0 0 190px;width:190px !important}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .it{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;cursor:pointer;transition:border-color .15s}
+  .it:hover{border-color:#1971c2}
+  .it small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:650}
+  .it b{display:block;font-size:20px;margin-top:3px;color:var(--ink);word-break:break-all}
+  .it.same{background:#f1f7ff;border-color:#a5d8ff}
+  .it.done b::after{content:"  ✓";color:#2b8a3e;font-size:15px}
+  table.pipe{border-collapse:collapse;width:100%;font-size:14px}
+  table.pipe th,table.pipe td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
+  table.pipe th{color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  table.pipe tr.hl td{background:#fff9db;font-weight:700}
+  @media(max-width:600px){.inp{flex-direction:column}.inp select{flex:auto;width:100% !important}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="cats" id="cats"></div>
+  <div class="inp" id="inp">
+    <input type="number" id="val" value="1" inputmode="decimal" step="any">
+    <select id="from"></select>
+  </div>
+</div>
+<div class="box">
+  <h3 id="head">Result</h3>
+  <div class="list" id="list"></div>
+  <div id="pipe" style="display:none"></div>
+  <p class="note" id="tip">Tap a result to copy it.</p>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+/* each unit: [name, size in the base unit] */
+const CATS = {
+  "Length": [["Millimetre (mm)", .001], ["Centimetre (cm)", .01], ["Metre (m)", 1], ["Kilometre (km)", 1000], ["Inch (in)", .0254], ["Foot (ft)", .3048], ["Yard (yd)", .9144], ["Mile", 1609.344]],
+  "Area": [["Square metre (m²)", 1], ["Square foot (ft²)", .09290304], ["Square inch (in²)", .00064516], ["Square yard (yd²)", .83612736], ["Square centimetre (cm²)", 1e-4], ["Square kilometre (km²)", 1e6], ["Hectare", 1e4], ["Acre", 4046.8564224], ["Decimal (shotok)", 40.468564224], ["Katha (Bangladesh)", 66.8901]],
+  "Volume": [["Litre (L)", 1], ["Millilitre (mL)", .001], ["Cubic metre (m³)", 1000], ["US gallon", 3.785411784], ["Imperial gallon", 4.54609], ["Cubic foot (ft³)", 28.316846592], ["Cubic inch (in³)", .016387064], ["Cup (US)", .2365882365]],
+  "Weight": [["Kilogram (kg)", 1], ["Gram (g)", .001], ["Tonne (t)", 1000], ["Pound (lb)", .45359237], ["Ounce (oz)", .028349523125], ["Tola", .0116638038], ["Carat", .0002]],
+  "Temperature": [["Celsius (°C)", "C"], ["Fahrenheit (°F)", "F"], ["Kelvin (K)", "K"]],
+  "Pressure": [["Bar", 1e5], ["PSI (lb/in²)", 6894.757293168], ["Kilopascal (kPa)", 1000], ["Megapascal (MPa)", 1e6], ["Pascal (Pa)", 1], ["Atmosphere (atm)", 101325], ["Metre of water (mH₂O)", 9806.65], ["mmHg", 133.322387415]],
+  "Flow": [["Litre per second (L/s)", 1], ["Litre per minute (L/min)", 1 / 60], ["Cubic metre per hour (m³/h)", 1000 / 3600], ["US gallon per minute (GPM)", 3.785411784 / 60], ["Imperial gallon per minute", 4.54609 / 60]],
+  "Speed": [["Kilometre per hour (km/h)", 1 / 3.6], ["Metre per second (m/s)", 1], ["Mile per hour (mph)", .44704], ["Knot", .514444]],
+  "Pipe size": null
+};
+/* common nominal pipe sizes: inch, DN (mm), steel OD (mm), PPR / PVC OD (mm) */
+const PIPES = [["1/2\"", 15, 21.3, 20], ["3/4\"", 20, 26.9, 25], ["1\"", 25, 33.7, 32], ["1 1/4\"", 32, 42.4, 40], ["1 1/2\"", 40, 48.3, 50],
+  ["2\"", 50, 60.3, 63], ["2 1/2\"", 65, 76.1, 75], ["3\"", 80, 88.9, 90], ["4\"", 100, 114.3, 110], ["5\"", 125, 139.7, 140], ["6\"", 150, 168.3, 160], ["8\"", 200, 219.1, 200]];
+let cat = "Length", done = null;
+
+function toBase(v, u){ if(u === "C") return v; if(u === "F") return (v - 32) * 5 / 9; if(u === "K") return v - 273.15; return v * u; }
+function fromBase(v, u){ if(u === "C") return v; if(u === "F") return v * 9 / 5 + 32; if(u === "K") return v + 273.15; return v / u; }
+function fmt(n){
+  if(!isFinite(n)) return "—";
+  const a = Math.abs(n);
+  if(a !== 0 && (a < 1e-6 || a >= 1e15)) return n.toExponential(4);
+  return Number(n.toPrecision(10)).toLocaleString("en-US", {maximumFractionDigits: a < 1 ? 8 : 6});
+}
+function tabs(){
+  $("cats").innerHTML = "";
+  Object.keys(CATS).forEach(k => {
+    const b = document.createElement("button"); b.textContent = TT(k); if(k === cat) b.className = "on";
+    b.onclick = () => { cat = k; tabs(); units(); calc(); }; $("cats").appendChild(b);
+  });
+}
+function units(){
+  const s = $("from"); s.innerHTML = "";
+  (CATS[cat] || []).forEach((u, i) => { const o = document.createElement("option"); o.value = i; o.textContent = TT(u[0]); s.appendChild(o); });
+  if(cat === "Length") s.value = 5; if(cat === "Area") s.value = 0; if(cat === "Temperature"){ s.value = 0; $("val").value = 30; }
+  if(cat === "Pressure") s.value = 0;
+}
+function calc(){
+  const pipe = cat === "Pipe size";
+  $("inp").style.display = pipe ? "none" : ""; $("list").style.display = pipe ? "none" : ""; $("pipe").style.display = pipe ? "" : "none";
+  $("tip").style.display = pipe ? "none" : "";
+  if(pipe){
+    let h = '<table class="pipe"><tr><th>' + TT("Inch") + "</th><th>DN (mm)</th><th>" + TT("Steel / GI outside size") + "</th><th>" + TT("PPR / PVC outside size") + "</th></tr>";
+    PIPES.forEach(p => h += "<tr><td>" + p[0] + "</td><td>DN " + p[1] + "</td><td>" + p[2] + " mm</td><td>" + p[3] + " mm</td></tr>");
+    $("pipe").innerHTML = h + "</table><p class=\"note\">" + TT("Sizes are the usual ones; check the maker's chart for the exact pipe you buy.") + "</p>";
+    $("head").textContent = TT("Pipe size chart");
+    return;
+  }
+  const list = CATS[cat], from = list[$("from").value] || list[0], v = Number($("val").value);
+  $("head").textContent = TT("Result");
+  const base = toBase(isFinite(v) ? v : 0, from[1]);
+  $("list").innerHTML = "";
+  list.forEach(u => {
+    const d = document.createElement("div"); d.className = "it" + (u === from ? " same" : "");
+    const r = fmt(fromBase(base, u[1]));
+    d.innerHTML = "<small></small><b></b>"; d.querySelector("small").textContent = TT(u[0]); d.querySelector("b").textContent = $("val").value === "" ? "—" : r;
+    d.onclick = () => { try{ navigator.clipboard.writeText(r.replace(/,/g, "")); }catch(e){} d.classList.add("done"); setTimeout(() => d.classList.remove("done"), 1200); };
+    $("list").appendChild(d);
+  });
+}
+$("val").oninput = calc; $("from").onchange = calc;
+tabs(); units(); calc();
+</script>
+</body>
+</html>

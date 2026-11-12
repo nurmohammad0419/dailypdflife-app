@@ -1,0 +1,216 @@
+/* DailyPdfLife — shared app shell + design system
+   Loaded on every page. nav.js builds the rail, top bar and page header. */
+
+:root{
+  --bg:#f3f5fa;
+  --surface:#ffffff;
+  --ink:#1b2030;
+  --ink-2:#4b5467;
+  --ink-3:#858d9e;
+  --line:#e6e9f2;
+  --line-2:#eff1f7;
+  --brand:#e5322d;
+  --brand-ink:#c3261f;
+  --ok:#17935a;
+  --rail:248px;
+  --rail-sm:68px;
+  --top:56px;
+  --r-lg:16px;
+  --r-md:11px;
+  --r-sm:9px;
+  --shadow:0 1px 2px rgba(20,25,40,.04), 0 8px 24px rgba(20,25,40,.06);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  text-align:left !important;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif !important;
+  background:var(--bg) !important;
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  padding:0 !important;
+}
+
+/* ---------- app frame ---------- */
+.appbar{
+  position:fixed;top:0;left:0;right:0;height:var(--top);z-index:9000;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;padding:0 16px;
+}
+.appbar .brand{display:flex;align-items:center;text-decoration:none;flex:none}
+.appbar .brand img{height:34px;display:block}
+.appbar .sep{width:1px;height:24px;background:var(--line);flex:none}
+.appbar .where{font-size:14.5px;font-weight:650;color:var(--ink);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.appbar .sp{flex:1}
+.appbar .menu{display:none}
+
+.rail{
+  position:fixed;top:var(--top);bottom:0;left:0;width:var(--rail);z-index:8500;
+  background:var(--surface);border-right:1px solid var(--line);
+  overflow-y:auto;overscroll-behavior:contain;padding:12px 10px 26px;
+}
+.rail h6{
+  margin:16px 8px 6px;font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--ink-3);font-weight:700;
+}
+.rail h6:first-child{margin-top:4px}
+.rail a{
+  display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r-md);
+  color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:550;margin-bottom:1px;
+}
+.rail a:hover{background:#f4f6fb;color:var(--ink)}
+.rail a.on{background:#fdecea;color:var(--brand-ink);font-weight:700}
+.rail a .ic{
+  width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;flex:none;
+}
+.rail .home{margin:2px 0 6px;background:#f4f6fb;color:var(--ink);font-weight:650}
+
+.shell{padding:calc(var(--top) + 20px) 24px 60px calc(var(--rail) + 24px);max-width:1500px}
+.phead{margin:0 0 18px}
+.phead h1{margin:0 0 4px;font-size:25px;letter-spacing:-.5px;color:var(--ink);font-weight:750}
+.phead p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:760px}
+.crumb{font-size:12.5px;color:var(--ink-3);margin-bottom:5px;font-weight:600;letter-spacing:.2px}
+
+/* ---------- cards (pages use .box / .panel / .form) ---------- */
+.box,.panel,.form{
+  background:var(--surface) !important;
+  border:1px solid var(--line) !important;
+  border-radius:var(--r-lg) !important;
+  box-shadow:var(--shadow) !important;
+  padding:22px !important;
+  margin:0 0 18px !important;
+  text-align:left !important;
+}
+.box{max-width:none !important;width:auto !important}
+.box h1,.panel h1,.form h1,.form h2,.panel h2{
+  font-size:17px !important;margin:0 0 4px !important;letter-spacing:-.2px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.box>p,.panel>p:first-of-type,.form>p:first-of-type{color:var(--ink-2);font-size:14px;margin:0 0 16px}
+.box h3,.panel h3,.form h3{
+  font-size:11px !important;letter-spacing:1px;text-transform:uppercase;color:var(--ink-3) !important;
+  font-weight:700 !important;margin:20px 0 8px !important;border:0 !important;padding:0 !important;
+}
+.box h4,.panel h4{font-size:13px}
+
+/* ---------- controls ---------- */
+:where(button){
+  font-family:inherit;font-size:14px;font-weight:650;border-radius:var(--r-md);cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:10px 16px;
+}
+:where(button:hover){background:#f7f8fc;border-color:#d8dde8}
+button{transition:filter .14s,transform .08s;font-family:inherit !important;
+  border-radius:var(--r-md) !important;cursor:pointer}
+button:hover{filter:brightness(1.05)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed;filter:none}
+/* the page's own action buttons keep their colour but get the app shape */
+.box>button,.panel>button,.form>button,button[onclick],.dl,.auto,.add{
+  box-shadow:none !important;
+}
+.dl,.pri{border:0 !important}
+input,select,textarea{
+  font-family:inherit !important;color:var(--ink);
+  border:1px solid #dce1ec !important;border-radius:var(--r-sm) !important;
+  background:#fff !important;outline:none;
+  transition:border-color .14s, box-shadow .14s;
+}
+:where(input,select,textarea){font-size:14px;padding:9px 11px}
+input:focus,select:focus,textarea:focus{
+  border-color:#9fb3ff !important;box-shadow:0 0 0 3px rgba(97,124,255,.14) !important;
+}
+input[type=file]{background:#fbfcfe !important;padding:8px 10px !important;cursor:pointer}
+input[type=color]{padding:3px !important;height:36px;min-width:42px}
+input[type=range]{padding:0 !important;border:0 !important;background:transparent !important;accent-color:var(--brand)}
+input[type=checkbox],input[type=radio]{accent-color:var(--brand);width:auto !important}
+label{font-size:14px;color:var(--ink-2)}
+small,.tip,.note{color:var(--ink-3);font-size:12.8px}
+
+/* status lines become quiet inline messages */
+#status,#s1,#s2,#s3,#rmStatus,#info{font-size:13.5px;color:var(--ink-2)}
+
+/* drop zones */
+.drop{
+  border:1.5px dashed #ccd4e4 !important;border-radius:var(--r-lg) !important;
+  background:#fafbff !important;color:var(--ink-2) !important;padding:30px 20px !important;
+  font-size:14.5px;transition:border-color .14s,background .14s;
+}
+.drop:hover{border-color:var(--brand) !important;background:#fff6f5 !important}
+
+/* two-column tools (CV, invoice, cover letter, passport, QR) */
+.wrap{
+  display:grid !important;
+  grid-template-columns:minmax(300px,400px) minmax(0,1fr);
+  gap:18px !important;align-items:start !important;padding:0 !important;
+}
+.wrap>.form,.wrap>.panel{width:100% !important;max-width:none !important}
+.paper{overflow:hidden}
+.paper>*{transform-origin:top left}
+@media(max-width:980px){.wrap{grid-template-columns:1fr}}
+@media print{.wrap{display:block !important}.paper>*{transform:none !important}.paper{overflow:visible}}
+
+/* result rows / thumbnails already styled by their own pages */
+.views img,.views canvas{border-radius:var(--r-md)}
+
+.lic{font-size:12.5px;color:var(--ink-3);margin:24px 2px 0;max-width:760px}
+.lic a{color:var(--ink-2)}
+
+/* info pages (privacy, terms, about, contact) */
+.legal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);
+  padding:34px 40px;max-width:860px;line-height:1.72;color:var(--ink-2)}
+.legal h1{margin:0 0 6px;font-size:28px;letter-spacing:-.6px;color:var(--ink)}
+.legal h2{margin:30px 0 8px;font-size:17px;color:var(--ink);letter-spacing:-.2px}
+.legal p,.legal li{font-size:15px}
+.legal ul{padding-left:20px}
+.legal li{margin:5px 0}
+.legal a{color:var(--brand-ink)}
+.legal .meta{font-size:13px;color:var(--ink-3);margin:0 0 18px}
+.legal .lead{font-size:16.5px;color:var(--ink)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+.grid3 div{border:1px solid var(--line);border-radius:var(--r-md);padding:14px;background:#fbfcfe}
+.grid3 b{display:block;color:var(--ink);margin-bottom:3px}
+.grid3 span{font-size:14px}
+.cgrid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:26px;margin-top:18px}
+.cform label{display:block;font-weight:650;color:var(--ink);font-size:14px;margin-bottom:12px}
+.cform input,.cform select,.cform textarea{display:block;width:100%;margin-top:6px}
+.cform .send{background:var(--brand);color:#fff;border:0;padding:12px 22px}
+.cform .small{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+.cside{background:#fbfcfe;border:1px solid var(--line);border-radius:var(--r-md);padding:18px;font-size:14px}
+.cside b{color:var(--ink)}
+.cside p{margin:3px 0 14px;font-size:14px}
+@media(max-width:760px){.legal{padding:22px 18px}.cgrid{grid-template-columns:1fr}}
+
+.sitefoot{margin-top:40px;padding:18px 2px 4px;border-top:1px solid var(--line);display:flex;
+  justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
+.sitefoot nav{display:flex;gap:18px;flex-wrap:wrap}
+.sitefoot a{color:var(--ink-2);text-decoration:none}
+.sitefoot a:hover{color:var(--brand-ink)}
+@media print{.sitefoot{display:none}}
+
+@media (max-width:1040px){
+  .rail{transform:translateX(-100%);transition:transform .2s;box-shadow:0 20px 50px rgba(16,20,30,.2)}
+  .rail.open{transform:none}
+  .shell{padding-left:20px;padding-right:20px}
+  .appbar .menu{display:inline-flex;align-items:center;gap:7px}
+}
+@media (max-width:760px){
+  .appbar .where{display:none}
+  .appbar{gap:10px;padding:0 12px}
+  .appbar .brand img{height:30px}
+}
+@media (max-width:620px){
+  .shell{padding-left:14px;padding-right:14px;padding-top:calc(var(--top) + 14px)}
+  .box,.panel,.form{padding:16px !important}
+  .phead h1{font-size:21px}
+}
+@media print{
+  .appbar,.rail,.phead,.railmask{display:none !important}
+  .shell{padding:0 !important}
+  .box,.panel,.form{border:0 !important;box-shadow:none !important}
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Loan & EMI calculator</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .lay{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:18px;align-items:start}
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:13px;font-weight:650;color:var(--ink);margin-bottom:5px}
+  .row{display:flex;gap:8px}
+  .row input{flex:1 1 auto;min-width:0;width:auto !important}
+  .row select{flex:0 0 110px;width:110px !important}
+  #amount{font-size:20px !important;font-weight:700}
+  .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:10px !important;background:#fff;font-size:13.5px !important}
+  .seg button.on{background:#1b2030;color:#fff}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .card{border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:#fff}
+  .card small{display:block;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:21px;margin-top:4px;color:var(--ink)}
+  .card.main{background:linear-gradient(135deg,#1c7ed6,#1864ab);border:0}
+  .card.main small{color:rgba(255,255,255,.85)} .card.main b{color:#fff;font-size:24px}
+  .split{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:16px 0 6px}
+  .split i{display:block;height:100%}
+  .legend{display:flex;gap:16px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+  .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:var(--c)}
+  .tbl{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{padding:8px 10px;border-bottom:1px solid #eef0f4;text-align:right;white-space:nowrap}
+  th{position:sticky;top:0;background:#f5f7fb;color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  td:first-child,th:first-child{text-align:left}
+  .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .acts .sp{flex:1}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="lay">
+  <div class="box">
+    <div class="f"><label>Loan amount</label>
+      <div class="row"><input type="number" id="amount" value="100000" min="0" step="any">
+      <select id="cur"><option>SAR</option><option>AED</option><option>QAR</option><option>KWD</option><option>BHD</option><option>OMR</option><option>BDT</option><option>USD</option><option>EUR</option><option>INR</option><option>PKR</option></select></div></div>
+    <div class="f"><label>Yearly profit / interest rate (%)</label><input type="number" id="rate" value="5" min="0" step="any" style="width:100%"></div>
+    <div class="f"><label>Time to pay back</label>
+      <div class="row"><input type="number" id="term" value="5" min="0" step="any"><select id="unit"><option value="y">Years</option><option value="m">Months</option></select></div></div>
+    <div class="f"><label>How the rate is worked out</label>
+      <div class="seg" id="type"><button data-t="flat" class="on">Flat rate</button><button data-t="red">Reducing balance</button></div>
+      <p class="note" id="typeHint" style="margin:6px 0 0"></p></div>
+    <div class="f"><label>Down payment (optional)</label><input type="number" id="down" value="0" min="0" step="any" style="width:100%"></div>
+  </div>
+  <div>
+    <div class="box">
+      <div class="cards">
+        <div class="card main"><small>Monthly payment</small><b id="emi">—</b></div>
+        <div class="card"><small>Total profit / interest</small><b id="int">—</b></div>
+        <div class="card"><small>Total you pay</small><b id="tot">—</b></div>
+      </div>
+      <div class="split"><i id="pBar" style="background:#1c7ed6"></i><i id="iBar" style="background:#ffa94d"></i></div>
+      <div class="legend"><span style="--c:#1c7ed6" id="pLeg"></span><span style="--c:#ffa94d" id="iLeg"></span></div>
+    </div>
+    <div class="box">
+      <div class="acts"><h3 style="margin:0">Payment plan</h3><span class="sp"></span>
+        <span class="seg" id="view" style="display:inline-grid;width:auto"><button data-v="y" class="on">By year</button><button data-v="m">By month</button></span>
+        <button id="copy">📋 Copy summary</button></div>
+      <div class="tbl"><table id="plan"></table></div>
+    </div>
+  </div>
+</div>
+<p class="note">Banks and finance companies may add fees or insurance, so the final offer can differ. Use this to compare offers.</p>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let type = "flat", view = "y", last = null;
+const dec = () => (["KWD", "BHD", "OMR"].includes($("cur").value) ? 3 : 2);
+const fmt = n => $("cur").value + " " + n.toLocaleString("en-US", {minimumFractionDigits: dec(), maximumFractionDigits: dec()});
+const num = n => n.toLocaleString("en-US", {minimumFractionDigits: dec(), maximumFractionDigits: dec()});
+
+function calc(){
+  const P = Math.max(0, (Number($("amount").value) || 0) - (Number($("down").value) || 0));
+  const r = Math.max(0, Number($("rate").value) || 0) / 100;
+  const n = Math.max(0, Math.round(($("unit").value === "y" ? 12 : 1) * (Number($("term").value) || 0)));
+  $("typeHint").textContent = type === "flat"
+    ? TT("Profit is charged on the full amount for the whole time. Common for car and personal finance in the Gulf.")
+    : TT("Interest is charged only on what is still owed, so it gets smaller every month. Common for home loans.");
+  if(!P || !n){ ["emi", "int", "tot"].forEach(id => $(id).textContent = "—"); $("plan").innerHTML = ""; last = null; return; }
+  let emi, rows = [], bal = P;
+  if(type === "flat"){
+    const totInt = P * r * n / 12; emi = (P + totInt) / n;
+    for(let k = 1; k <= n; k++){ const ip = totInt / n, pp = P / n; bal -= pp; rows.push([k, emi, pp, ip, Math.max(0, bal)]); }
+  } else {
+    const i = r / 12;
+    emi = i ? P * i * Math.pow(1 + i, n) / (Math.pow(1 + i, n) - 1) : P / n;
+    for(let k = 1; k <= n; k++){ const ip = bal * i, pp = emi - ip; bal -= pp; rows.push([k, emi, pp, ip, Math.max(0, bal)]); }
+  }
+  const tot = emi * n, totI = tot - P;
+  $("emi").textContent = fmt(emi); $("int").textContent = fmt(totI); $("tot").textContent = fmt(tot);
+  const pp = tot ? P / tot * 100 : 100;
+  $("pBar").style.width = pp + "%"; $("iBar").style.width = (100 - pp) + "%";
+  $("pLeg").textContent = TT("Loan amount") + " " + Math.round(pp) + "%"; $("iLeg").textContent = TT("Profit / interest") + " " + Math.round(100 - pp) + "%";
+  last = {P, emi, tot, totI, n};
+  /* table */
+  let h = "<tr><th>" + TT(view === "y" ? "Year" : "Month") + "</th><th>" + TT("Payment") + "</th><th>" + TT("Towards loan") + "</th><th>" + TT("Profit / interest") + "</th><th>" + TT("Still owed") + "</th></tr>";
+  if(view === "m") rows.forEach(r => h += "<tr><td>" + r[0] + "</td><td>" + num(r[1]) + "</td><td>" + num(r[2]) + "</td><td>" + num(r[3]) + "</td><td>" + num(r[4]) + "</td></tr>");
+  else for(let y = 0; y * 12 < rows.length; y++){
+    const part = rows.slice(y * 12, y * 12 + 12), s = c => part.reduce((a, r) => a + r[c], 0);
+    h += "<tr><td>" + (y + 1) + "</td><td>" + num(s(1)) + "</td><td>" + num(s(2)) + "</td><td>" + num(s(3)) + "</td><td>" + num(part[part.length - 1][4]) + "</td></tr>";
+  }
+  $("plan").innerHTML = h;
+}
+document.querySelectorAll("#type button").forEach(b => b.onclick = () => { type = b.dataset.t; document.querySelectorAll("#type button").forEach(x => x.classList.toggle("on", x === b)); calc(); });
+document.querySelectorAll("#view button").forEach(b => b.onclick = () => { view = b.dataset.v; document.querySelectorAll("#view button").forEach(x => x.classList.toggle("on", x === b)); calc(); });
+["amount", "rate", "term", "unit", "cur", "down"].forEach(id => $(id).addEventListener("input", calc));
+$("copy").onclick = () => {
+  if(!last) return;
+  const t = TT("Loan amount") + ": " + fmt(last.P) + "\n" + TT("Monthly payment") + ": " + fmt(last.emi) + " × " + last.n + "\n" +
+            TT("Total profit / interest") + ": " + fmt(last.totI) + "\n" + TT("Total you pay") + ": " + fmt(last.tot);
+  try{ navigator.clipboard.writeText(t); $("copy").textContent = "✓ " + TT("Copied"); setTimeout(() => $("copy").textContent = "📋 " + TT("Copy summary"), 1500); }catch(e){}
+};
+calc();
+</script>
+</body>
+</html>

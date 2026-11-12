@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Scan to PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="cropbox.js"></script>
+<style>
+  .add{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .add label,.add button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    border:1.5px dashed #ccd4e4;border-radius:14px;padding:22px 10px;background:#fafbff;cursor:pointer;font-weight:650;
+    color:var(--ink);font-size:14.5px;text-align:center}
+  .add label:hover,.add button:hover{border-color:#e5322d;background:#fff6f5}
+  .add span.e{font-size:28px}
+  .add small{font-weight:500}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .bar label{display:flex;gap:6px;align-items:center;font-size:13.5px}
+  .bar .sp{flex:1}
+  .pri{background:#2e9d4a;color:#fff;border:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-top:16px}
+  .pg{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;text-align:center}
+  .pg .th{height:200px;display:flex;align-items:center;justify-content:center;background:#f3f5f9;border-radius:8px}
+  .pg canvas{max-width:100%;max-height:200px;box-shadow:0 1px 6px rgba(20,25,40,.18)}
+  .pg select{width:100%;margin-top:8px;padding:6px 8px !important;font-size:13px !important}
+  .pg .ops{display:flex;justify-content:center;gap:4px;margin-top:6px}
+  .pg .ops button{padding:4px 9px !important;font-size:13px !important;border-radius:8px !important}
+  .pg .lb{font-size:12.5px;color:var(--ink-2);font-weight:650;margin-top:6px}
+  .empty{color:var(--ink-3);text-align:center;padding:20px}
+  .cam{position:fixed;inset:0;background:rgba(10,12,18,.88);z-index:12000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+  .cam.on{display:flex}
+  .cam video{max-width:100%;max-height:72vh;border-radius:12px;background:#000}
+  .cam .row{display:flex;gap:12px}
+  .cropm{position:fixed;inset:0;background:rgba(10,12,18,.86);z-index:12000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+  .cropm.on{display:flex}
+  .cropm .host{position:relative;overflow:hidden;touch-action:none}
+  .cropm .host canvas{display:block}
+  .cropm .row{display:flex;gap:10px}
+  .shot{width:68px;height:68px;border-radius:50% !important;border:4px solid #fff !important;background:#e5322d !important;padding:0 !important}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="add">
+    <label>
+      <span class="e">📷</span>Take a photo<small class="note">Opens the camera on phones</small>
+      <input type="file" id="cap" accept="image/*" capture="environment" hidden>
+    </label>
+    <label>
+      <span class="e">🖼</span>Choose images<small class="note">JPG or PNG, several at once</small>
+      <input type="file" id="pick" accept="image/*" multiple hidden>
+    </label>
+    <button id="webcam"><span class="e">🎥</span>Use webcam<small class="note">For laptops and desktops</small></button>
+  </div>
+</div>
+
+<div class="box">
+  <div class="bar">
+    <label>Look
+      <select id="allF">
+        <option value="doc">Document (clean black &amp; white)</option>
+        <option value="enh">Enhanced colour</option>
+        <option value="gray">Grayscale</option>
+        <option value="orig">Original</option>
+      </select>
+    </label>
+    <button id="applyAll">Apply to all pages</button>
+    <span class="sp"></span>
+    <label>Page
+      <select id="size"><option value="a4">A4</option><option value="letter">Letter</option><option value="fit">Same as photo</option></select>
+    </label>
+    <button class="pri" id="save">📄 Make PDF</button>
+  </div>
+  <div class="grid" id="grid"><p class="empty">No pages yet. Take a photo or choose images above.</p></div>
+</div>
+
+<div class="cam" id="cam">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="row">
+    <button id="camClose">Done</button>
+    <button class="shot" id="shot" title="Capture"></button>
+  </div>
+  <p class="note" style="color:#c9cfdd" id="camInfo">Hold the page flat and fill the frame.</p>
+</div>
+
+<div class="cropm" id="cropm">
+  <div class="host" id="chost"><canvas id="ccv"></canvas></div>
+  <div class="row">
+    <button id="cAuto">✨ Find page edges</button>
+    <button id="cFull">Full photo</button>
+    <button id="cCancel">Cancel</button>
+    <button class="pri" id="cApply">Apply</button>
+  </div>
+</div>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const { PDFDocument } = PDFLib;
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let pages = [];   /* {src (canvas), filter, rot, cv} */
+const MAX = 2200;
+
+function toCanvas(img){
+  const w = img.naturalWidth || img.videoWidth || img.width, h = img.naturalHeight || img.videoHeight || img.height;
+  const k = Math.min(1, MAX / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+function loadFile(f){
+  return new Promise((ok, bad) => {
+    const im = new Image();
+    im.onload = () => { ok(toCanvas(im)); URL.revokeObjectURL(im.src); };
+    im.onerror = bad;
+    im.src = URL.createObjectURL(f);
+  });
+}
+async function addFiles(list){
+  for(const f of list){
+    try{ add(await loadFile(f)); }catch(e){ alert(TT("This image could not be opened:") + " " + f.name); }
+  }
+}
+function findPage(src){
+  const k = Math.min(1, 320 / Math.max(src.width, src.height));
+  const w = Math.max(1, Math.round(src.width * k)), h = Math.max(1, Math.round(src.height * k));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, y = new Uint8Array(w * h), hist = new Uint32Array(256);
+  for(let i = 0, j = 0; i < d.length; i += 4, j++){ const v = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) | 0; y[j] = v; hist[v]++; }
+  /* Otsu threshold */
+  let sum = 0; for(let i = 0; i < 256; i++) sum += i * hist[i];
+  let sB = 0, wB = 0, best = 0, th = 128;
+  for(let t = 0; t < 256; t++){
+    wB += hist[t]; if(!wB) continue; const wF = w * h - wB; if(!wF) break;
+    sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, between = wB * wF * (mB - mF) * (mB - mF);
+    if(between > best){ best = between; th = t; }
+  }
+  const colOk = x => { let n = 0; for(let yy = 0; yy < h; yy++) if(y[yy * w + x] > th) n++; return n / h > 0.45; };
+  const rowOk = yy => { let n = 0; for(let x = 0; x < w; x++) if(y[yy * w + x] > th) n++; return n / w > 0.45; };
+  let x0 = 0, x1 = w - 1, y0 = 0, y1 = h - 1;
+  while(x0 < x1 && !colOk(x0)) x0++; while(x1 > x0 && !colOk(x1)) x1--;
+  while(y0 < y1 && !rowOk(y0)) y0++; while(y1 > y0 && !rowOk(y1)) y1--;
+  const r = {x: x0 / w, y: y0 / h, w: (x1 - x0 + 1) / w, h: (y1 - y0 + 1) / h};
+  const area = r.w * r.h;
+  if(area < 0.25 || area > 0.97) return null;
+  return r;
+}
+function add(src){
+  pages.push({src: src, filter: $("allF").value, rot: 0, crop: findPage(src)});
+  render();
+}
+$("cap").onchange = e => { addFiles([...e.target.files]); e.target.value = ""; };
+$("pick").onchange = e => { addFiles([...e.target.files]); e.target.value = ""; };
+
+/* ---- image clean-up ---- */
+function pct(hist, total, p){ let s = 0; for(let i = 0; i < 256; i++){ s += hist[i]; if(s >= total * p) return i; } return 255; }
+function cropped(p){
+  if(!p.crop) return p.src;
+  const cr = p.crop, sx = Math.round(cr.x * p.src.width), sy = Math.round(cr.y * p.src.height);
+  const sw = Math.max(1, Math.round(cr.w * p.src.width)), sh = Math.max(1, Math.round(cr.h * p.src.height));
+  const c = document.createElement("canvas"); c.width = sw; c.height = sh;
+  c.getContext("2d").drawImage(p.src, sx, sy, sw, sh, 0, 0, sw, sh);
+  return c;
+}
+function processed(p){
+  const src = cropped(p);
+  const r = p.rot % 180 !== 0;
+  const c = document.createElement("canvas");
+  c.width = r ? src.height : src.width; c.height = r ? src.width : src.height;
+  const g = c.getContext("2d");
+  g.translate(c.width / 2, c.height / 2); g.rotate(p.rot * Math.PI / 180);
+  g.drawImage(src, -src.width / 2, -src.height / 2);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  if(p.filter === "orig") return c;
+  const im = g.getImageData(0, 0, c.width, c.height), d = im.data, n = d.length / 4;
+  if(p.filter === "enh"){
+    for(let ch = 0; ch < 3; ch++){
+      const h = new Uint32Array(256);
+      for(let i = ch; i < d.length; i += 4) h[d[i]]++;
+      const lo = pct(h, n, 0.02), hi = Math.max(lo + 1, pct(h, n, 0.95));
+      for(let i = ch; i < d.length; i += 4) d[i] = Math.max(0, Math.min(255, (d[i] - lo) * 255 / (hi - lo)));
+    }
+  }else{
+    const h = new Uint32Array(256);
+    for(let i = 0; i < d.length; i += 4){
+      const y = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) | 0;
+      d[i] = y; h[y]++;
+    }
+    let lo, hi;
+    if(p.filter === "doc"){ lo = pct(h, n, 0.03); hi = Math.max(lo + 1, pct(h, n, 0.55)); }
+    else { lo = pct(h, n, 0.01); hi = Math.max(lo + 1, pct(h, n, 0.99)); }
+    for(let i = 0; i < d.length; i += 4){
+      let v = (d[i] - lo) * 255 / (hi - lo);
+      if(p.filter === "doc") v = v > 200 ? 255 : Math.pow(Math.max(0, v) / 255, 1.35) * 255;
+      v = Math.max(0, Math.min(255, v));
+      d[i] = d[i + 1] = d[i + 2] = v;
+    }
+  }
+  g.putImageData(im, 0, 0);
+  return c;
+}
+
+function render(){
+  const grid = $("grid");
+  if(!pages.length){ grid.innerHTML = '<p class="empty">' + TT("No pages yet. Take a photo or choose images above.") + "</p>"; return; }
+  grid.innerHTML = "";
+  pages.forEach((p, i) => {
+    if(!p.cv || p.dirty !== false){ p.cv = processed(p); p.dirty = false; }
+    const el = document.createElement("div"); el.className = "pg";
+    el.innerHTML = '<div class="th"></div>' +
+      '<select><option value="doc">Document</option><option value="enh">Enhanced colour</option>' +
+      '<option value="gray">Grayscale</option><option value="orig">Original</option></select>' +
+      '<div class="ops"><button data-a="l">◀</button><button data-a="c" title="Crop">✂</button><button data-a="r">↻</button>' +
+      '<button data-a="x">✕</button><button data-a="n">▶</button></div>' +
+      '<div class="lb">' + TT("Page") + " " + (i + 1) + "</div>";
+    const th = document.createElement("canvas");
+    const k = Math.min(1, 400 / Math.max(p.cv.width, p.cv.height));
+    th.width = p.cv.width * k; th.height = p.cv.height * k;
+    th.getContext("2d").drawImage(p.cv, 0, 0, th.width, th.height);
+    el.querySelector(".th").appendChild(th);
+    const sel = el.querySelector("select"); sel.value = p.filter;
+    sel.onchange = () => { p.filter = sel.value; p.dirty = true; render(); };
+    el.querySelectorAll(".ops button").forEach(b => b.onclick = () => {
+      const a = b.dataset.a;
+      if(a === "c"){ openCrop(p); return; }
+      if(a === "r"){ p.rot = (p.rot + 90) % 360; p.dirty = true; }
+      if(a === "x") pages.splice(i, 1);
+      if(a === "l" && i > 0){ pages.splice(i, 1); pages.splice(i - 1, 0, p); }
+      if(a === "n" && i < pages.length - 1){ pages.splice(i, 1); pages.splice(i + 1, 0, p); }
+      render();
+    });
+    grid.appendChild(el);
+  });
+}
+$("applyAll").onclick = () => { pages.forEach(p => { p.filter = $("allF").value; p.dirty = true; }); render(); };
+
+/* ---- manual crop ---- */
+let cropPage = null, cropper = null;
+function openCrop(p){
+  cropPage = p;
+  const cv = $("ccv");
+  const k = Math.min((window.innerWidth - 40) / p.src.width, (window.innerHeight - 140) / p.src.height, 1);
+  cv.width = p.src.width; cv.height = p.src.height;
+  cv.style.width = Math.round(p.src.width * k) + "px"; cv.style.height = Math.round(p.src.height * k) + "px";
+  cv.getContext("2d").drawImage(p.src, 0, 0);
+  $("chost").style.width = cv.style.width; $("chost").style.height = cv.style.height;
+  $("cropm").classList.add("on");
+  if(!cropper) cropper = new DPLCrop($("chost"));
+  cropper.set(p.crop || {x: 0, y: 0, w: 1, h: 1});
+}
+$("cAuto").onclick = () => { const r = findPage(cropPage.src); if(r) cropper.set(r); else alert(TT("Could not find the page edges. Drag the corners instead.")); };
+$("cFull").onclick = () => cropper.set({x: 0, y: 0, w: 1, h: 1});
+$("cCancel").onclick = () => $("cropm").classList.remove("on");
+$("cApply").onclick = () => {
+  const r = cropper.get();
+  cropPage.crop = (r.w > 0.995 && r.h > 0.995) ? null : r;
+  cropPage.dirty = true;
+  $("cropm").classList.remove("on");
+  render();
+};
+
+/* ---- webcam ---- */
+let stream = null;
+$("webcam").onclick = async () => {
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "environment", width: {ideal: 1920}, height: {ideal: 1080}}});
+    $("video").srcObject = stream; $("cam").classList.add("on");
+  }catch(e){ alert(TT("The camera could not be opened. Check that you allowed camera access.")); }
+};
+$("shot").onclick = () => {
+  const v = $("video"); if(!v.videoWidth) return;
+  add(toCanvas(v));
+  $("camInfo").textContent = pages.length + " " + TT("pages captured");
+};
+$("camClose").onclick = () => {
+  $("cam").classList.remove("on");
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+};
+
+/* ---- PDF ---- */
+$("save").onclick = async () => {
+  if(!pages.length){ alert(TT("Add at least one page first")); return; }
+  const btn = $("save"), old = btn.textContent; btn.disabled = true; btn.textContent = TT("Saving...");
+  try{
+    const pdf = await PDFDocument.create();
+    const size = $("size").value;
+    for(const p of pages){
+      if(p.dirty !== false) { p.cv = processed(p); p.dirty = false; }
+      const blob = await new Promise(ok => p.cv.toBlob(ok, "image/jpeg", 0.85));
+      const img = await pdf.embedJpg(await blob.arrayBuffer());
+      let pw, ph;
+      if(size === "fit"){ pw = p.cv.width * 0.5; ph = p.cv.height * 0.5; }
+      else{
+        const base = size === "a4" ? [595.28, 841.89] : [612, 792];
+        [pw, ph] = p.cv.width > p.cv.height ? [base[1], base[0]] : base;
+      }
+      const page = pdf.addPage([pw, ph]);
+      const m = size === "fit" ? 0 : 18;
+      const k = Math.min((pw - 2 * m) / p.cv.width, (ph - 2 * m) / p.cv.height);
+      const w = p.cv.width * k, h = p.cv.height * k;
+      page.drawImage(img, {x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h});
+    }
+    const d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    DPLResult.file(new Blob([await pdf.save()], {type: "application/pdf"}), "scan-" + stamp + ".pdf");
+  }catch(err){
+    alert(TT("Something went wrong, please try again."));
+  }
+  btn.disabled = false; btn.textContent = old;
+};
+</script>
+</body>
+</html>

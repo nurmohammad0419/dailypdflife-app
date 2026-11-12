@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>HEIC to JPG</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<style>
+  .drop{display:block;text-align:center;cursor:pointer}
+  .opts{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:14px}
+  .opts label{display:flex;gap:7px;align-items:center}
+  .go{background:#f59f00;color:#fff;border:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:6px}
+  .it{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;text-align:center;font-size:13px}
+  .it .th{height:150px;display:flex;align-items:center;justify-content:center;background:#f5f6fa;border-radius:8px;margin-bottom:8px;overflow:hidden}
+  .it img{max-width:100%;max-height:150px}
+  .it .nm{color:var(--ink);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it .st{color:var(--ink-3);margin-top:3px}
+  .it .st.bad{color:#c92a2a}
+  .it button{margin-top:8px;padding:6px 12px !important;font-size:13px !important}
+  .bar{display:flex;gap:10px;align-items:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">
+    📱 Choose iPhone photos (.heic / .heif), or drag them here
+    <input type="file" id="files" accept=".heic,.heif,image/heic,image/heif" multiple hidden>
+  </label>
+  <div class="opts">
+    <label>Convert to
+      <select id="fmt"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select>
+    </label>
+    <label>Quality <input type="range" id="q" min="50" max="100" value="90"> <span id="qv">90%</span></label>
+    <button class="go" id="go">⇄ Convert</button>
+  </div>
+</div>
+<div class="box" id="out" style="display:none">
+  <div class="grid" id="grid"></div>
+  <div class="bar"><span id="sum" class="note" style="flex:1"></span><button id="all">⬇ Download all</button></div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let files = [], results = [];
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+
+$("q").oninput = () => $("qv").textContent = $("q").value + "%";
+$("files").onchange = e => { files = [...e.target.files]; listFiles(); };
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); files = [...e.dataTransfer.files]; listFiles(); };
+
+function listFiles(){
+  $("out").style.display = files.length ? "" : "none";
+  $("grid").innerHTML = ""; results = [];
+  files.forEach((f, i) => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<div class="th">🖼</div><div class="nm"></div><div class="st"></div>';
+    d.querySelector(".nm").textContent = f.name;
+    d.querySelector(".st").textContent = kb(f.size) + " · " + TT("ready");
+    $("grid").appendChild(d); f._el = d;
+  });
+  $("sum").textContent = files.length + " " + TT("photos selected");
+}
+
+$("go").onclick = async () => {
+  if(!files.length){ alert(TT("Choose a photo first")); return; }
+  const type = $("fmt").value, ext = type === "image/png" ? "png" : "jpg", q = $("q").value / 100;
+  const btn = $("go"); btn.disabled = true; results = [];
+  let done = 0;
+  for(const f of files){
+    const st = f._el.querySelector(".st");
+    st.className = "st"; st.textContent = TT("Converting...");
+    try{
+      let out = await heic2any({blob: f, toType: type, quality: q});
+      if(Array.isArray(out)) out = out[0];
+      const name = f.name.replace(/\.(heic|heif)$/i, "") + "." + ext;
+      const url = URL.createObjectURL(out);
+      f._el.querySelector(".th").innerHTML = '<img src="' + url + '">';
+      st.textContent = kb(out.size) + " · " + ext.toUpperCase();
+      const b = document.createElement("button"); b.textContent = "⬇ " + TT("Download");
+      b.onclick = () => DPLResult.save(out, name);
+      f._el.appendChild(b);
+      results.push({blob: out, name: name}); done++;
+    }catch(err){
+      st.className = "st bad";
+      st.textContent = /ERR_USER|format not supported/i.test(String(err && err.message || err))
+        ? TT("Not a HEIC photo") : TT("Could not convert this photo");
+    }
+  }
+  $("sum").textContent = done + " / " + files.length + " " + TT("photos converted");
+  btn.disabled = false;
+  if(results.length) DPLResult.files(results);
+};
+$("all").onclick = () => { if(results.length) DPLResult.files(results); };
+</script>
+</body>
+</html>

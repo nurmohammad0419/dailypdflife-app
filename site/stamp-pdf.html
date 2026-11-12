@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Add stamp or image to PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  .lay{display:grid;grid-template-columns:310px minmax(0,1fr);gap:18px;align-items:start}
+  .drop{display:block;text-align:center;cursor:pointer}
+  .side h3:first-child{margin-top:0}
+  .side select,.side input[type=text]{width:100%}
+  .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:10px !important;background:#fff;font-size:13.5px !important}
+  .seg button.on{background:#1b2030;color:#fff}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .quick button{padding:8px 4px !important;font-size:12.5px !important;font-weight:800 !important;letter-spacing:.5px}
+  .quick button.on{outline:2px solid #1b2030;outline-offset:1px}
+  .crow{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .crow input[type=color]{width:40px;height:34px;padding:0 !important;border:0;background:none}
+  .ck{display:flex;gap:7px;align-items:center;font-size:13.5px;margin-top:8px}
+  .rng{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2);margin-top:6px}
+  .rng label{width:66px;font-weight:650}
+  .rng input{flex:1}
+  .pri{background:#c92a2a;color:#fff;border:0;width:100%;margin-top:16px}
+  .nav{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:10px;font-weight:650;font-size:14px}
+  .nav button{padding:6px 12px !important}
+  .stage{display:flex;justify-content:center;background:#e9ecf3;border-radius:12px;padding:16px}
+  .host{position:relative;box-shadow:0 3px 14px rgba(20,25,40,.18);line-height:0;background:#fff}
+  .host canvas{display:block;max-width:100%}
+  #st{position:absolute;cursor:move;touch-action:none;outline:1.5px dashed #1971c2;outline-offset:2px}
+  #st img{width:100%;height:100%;display:block;pointer-events:none}
+  #st i{position:absolute;right:-9px;bottom:-9px;width:16px;height:16px;background:#1971c2;border:2px solid #fff;border-radius:50%;cursor:nwse-resize}
+  #ownBox{display:none}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">🔖 Choose a PDF, or drag it here
+    <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+  </label>
+</div>
+<div class="lay" id="lay" style="display:none">
+  <div class="box side">
+    <h3>Stamp</h3>
+    <div class="seg" id="kind"><button data-k="quick" class="on">✓ Ready stamp</button><button data-k="own">🖼 My seal / image</button></div>
+    <div id="quickBox">
+      <div class="quick" id="quick" style="margin-top:10px">
+        <button data-t="PAID" style="color:#c92a2a" class="on">PAID</button>
+        <button data-t="APPROVED" style="color:#2b8a3e">APPROVED</button>
+        <button data-t="RECEIVED" style="color:#1971c2">RECEIVED</button>
+        <button data-t="COPY" style="color:#495057">COPY</button>
+        <button data-t="ORIGINAL" style="color:#2b8a3e">ORIGINAL</button>
+        <button data-t="CONFIDENTIAL" style="color:#c92a2a">CONFIDENTIAL</button>
+      </div>
+      <div class="crow"><input type="color" id="color" value="#c92a2a" title="Colour"><input type="text" id="word" value="PAID" maxlength="24" dir="auto"></div>
+      <label class="ck"><input type="checkbox" id="date" checked> Add today's date</label>
+    </div>
+    <div id="ownBox">
+      <h3>Seal, signature or logo image</h3>
+      <input type="file" id="img" accept="image/png,image/jpeg,image/webp">
+      <label class="ck"><input type="checkbox" id="clear" checked> Make the white background see-through</label>
+    </div>
+    <h3>Look</h3>
+    <div class="rng"><label>Opacity</label><input type="range" id="op" min="20" max="100" value="90"></div>
+    <div class="rng"><label>Angle</label><input type="range" id="ang" min="-45" max="45" value="-12"></div>
+    <h3>Put it on</h3>
+    <select id="where">
+      <option value="this">This page only</option>
+      <option value="all">Every page</option>
+      <option value="first">First page</option>
+      <option value="last">Last page</option>
+      <option value="list">These pages…</option>
+    </select>
+    <input type="text" id="list" placeholder="e.g. 1, 3, 5-8" style="display:none;margin-top:8px">
+    <p class="note">Drag the stamp on the page to move it. Drag the blue dot to resize it.</p>
+    <button class="pri" id="save">🔖 Stamp &amp; save PDF</button>
+  </div>
+  <div class="box">
+    <div class="nav"><button id="prev">◀</button><span id="pno"></span><button id="next">▶</button></div>
+    <div class="stage"><div class="host" id="host"><canvas id="cv"></canvas><div id="st"><img id="stImg" alt=""><i></i></div></div></div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let pdf = null, bytes = null, pno = 1, fileName = "document", kind = "quick", ownImg = null;
+let box = {x: 0.6, y: 0.08, w: 0.3};          /* fractions of the shown page; height follows the image */
+let stampCanvas = null;
+
+/* ---------- build the stamp picture ---------- */
+function quickStamp(){
+  const word = ($("word").value || "PAID").trim(), col = $("color").value, withDate = $("date").checked;
+  const c = document.createElement("canvas"), g = c.getContext("2d");
+  const fs = 120; g.font = "800 " + fs + "px Arial, sans-serif";
+  const tw = g.measureText(word).width;
+  const d = new Date(), ds = String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+  const pad = 46, W = Math.max(tw, withDate ? 420 : 0) + pad * 2, H = fs + pad * 2 + (withDate ? 70 : 0);
+  c.width = W; c.height = H;
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 14; g.lineJoin = "round";
+  const r = 34; g.beginPath(); g.moveTo(r + 7, 7); g.arcTo(W - 7, 7, W - 7, H - 7, r); g.arcTo(W - 7, H - 7, 7, H - 7, r); g.arcTo(7, H - 7, 7, 7, r); g.arcTo(7, 7, W - 7, 7, r); g.closePath(); g.stroke();
+  g.lineWidth = 4; g.strokeRect(24, 24, W - 48, H - 48);
+  g.textAlign = "center"; g.textBaseline = "middle"; g.font = "800 " + fs + "px Arial, sans-serif";
+  g.fillText(word, W / 2, pad + fs / 2 + 4);
+  if(withDate){ g.font = "700 52px Arial, sans-serif"; g.fillText(ds, W / 2, pad + fs + 40); }
+  return c;
+}
+function ownStamp(){
+  if(!ownImg) return null;
+  const k = Math.min(1, 1200 / Math.max(ownImg.naturalWidth, ownImg.naturalHeight));
+  const c = document.createElement("canvas"); c.width = Math.round(ownImg.naturalWidth * k); c.height = Math.round(ownImg.naturalHeight * k);
+  const g = c.getContext("2d"); g.drawImage(ownImg, 0, 0, c.width, c.height);
+  if($("clear").checked){
+    const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+    for(let i = 0; i < a.length; i += 4){
+      const m = Math.min(a[i], a[i + 1], a[i + 2]);
+      if(m > 225) a[i + 3] = 0;                                  /* white paper → clear */
+      else if(m > 175) a[i + 3] = Math.round(a[i + 3] * (225 - m) / 50);  /* soft edge */
+    }
+    g.putImageData(d, 0, 0);
+  }
+  return c;
+}
+/* turn the picture by the chosen angle, so preview and PDF match exactly */
+function finalStamp(){
+  const s = kind === "quick" ? quickStamp() : ownStamp(); if(!s) return null;
+  const a = $("ang").value * Math.PI / 180, cw = Math.abs(s.width * Math.cos(a)) + Math.abs(s.height * Math.sin(a)), ch = Math.abs(s.width * Math.sin(a)) + Math.abs(s.height * Math.cos(a));
+  const c = document.createElement("canvas"); c.width = Math.ceil(cw); c.height = Math.ceil(ch);
+  const g = c.getContext("2d"); g.translate(c.width / 2, c.height / 2); g.rotate(a); g.drawImage(s, -s.width / 2, -s.height / 2);
+  return c;
+}
+function refreshStamp(){
+  stampCanvas = finalStamp();
+  $("st").style.display = stampCanvas ? "" : "none";
+  if(stampCanvas){ $("stImg").src = stampCanvas.toDataURL("image/png"); place(); }
+  $("st").style.opacity = $("op").value / 100;
+}
+function place(){
+  if(!stampCanvas) return;
+  const cv = $("cv"), W = cv.clientWidth, H = cv.clientHeight, st = $("st");
+  const w = box.w * W, h = w * stampCanvas.height / stampCanvas.width;
+  box.x = Math.min(Math.max(0, box.x), Math.max(0, 1 - box.w)); box.y = Math.min(Math.max(0, box.y), Math.max(0, 1 - h / H));
+  st.style.left = box.x * W + "px"; st.style.top = box.y * H + "px"; st.style.width = w + "px"; st.style.height = h + "px";
+}
+
+/* ---------- show a page ---------- */
+async function show(){
+  const pg = await pdf.getPage(pno), vp0 = pg.getViewport({scale: 1});
+  const want = Math.min(760, $("host").parentNode.clientWidth - 32);
+  const vp = pg.getViewport({scale: want / vp0.width * (window.devicePixelRatio || 1)});
+  const cv = $("cv"); cv.width = vp.width; cv.height = vp.height;
+  cv.style.width = want + "px"; cv.style.height = (want * vp.height / vp.width) + "px";
+  await pg.render({canvasContext: cv.getContext("2d"), viewport: vp}).promise;
+  $("pno").textContent = TT("Page") + " " + pno + " / " + pdf.numPages;
+  place();
+}
+async function load(f){
+  if(!f) return;
+  fileName = f.name.replace(/\.pdf$/i, "");
+  const buf = new Uint8Array(await f.arrayBuffer());
+  try{ pdf = await pdfjsLib.getDocument({data: buf.slice()}).promise; }
+  catch(err){ alert(err && err.name === "PasswordException" ? TT("This PDF is locked with a password. Unlock it first with Unlock PDF.") : TT("This PDF could not be opened. It may be damaged.")); return; }
+  bytes = buf; pno = 1; $("lay").style.display = "";
+  await show(); refreshStamp();
+}
+$("file").onchange = e => load(e.target.files[0]);
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+$("prev").onclick = () => { if(pdf && pno > 1){ pno--; show(); } };
+$("next").onclick = () => { if(pdf && pno < pdf.numPages){ pno++; show(); } };
+window.addEventListener("resize", () => { if(pdf) show(); });
+
+$("kind").querySelectorAll("button").forEach(b => b.onclick = () => {
+  kind = b.dataset.k; $("kind").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("quickBox").style.display = kind === "quick" ? "" : "none"; $("ownBox").style.display = kind === "own" ? "block" : "none";
+  if(kind === "own"){ $("ang").value = 0; }
+  refreshStamp();
+});
+$("quick").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("quick").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("word").value = b.dataset.t;
+  $("color").value = {"PAID": "#c92a2a", "APPROVED": "#2b8a3e", "RECEIVED": "#1971c2", "COPY": "#495057", "ORIGINAL": "#2b8a3e", "CONFIDENTIAL": "#c92a2a"}[b.dataset.t];
+  refreshStamp();
+});
+["word", "color", "date", "clear", "ang"].forEach(id => $(id).addEventListener("input", refreshStamp));
+$("op").oninput = () => $("st").style.opacity = $("op").value / 100;
+$("img").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  const im = new Image(); im.src = URL.createObjectURL(f);
+  try{ await im.decode(); ownImg = im; box.w = 0.22; refreshStamp(); }catch(err){ alert(TT("This image could not be opened:") + " " + f.name); }
+};
+$("where").onchange = () => $("list").style.display = $("where").value === "list" ? "" : "none";
+
+/* ---------- drag and resize ---------- */
+let drag = null;
+$("st").addEventListener("pointerdown", e => {
+  const r = $("cv").getBoundingClientRect();
+  drag = {resize: e.target.tagName === "I", sx: e.clientX, sy: e.clientY, b: Object.assign({}, box), W: r.width, H: r.height};
+  $("st").setPointerCapture(e.pointerId); e.preventDefault();
+});
+$("st").addEventListener("pointermove", e => {
+  if(!drag) return;
+  const dx = (e.clientX - drag.sx) / drag.W, dy = (e.clientY - drag.sy) / drag.H;
+  if(drag.resize) box.w = Math.min(1 - drag.b.x, Math.max(0.04, drag.b.w + dx));
+  else { box.x = drag.b.x + dx; box.y = drag.b.y + dy; }
+  place();
+});
+$("st").addEventListener("pointerup", () => drag = null);
+
+function targets(n){
+  const w = $("where").value, out = new Set();
+  if(w === "this") out.add(pno); else if(w === "all") for(let i = 1; i <= n; i++) out.add(i);
+  else if(w === "first") out.add(1); else if(w === "last") out.add(n);
+  else $("list").value.split(/[,;\s]+/).forEach(p => {
+    const m = p.match(/^(\d+)-(\d+)$/);
+    if(m){ for(let i = +m[1]; i <= +m[2]; i++) if(i >= 1 && i <= n) out.add(i); }
+    else if(/^\d+$/.test(p) && +p >= 1 && +p <= n) out.add(+p);
+  });
+  return [...out].sort((a, b) => a - b);
+}
+
+$("save").onclick = async () => {
+  if(!pdf){ alert(TT("Choose a PDF first")); return; }
+  if(!stampCanvas){ alert(TT("Choose a seal or image first")); return; }
+  const list = targets(pdf.numPages);
+  if(!list.length){ alert(TT("Type the page numbers first")); return; }
+  let doc;
+  try{ doc = await PDFLib.PDFDocument.load(bytes, {ignoreEncryption: true}); }
+  catch(e){ alert(TT("This PDF could not be opened. It may be damaged.")); return; }
+  const png = await doc.embedPng(await new Promise(r => stampCanvas.toBlob(b => b.arrayBuffer().then(r), "image/png")));
+  const ratio = stampCanvas.height / stampCanvas.width;
+  for(const i of list){
+    /* place by what the reader sees, so rotated pages work too */
+    const vp = (await pdf.getPage(i)).getViewport({scale: 1});
+    const L = box.x * vp.width, T = box.y * vp.height, Wd = box.w * vp.width, Ht = Wd * ratio;
+    const p0 = vp.convertToPdfPoint(L, T + Ht), p1 = vp.convertToPdfPoint(L + Wd, T + Ht), p2 = vp.convertToPdfPoint(L, T);
+    const wv = [p1[0] - p0[0], p1[1] - p0[1]], hv = [p2[0] - p0[0], p2[1] - p0[1]];
+    doc.getPage(i - 1).drawImage(png, {
+      x: p0[0], y: p0[1], width: Math.hypot(wv[0], wv[1]), height: Math.hypot(hv[0], hv[1]),
+      rotate: PDFLib.degrees(Math.atan2(wv[1], wv[0]) * 180 / Math.PI), opacity: $("op").value / 100
+    });
+  }
+  DPLResult.file(new Blob([await doc.save()], {type: "application/pdf"}), fileName + "-stamped.pdf");
+};
+</script>
+</body>
+</html>

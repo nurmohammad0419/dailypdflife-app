@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PDF to JPG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:30px;text-align:center}
+  h1{color:#e5322d}
+  .box{background:#fff;max-width:700px;margin:auto;padding:30px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  input{margin:20px 0}
+  button{background:#e5322d;color:#fff;border:none;padding:12px 30px;font-size:16px;border-radius:8px;cursor:pointer}
+  #out img{width:180px;margin:10px;border:1px solid #ddd}
+  #out a{display:inline-block;margin:5px;color:#e5322d}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="box">
+  <h1>PDF to JPG</h1>
+  <p>Pick a PDF and every page becomes a JPG image.</p>
+  <input type="file" id="file" accept="application/pdf"><br>
+  <button onclick="convert()">Convert</button>
+  <p id="status"></p>
+  <div id="out"></div>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+async function convert(){
+  const f = document.getElementById("file").files[0];
+  const out = document.getElementById("out");
+  const status = document.getElementById("status");
+  if(!f){ alert(T("Choose a PDF first")); return; }
+  out.innerHTML = "";
+  status.textContent = "Working...";
+  const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({scale: 2});
+    const c = document.createElement("canvas");
+    c.width = vp.width; c.height = vp.height;
+    await page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+    const url = c.toDataURL("image/jpeg", 0.92);
+    const img = document.createElement("img"); img.src = url;
+    const a = document.createElement("a");
+    a.href = url; a.download = "page-" + i + ".jpg"; a.textContent = "Download page " + i;
+    const div = document.createElement("div");
+    div.style.display = "inline-block";
+    div.append(img, document.createElement("br"), a);
+    out.appendChild(div);
+  }
+  status.textContent = "Done! Total " + pdf.numPages + " pages.";
+}
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

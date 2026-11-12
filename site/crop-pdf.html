@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Crop PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="cropbox.js"></script>
+<style>
+  .lay{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+  .side label.r{display:flex;gap:8px;align-items:center;margin:8px 0}
+  .side button{width:100%;margin-top:8px}
+  .pri{background:#2e9d4a;color:#fff;border:0}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .host{position:relative;overflow:hidden;box-shadow:0 3px 14px rgba(20,25,40,.18);background:#fff;touch-action:none}
+  .host canvas{display:block}
+  .nav{display:flex;gap:10px;align-items:center}
+  .nav span{min-width:110px;text-align:center;font-weight:650;color:var(--ink-2)}
+  .dims{font-size:13px;color:var(--ink-3)}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+</div>
+<div class="lay" id="lay" style="display:none">
+  <div class="box side">
+    <h3>2. Crop area</h3>
+    <p class="note">Drag the box or its corners. Everything outside it will be cut off.</p>
+    <button id="auto">✨ Auto-trim white margins</button>
+    <button id="reset">↺ Reset</button>
+    <h3>3. Apply to</h3>
+    <label class="r"><input type="radio" name="mode" value="all" checked> All pages</label>
+    <label class="r"><input type="radio" name="mode" value="one"> Each page separately</label>
+    <p class="dims" id="dims"></p>
+    <button class="pri" id="save">✂ Crop &amp; save</button>
+    <p class="note">Cropping hides the area outside the box. The hidden part still exists inside the file, so use Redact PDF to remove private information.</p>
+  </div>
+  <div class="box">
+    <div class="stage">
+      <div class="nav">
+        <button id="prev">◀</button><span id="pn"></span><button id="next">▶</button>
+      </div>
+      <div class="host" id="host"><canvas id="cv"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const { PDFDocument } = PDFLib;
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let bytes = null, fileName = "document", js = null, cur = 0, crop = null;
+let shared = null, per = {}, vpNow = null;
+
+const mode = () => document.querySelector("input[name=mode]:checked").value;
+
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  fileName = f.name.replace(/\.pdf$/i, "");
+  bytes = await f.arrayBuffer();
+  try{ js = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise; }
+  catch(err){ alert(TT("This PDF could not be opened. It may be password-protected.")); return; }
+  shared = null; per = {}; cur = 0;
+  $("lay").style.display = "";
+  await show(0);
+};
+
+async function show(i){
+  cur = i;
+  const po = await js.getPage(i + 1);
+  const v1 = po.getViewport({scale: 1});
+  const maxW = Math.min(760, $("host").parentNode.clientWidth - 10), maxH = window.innerHeight * 0.72;
+  const s = Math.min(maxW / v1.width, maxH / v1.height);
+  vpNow = po.getViewport({scale: s});
+  const c = $("cv");
+  c.width = Math.floor(vpNow.width * 2); c.height = Math.floor(vpNow.height * 2);
+  c.style.width = Math.floor(vpNow.width) + "px"; c.style.height = Math.floor(vpNow.height) + "px";
+  $("host").style.width = Math.floor(vpNow.width) + "px"; $("host").style.height = Math.floor(vpNow.height) + "px";
+  await po.render({canvasContext: c.getContext("2d"), viewport: po.getViewport({scale: s * 2})}).promise;
+  $("pn").textContent = TT("Page") + " " + (i + 1) + " / " + js.numPages;
+  $("prev").disabled = i === 0; $("next").disabled = i === js.numPages - 1;
+  if(!crop) crop = new DPLCrop($("host"), {onchange: saveCrop});
+  const want = mode() === "all" ? shared : per[i];
+  if(want) crop.set(want); else { crop.reset(); }
+  crop.redraw(); dims();
+}
+function saveCrop(r){ if(mode() === "all") shared = r; else per[cur] = r; dims(); }
+function dims(){
+  if(!vpNow || !crop) return;
+  const r = crop.get(), v = vpNow.viewBox;
+  const W = (v[2] - v[0]), H = (v[3] - v[1]);
+  const mm = pt => Math.round(pt / 72 * 25.4);
+  $("dims").textContent = TT("New size") + ": " + mm(r.w * W) + " × " + mm(r.h * H) + " mm";
+}
+document.querySelectorAll("input[name=mode]").forEach(r => r.onchange = () => {
+  if(mode() === "one" && shared){ per[cur] = shared; }
+  if(mode() === "all" && per[cur]){ shared = per[cur]; }
+});
+$("prev").onclick = () => cur > 0 && show(cur - 1);
+$("next").onclick = () => cur < js.numPages - 1 && show(cur + 1);
+$("reset").onclick = () => { crop.set({x: 0, y: 0, w: 1, h: 1}); saveCrop(crop.get()); };
+
+$("auto").onclick = () => {
+  const c = $("cv"), g = c.getContext("2d");
+  const d = g.getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height;
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for(let y = 0; y < H; y += 2){
+    for(let x = 0; x < W; x += 2){
+      const i = (y * W + x) * 4;
+      if(d[i] < 235 || d[i + 1] < 235 || d[i + 2] < 235){
+        if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+      }
+    }
+  }
+  if(x1 < 0){ alert(TT("This page looks blank.")); return; }
+  const pad = 0.015;
+  crop.set({x: Math.max(0, x0 / W - pad), y: Math.max(0, y0 / H - pad),
+            w: Math.min(1, (x1 - x0) / W + pad * 2), h: Math.min(1, (y1 - y0) / H + pad * 2)});
+  saveCrop(crop.get());
+};
+
+$("save").onclick = async () => {
+  if(!js){ alert(TT("Choose a PDF first")); return; }
+  const btn = $("save"), old = btn.textContent; btn.disabled = true; btn.textContent = TT("Saving...");
+  try{
+    const doc = await PDFDocument.load(bytes.slice(0), {ignoreEncryption: true});
+    const list = doc.getPages();
+    for(let i = 0; i < list.length; i++){
+      const r = mode() === "all" ? (shared || crop.get()) : per[i];
+      if(!r) continue;
+      const po = await js.getPage(i + 1);
+      const vp = po.getViewport({scale: 1});
+      const a = vp.convertToPdfPoint(r.x * vp.width, r.y * vp.height);
+      const b = vp.convertToPdfPoint((r.x + r.w) * vp.width, (r.y + r.h) * vp.height);
+      const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]);
+      const w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+      list[i].setMediaBox(x, y, w, h);
+      list[i].setCropBox(x, y, w, h);
+    }
+    DPLResult.file(new Blob([await doc.save()], {type: "application/pdf"}), fileName + "-cropped.pdf");
+  }catch(err){
+    alert(TT("Sorry, this PDF could not be saved. It may be password-protected."));
+  }
+  btn.disabled = false; btn.textContent = old;
+};
+</script>
+</body>
+</html>

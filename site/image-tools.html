@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Image Tools</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:30px;text-align:center}
+  .box{background:#fff;max-width:700px;margin:0 auto 30px;padding:30px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  h1{margin-top:0}
+  .c1 h1{color:#1c7ed6} .c2 h1{color:#f08c00} .c3 h1{color:#0ca678}
+  input,select{margin:8px 4px;padding:8px;font-size:15px}
+  input[type=number]{width:110px}
+  input[type=range]{width:60%}
+  button{color:#fff;border:none;padding:12px 30px;font-size:16px;border-radius:8px;cursor:pointer}
+  .c1 button{background:#1c7ed6} .c2 button{background:#f08c00} .c3 button{background:#0ca678}
+  .res{margin-top:15px}
+  .res div{display:inline-block;margin:8px;font-size:13px;vertical-align:top}
+  .res img{width:150px;height:110px;object-fit:contain;border:1px solid #ddd;background:#fafafa;display:block;margin-bottom:4px}
+  .res a{color:#1c7ed6}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="box c1" id="compress">
+  <h1>Compress Image</h1>
+  <p>Shrink the file while keeping the picture sharp.</p>
+  <input type="file" id="f1" accept="image/*" multiple><br>
+  Quality: <input type="range" id="q1" min="10" max="95" value="70" oninput="ql.textContent=this.value+'%'">
+  <span id="ql">70%</span><br>
+  <button onclick="compress()">Compress</button>
+  <div class="res" id="r1"></div>
+</div>
+<div class="box c2" id="resize">
+  <h1>Resize Image</h1>
+  <p>Resize by pixels or by percentage.</p>
+  <input type="file" id="f2" accept="image/*" multiple><br>
+  <select id="rmode" onchange="pctBox.style.display=this.value==='pct'?'inline':'none';pxBox.style.display=this.value==='px'?'inline':'none'">
+    <option value="pct">By percentage</option>
+    <option value="px">In pixels</option>
+  </select>
+  <span id="pctBox"><input type="number" id="pct" value="50" min="1" max="500"> %</span>
+  <span id="pxBox" style="display:none">
+    <input type="number" id="w" placeholder="Width"> × <input type="number" id="h" placeholder="Height">
+    <label><input type="checkbox" id="keep" checked> Keep aspect ratio</label>
+  </span><br>
+  <button onclick="resize()">Resize</button>
+  <div class="res" id="r2"></div>
+</div>
+<div class="box c3" id="convert">
+  <h1>Convert Image</h1>
+  <p>Convert between JPG, PNG and WEBP.</p>
+  <input type="file" id="f3" accept="image/*" multiple><br>
+  Convert to:
+  <select id="fmt">
+    <option value="image/png">PNG</option>
+    <option value="image/jpeg">JPG</option>
+    <option value="image/webp">WEBP</option>
+  </select><br>
+  <button onclick="convert()">Convert</button>
+  <div class="res" id="r3"></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const mb = n => n > 1048576 ? (n/1048576).toFixed(2) + " MB" : Math.round(n/1024) + " KB";
+const ext = {"image/png":"png","image/jpeg":"jpg","image/webp":"webp"};
+function loadImg(file){
+  return new Promise((ok, bad) => {
+    const img = new Image();
+    img.onload = () => ok(img); img.onerror = bad;
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function process(file, w, h, type, quality){
+  const img = await loadImg(file);
+  w = Math.max(1, Math.round(w || img.naturalWidth));
+  h = Math.max(1, Math.round(h || img.naturalHeight));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  if(type === "image/jpeg"){ ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); }
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, w, h);
+  return new Promise(ok => c.toBlob(ok, type, quality));
+}
+function show(boxId, blob, name, info){
+  const url = URL.createObjectURL(blob);
+  const d = document.createElement("div");
+  d.innerHTML = '<img src="' + url + '">' + info + '<br><a href="' + url + '" download="' + name + '">⬇ Download</a>';
+  $(boxId).appendChild(d);
+}
+const base = f => f.name.replace(/\.[^.]+$/, "");
+const files = id => { const f = [...$(id).files]; if(!f.length) alert(T("Choose an image first")); return f; };
+async function compress(){
+  $("r1").innerHTML = "";
+  const q = $("q1").value / 100;
+  for(const f of files("f1")){
+    const type = f.type === "image/png" ? "image/webp" : "image/jpeg";
+    const img = await loadImg(f);
+    let blob = await process(f, img.naturalWidth, img.naturalHeight, type, q);
+    let outName = base(f) + "-compressed." + ext[type];
+    if(blob.size >= f.size){ blob = f; outName = f.name; }
+    show("r1", blob, outName, mb(f.size) + " → " + mb(blob.size));
+  }
+}
+async function resize(){
+  $("r2").innerHTML = "";
+  for(const f of files("f2")){
+    const img = await loadImg(f);
+    const W = img.naturalWidth, H = img.naturalHeight;
+    let w, h;
+    if($("rmode").value === "pct"){
+      const p = Number($("pct").value) / 100; w = W * p; h = H * p;
+    }else{
+      w = Number($("w").value); h = Number($("h").value);
+      if($("keep").checked){
+        if(w && !h) h = H * w / W;
+        else if(h && !w) w = W * h / H;
+        else if(w && h){ const s = Math.min(w / W, h / H); w = W * s; h = H * s; }
+      }
+      if(!w || !h){ alert(T("Enter a width or a height")); return; }
+    }
+    const type = f.type === "image/png" ? "image/png" : "image/jpeg";
+    const blob = await process(f, w, h, type, 0.92);
+    show("r2", blob, base(f) + "-" + Math.round(w) + "x" + Math.round(h) + "." + ext[type],
+         W + "×" + H + " → " + Math.round(w) + "×" + Math.round(h));
+  }
+}
+async function convert(){
+  $("r3").innerHTML = "";
+  const type = $("fmt").value;
+  for(const f of files("f3")){
+    const blob = await process(f, 0, 0, type, 0.92);
+    show("r3", blob, base(f) + "." + ext[type], ext[type].toUpperCase() + " · " + mb(blob.size));
+  }
+}
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

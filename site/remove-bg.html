@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Remove Background</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:30px;text-align:center}
+  .box{background:#fff;max-width:900px;margin:auto;padding:30px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  h1{color:#7b3fe4;margin-top:0}
+  .drop{display:block;border:3px dashed #c5b3f0;border-radius:12px;padding:40px;cursor:pointer;color:#666}
+  .drop:hover{background:#f7f3ff}
+  .views{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+  .views div{flex:1;min-width:260px}
+  .views img,.views canvas{max-width:100%;max-height:380px;border-radius:8px;border:1px solid #ddd}
+  .chk{background:repeating-conic-gradient(#ddd 0% 25%,#fff 0% 50%) 50%/20px 20px}
+  .opts{margin:20px 0;display:none}
+  .colors span{display:inline-block;width:34px;height:34px;border-radius:50%;cursor:pointer;margin:4px;border:2px solid #ccc;vertical-align:middle}
+  button{color:#fff;border:none;padding:12px 26px;font-size:15px;border-radius:8px;cursor:pointer;margin:5px;background:#7b3fe4}
+  button.g{background:#2e9d4a}
+  #status{color:#555;margin:15px 0;min-height:20px}
+  .bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;max-width:400px;margin:auto;display:none}
+  .bar i{display:block;height:100%;width:0;background:#7b3fe4;transition:.2s}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+</head>
+<body>
+<div class="box">
+  <h1>🪄 Remove Background</h1>
+  <p>Remove the background with AI in one click. Nothing is uploaded.</p>
+  <label class="drop" id="drop">
+    📁 Click here to choose an image, or drag and drop one
+    <input type="file" id="file" accept="image/*" hidden>
+  </label>
+  <div id="status"></div>
+  <div class="bar" id="bar"><i id="barIn"></i></div>
+  <div class="views">
+    <div><p><b>Before</b></p><img id="before" style="display:none"></div>
+    <div><p><b>After</b></p><canvas id="after" class="chk" style="display:none"></canvas></div>
+  </div>
+  <div class="opts" id="opts">
+    <p><b>New background:</b></p>
+    <div class="colors">
+      <span class="chk" title="Transparent" onclick="setBg(null)"></span>
+      <span style="background:#fff" onclick="setBg('#ffffff')"></span>
+      <span style="background:#000" onclick="setBg('#000000')"></span>
+      <span style="background:#dbe9f7" onclick="setBg('#dbe9f7')"></span>
+      <span style="background:#5b8fd6" onclick="setBg('#5b8fd6')"></span>
+      <span style="background:#e5322d" onclick="setBg('#e5322d')"></span>
+      <span style="background:#2e9d4a" onclick="setBg('#2e9d4a')"></span>
+      <input type="color" onchange="setBg(this.value)" title="Custom colour" style="width:40px;height:36px;vertical-align:middle">
+    </div>
+    <p>Or use your own background image: <input type="file" id="bgImg" accept="image/*"></p>
+    <button class="g" onclick="dl('png')">⬇ Download PNG</button>
+    <button onclick="dl('jpg')">⬇ Download JPG</button>
+  </div>
+</div>
+<script type="module">
+import { removeBackground } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal/+esm";
+const $ = id => document.getElementById(id);
+let cut = null, bgColor = null, bgPic = null, name = "image";
+async function start(f){
+  if(!f || !f.type.startsWith("image/")) return;
+  name = f.name.replace(/\.[^.]+$/, "");
+  $("before").src = URL.createObjectURL(f); $("before").style.display = "inline";
+  $("after").style.display = "none"; $("opts").style.display = "none";
+  $("bar").style.display = "block"; $("barIn").style.width = "0";
+  $("status").textContent = "Working... the AI model takes a moment to download the first time";
+  try{
+    const blob = await removeBackground(f, {
+      progress: (k, cur, total) => {
+        if(total){ $("barIn").style.width = Math.round(cur / total * 100) + "%";
+                   $("status").textContent = "Downloading AI model: " + Math.round(cur / total * 100) + "%"; }
+      }
+    });
+    cut = new Image();
+    cut.onload = () => {
+      $("bar").style.display = "none";
+      $("status").textContent = "✅ Done! Add a new background if you like, then download.";
+      $("after").style.display = "inline"; $("opts").style.display = "block";
+      render();
+    };
+    cut.src = URL.createObjectURL(blob);
+  }catch(e){
+    $("bar").style.display = "none";
+    $("status").textContent = "❌ Something went wrong. Check your internet and try again.";
+  }
+}
+function render(){
+  const c = $("after"), g = c.getContext("2d");
+  c.width = cut.naturalWidth; c.height = cut.naturalHeight;
+  g.clearRect(0, 0, c.width, c.height);
+  if(bgPic){
+    const s = Math.max(c.width / bgPic.naturalWidth, c.height / bgPic.naturalHeight);
+    const w = bgPic.naturalWidth * s, h = bgPic.naturalHeight * s;
+    g.drawImage(bgPic, (c.width - w) / 2, (c.height - h) / 2, w, h);
+  }else if(bgColor){ g.fillStyle = bgColor; g.fillRect(0, 0, c.width, c.height); }
+  g.drawImage(cut, 0, 0);
+}
+window.setBg = c => { bgColor = c; bgPic = null; $("bgImg").value = ""; if(cut) render(); };
+$("bgImg").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const i = new Image(); i.onload = () => { bgPic = i; render(); }; i.src = URL.createObjectURL(f);
+};
+window.dl = type => {
+  const c = $("after");
+  let src = c;
+  if(type === "jpg" && !bgColor && !bgPic){
+    src = document.createElement("canvas"); src.width = c.width; src.height = c.height;
+    const g = src.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(c, 0, 0);
+  }
+  src.toBlob(b => DPLResult.file(b, name + "-no-bg." + type),
+             type === "png" ? "image/png" : "image/jpeg", 0.95);
+};
+$("file").onchange = e => start(e.target.files[0]);
+const d = $("drop");
+d.ondragover = e => { e.preventDefault(); d.style.background = "#f7f3ff"; };
+d.ondragleave = () => d.style.background = "";
+d.ondrop = e => { e.preventDefault(); d.style.background = ""; start(e.dataTransfer.files[0]); };
+</script>
+<p class="lic">Background removal is powered by
+  <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">IMG.LY background-removal</a>,
+  licensed under AGPL-3.0. The code of this page is offered under the same licence — use your browser's "View page source" to get it.</p>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Redact PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .tools .sp{flex:1}
+  .tools input[type=text]{min-width:220px;flex:1}
+  .pri{background:#212529;color:#fff;border:0}
+  .find{background:#1c7ed6;color:#fff;border:0}
+  .pages{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:16px}
+  .pw{position:relative;background:#fff;box-shadow:0 3px 14px rgba(20,25,40,.15);cursor:crosshair;touch-action:none}
+  .pw canvas{display:block}
+  .pw .n{position:absolute;left:-28px;top:0;font-size:12px;color:var(--ink-3)}
+  .rb{position:absolute;background:rgba(0,0,0,.82);outline:1px solid #000}
+  .rb button{position:absolute;right:-9px;top:-9px;width:20px;height:20px;padding:0 !important;border-radius:50% !important;
+             font-size:11px !important;line-height:1;background:#fff;border:1px solid #ccd;display:none;cursor:pointer}
+  .rb:hover button{display:block}
+  .warn{background:#fff8e6;border:1px solid #f6e7bf;border-radius:12px;padding:12px 14px;font-size:13.5px;color:var(--ink-2)}
+  @media(max-width:760px){.pw .n{display:none}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <h3>2. Mark what to remove</h3>
+  <div class="tools">
+    <input type="text" id="q" placeholder="Find words to redact, e.g. a name, phone or ID number">
+    <button class="find" id="findBtn">🔎 Find &amp; mark</button>
+    <span class="sp"></span>
+    <button id="undo">↶ Undo</button>
+    <button id="clear">Clear all</button>
+    <button class="pri" id="save">⬛ Redact &amp; save</button>
+  </div>
+  <p class="note" id="info">Drag across the page to black out an area, or search for words to mark every place they appear.</p>
+</div>
+<div class="box warn">
+  <b>Real redaction:</b> on every page you mark, the hidden text is removed from the file for good — not just covered.
+  To do that, those pages are saved as images, so their text can no longer be selected. Pages without marks are kept as they are.
+</div>
+<div class="pages" id="pages"></div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const { PDFDocument } = PDFLib;
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let bytes = null, fileName = "document", js = null, pages = [], boxes = [], hist = [], S = 1;
+
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  fileName = f.name.replace(/\.pdf$/i, "");
+  bytes = await f.arrayBuffer();
+  try{ js = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise; }
+  catch(err){ alert(TT("This PDF could not be opened. It may be password-protected.")); return; }
+  boxes = []; hist = []; pages = [];
+  const host = $("pages"); host.innerHTML = "";
+  const maxW = Math.min(900, document.querySelector(".shell").clientWidth - 40);
+  for(let i = 1; i <= js.numPages; i++){
+    const po = await js.getPage(i);
+    const v1 = po.getViewport({scale: 1});
+    if(i === 1) S = Math.min(1.6, maxW / v1.width);
+    const vp = po.getViewport({scale: S});
+    const w = document.createElement("div"); w.className = "pw";
+    w.style.width = Math.floor(vp.width) + "px"; w.style.height = Math.floor(vp.height) + "px";
+    const c = document.createElement("canvas");
+    c.width = Math.floor(vp.width * 1.5); c.height = Math.floor(vp.height * 1.5);
+    c.style.width = Math.floor(vp.width) + "px";
+    await po.render({canvasContext: c.getContext("2d"), viewport: po.getViewport({scale: S * 1.5})}).promise;
+    const n = document.createElement("div"); n.className = "n"; n.textContent = i;
+    w.append(c, n); host.appendChild(w);
+    const pg = {po: po, el: w, v1: v1, text: null};
+    pages.push(pg); hookDraw(pg, i - 1);
+  }
+  draw();
+};
+
+function hookDraw(pg, idx){
+  pg.el.addEventListener("pointerdown", ev => {
+    if(ev.target.tagName === "BUTTON") return;
+    ev.preventDefault();
+    const r = pg.el.getBoundingClientRect();
+    const x0 = (ev.clientX - r.left) / S, y0 = (ev.clientY - r.top) / S;
+    const b = {page: idx, x: x0, y: y0, w: 0, h: 0};
+    boxes.push(b);
+    pg.el.setPointerCapture(ev.pointerId);
+    const move = e => {
+      const x1 = (e.clientX - r.left) / S, y1 = (e.clientY - r.top) / S;
+      b.x = Math.min(x0, x1); b.y = Math.min(y0, y1); b.w = Math.abs(x1 - x0); b.h = Math.abs(y1 - y0);
+      draw();
+    };
+    const up = () => {
+      pg.el.removeEventListener("pointermove", move); pg.el.removeEventListener("pointerup", up);
+      if(b.w < 3 || b.h < 3) boxes.splice(boxes.indexOf(b), 1); else hist.push([b]);
+      draw();
+    };
+    pg.el.addEventListener("pointermove", move); pg.el.addEventListener("pointerup", up);
+  });
+}
+
+function draw(){
+  document.querySelectorAll(".rb").forEach(n => n.remove());
+  boxes.forEach(b => {
+    const d = document.createElement("div"); d.className = "rb";
+    d.style.left = b.x * S + "px"; d.style.top = b.y * S + "px";
+    d.style.width = b.w * S + "px"; d.style.height = b.h * S + "px";
+    const x = document.createElement("button"); x.textContent = "✕"; x.title = TT("Remove");
+    x.onclick = ev => { ev.stopPropagation(); boxes.splice(boxes.indexOf(b), 1); draw(); };
+    d.appendChild(x);
+    pages[b.page].el.appendChild(d);
+  });
+  const n = boxes.length, pp = new Set(boxes.map(b => b.page)).size;
+  $("info").textContent = n ? n + " " + TT("areas marked on") + " " + pp + " " + TT("pages") + "."
+                            : TT("Drag across the page to black out an area, or search for words to mark every place they appear.");
+}
+
+$("findBtn").onclick = async () => {
+  const q = $("q").value.trim();
+  if(!js){ alert(TT("Choose a PDF first")); return; }
+  if(!q) return;
+  const ql = q.toLowerCase(), added = [];
+  for(let i = 0; i < pages.length; i++){
+    const pg = pages[i];
+    if(!pg.text) pg.text = await pg.po.getTextContent();
+    const vp = pg.po.getViewport({scale: 1});
+    pg.text.items.forEach(it => {
+      const s = it.str || ""; if(!s) return;
+      const low = s.toLowerCase();
+      let k = low.indexOf(ql);
+      if(k < 0) return;
+      const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
+      const fh = Math.hypot(tx[2], tx[3]);
+      const cw = it.width / Math.max(1, s.length);
+      while(k >= 0){
+        const b = {page: i, x: tx[4] + k * cw - 1.5, y: tx[5] - fh * 0.95, w: ql.length * cw + 3, h: fh * 1.25};
+        boxes.push(b); added.push(b);
+        k = low.indexOf(ql, k + ql.length);
+      }
+    });
+  }
+  if(added.length) hist.push(added);
+  draw();
+  if(!added.length) $("info").textContent = TT("No matches found. Scanned pages have no searchable text — mark them by hand.");
+};
+$("q").onkeydown = e => { if(e.key === "Enter") $("findBtn").click(); };
+$("undo").onclick = () => { const last = hist.pop(); if(last){ boxes = boxes.filter(b => last.indexOf(b) < 0); draw(); } };
+$("clear").onclick = () => { if(boxes.length){ hist.push(boxes.slice()); } boxes = []; draw(); };
+
+$("save").onclick = async () => {
+  if(!js){ alert(TT("Choose a PDF first")); return; }
+  if(!boxes.length){ alert(TT("Mark at least one area first")); return; }
+  const btn = $("save"), old = btn.textContent; btn.disabled = true;
+  try{
+    const src = await PDFDocument.load(bytes.slice(0), {ignoreEncryption: true});
+    const out = await PDFDocument.create();
+    for(let i = 0; i < pages.length; i++){
+      const mine = boxes.filter(b => b.page === i);
+      btn.textContent = TT("Page") + " " + (i + 1) + " / " + pages.length;
+      if(!mine.length){
+        const [cp] = await out.copyPages(src, [i]); out.addPage(cp); continue;
+      }
+      const R = 2.2, vp = pages[i].po.getViewport({scale: R});
+      const c = document.createElement("canvas"); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+      await pages[i].po.render({canvasContext: g, viewport: vp}).promise;
+      g.fillStyle = "#000";
+      mine.forEach(b => g.fillRect(Math.floor(b.x * R), Math.floor(b.y * R), Math.ceil(b.w * R) + 1, Math.ceil(b.h * R) + 1));
+      const jpg = await out.embedJpg(await (await fetch(c.toDataURL("image/jpeg", 0.9))).arrayBuffer());
+      const v1 = pages[i].v1;
+      const np = out.addPage([v1.width, v1.height]);
+      np.drawImage(jpg, {x: 0, y: 0, width: v1.width, height: v1.height});
+    }
+    out.setTitle(""); out.setAuthor(""); out.setSubject(""); out.setKeywords([]); out.setProducer("DailyPdfLife"); out.setCreator("DailyPdfLife");
+    DPLResult.file(new Blob([await out.save()], {type: "application/pdf"}), fileName + "-redacted.pdf");
+  }catch(err){
+    alert(TT("Sorry, this PDF could not be saved. It may be password-protected."));
+  }
+  btn.disabled = false; btn.textContent = old;
+};
+</script>
+</body>
+</html>

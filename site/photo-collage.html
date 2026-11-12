@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Photo collage</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .lay{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+  .drop{display:block;text-align:center;cursor:pointer}
+  .side h3:first-child{margin-top:0}
+  .side select{width:100%}
+  .layouts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .layouts button{padding:6px !important;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#fff}
+  .layouts button.on{border-color:#c2255c;box-shadow:0 0 0 2px #c2255c inset}
+  .layouts canvas{width:100%;height:100%}
+  .rng{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+  .rng input{flex:1}
+  .rng span{width:42px;text-align:right;font-weight:650}
+  .colors{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .colors button{width:28px;height:28px;padding:0 !important;border-radius:50% !important;border:2px solid #fff;box-shadow:0 0 0 1px #c9ced8}
+  .colors button.on{box-shadow:0 0 0 2px #c2255c}
+  .colors input{width:34px;height:30px;padding:0 !important;border:0;background:none}
+  .pri{background:#c2255c;color:#fff;border:0;width:100%;margin-top:16px}
+  .stage{display:flex;justify-content:center;background:#e9ecf3;border-radius:12px;padding:16px}
+  #cv{max-width:100%;max-height:72vh;box-shadow:0 3px 14px rgba(20,25,40,.18);cursor:pointer;touch-action:manipulation}
+  .thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .thumbs div{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;background:#eee}
+  .thumbs img{width:100%;height:100%;object-fit:cover}
+  .thumbs b{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;
+            font-size:11px;line-height:18px;text-align:center;cursor:pointer}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">🧩 Choose 2 to 9 photos, or drag them here
+    <input type="file" id="file" accept="image/*" multiple hidden>
+  </label>
+  <div class="thumbs" id="thumbs"></div>
+</div>
+<div class="lay" id="lay" style="display:none">
+  <div class="box side">
+    <h3>Layout</h3>
+    <div class="layouts" id="layouts"></div>
+    <h3>Size</h3>
+    <select id="size">
+      <option value="1080x1080">Square 1:1 (Instagram)</option>
+      <option value="1080x1350">Portrait 4:5</option>
+      <option value="1080x1920">Story 9:16 (WhatsApp status)</option>
+      <option value="1920x1080">Wide 16:9</option>
+      <option value="2480x3508">A4 page (print)</option>
+    </select>
+    <h3>Spacing</h3>
+    <div class="rng"><input type="range" id="gap" min="0" max="60" value="16"><span id="gapv">16</span></div>
+    <h3>Rounded corners</h3>
+    <div class="rng"><input type="range" id="rad" min="0" max="80" value="0"><span id="radv">0</span></div>
+    <h3>Background</h3>
+    <div class="colors" id="colors">
+      <button data-c="#ffffff" class="on" style="background:#ffffff"></button>
+      <button data-c="#000000" style="background:#000000"></button>
+      <button data-c="#f1e9da" style="background:#f1e9da"></button>
+      <button data-c="#fde2e4" style="background:#fde2e4"></button>
+      <button data-c="#d0ebff" style="background:#d0ebff"></button>
+      <button data-c="#d3f9d8" style="background:#d3f9d8"></button>
+      <input type="color" id="custom" value="#c2255c" title="Pick a colour">
+    </div>
+    <h3>Save as</h3>
+    <select id="fmt"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select>
+    <button class="pri" id="save">⬇ Save collage</button>
+  </div>
+  <div class="box">
+    <div class="stage"><canvas id="cv"></canvas></div>
+    <p class="note" id="hint">Tip: tap one photo, then tap another to swap them.</p>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let imgs = [], layoutIdx = 0, bg = "#ffffff", picked = -1, rects = [];
+
+/* ---------- layouts: lists of [x, y, w, h] as fractions ---------- */
+function gridRows(counts){            /* counts = photos in each row */
+  const out = [], rh = 1 / counts.length;
+  counts.forEach((n, r) => { for(let i = 0; i < n; i++) out.push([i / n, r * rh, 1 / n, rh]); });
+  return out;
+}
+function gridCols(counts){
+  return gridRows(counts).map(r => [r[1], r[0], r[3], r[2]]);
+}
+function layoutsFor(n){
+  const L = [];
+  const c = Math.ceil(Math.sqrt(n)), rows = [];
+  let left = n; const nr = Math.ceil(n / c);
+  for(let r = 0; r < nr; r++){ const k = Math.ceil(left / (nr - r)); rows.push(k); left -= k; }
+  L.push(gridRows(rows));
+  L.push(gridCols(rows));
+  if(n >= 2){
+    L.push(gridRows([1, n - 1].filter(x => x)));                     /* big on top */
+    L.push(gridCols([1, n - 1]));                                    /* big on the left */
+    L.push(gridRows([n - 1, 1]));                                    /* big at the bottom */
+  }
+  if(n >= 3 && n <= 5){ L.push(gridRows(Array(n).fill(1))); L.push(gridCols(Array(n).fill(1))); }
+  if(n >= 4){
+    const a = Math.floor((n - 1) / 2), b = n - 1 - a;                /* big in the middle */
+    const top = gridRows([a]).map(r => [r[0], 0, r[2], 0.25]);
+    const bot = gridRows([b]).map(r => [r[0], 0.75, r[2], 0.25]);
+    L.push(top.concat([[0, 0.25, 1, 0.5]]).concat(bot));
+  }
+  /* drop duplicates */
+  const seen = {};
+  return L.filter(l => { const k = JSON.stringify(l.map(r => r.map(v => v.toFixed(3)))); if(seen[k]) return false; seen[k] = 1; return true; });
+}
+
+function roundRect(g, x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+function drawCover(g, im, x, y, w, h){
+  const s = Math.max(w / im.naturalWidth, h / im.naturalHeight);
+  const sw = w / s, sh = h / s;
+  g.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
+}
+function paint(g, W, H, layout, gapPx, radPx, list, hi){
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const out = [];
+  layout.forEach((r, i) => {
+    const x = r[0] * W + gapPx / 2 + (r[0] === 0 ? gapPx / 2 : 0);
+    const y = r[1] * H + gapPx / 2 + (r[1] === 0 ? gapPx / 2 : 0);
+    const x2 = (r[0] + r[2]) * W - gapPx / 2 - (r[0] + r[2] >= 0.999 ? gapPx / 2 : 0);
+    const y2 = (r[1] + r[3]) * H - gapPx / 2 - (r[1] + r[3] >= 0.999 ? gapPx / 2 : 0);
+    const w = Math.max(1, x2 - x), h = Math.max(1, y2 - y);
+    out.push([x, y, w, h]);
+    const im = list[i]; if(!im) return;
+    g.save(); roundRect(g, x, y, w, h, radPx); g.clip(); drawCover(g, im, x, y, w, h); g.restore();
+    if(hi === i){ g.save(); g.lineWidth = Math.max(4, W / 160); g.strokeStyle = "#c2255c"; roundRect(g, x, y, w, h, radPx); g.stroke(); g.restore(); }
+  });
+  return out;
+}
+function dims(){ const [w, h] = $("size").value.split("x").map(Number); return [w, h]; }
+function scaleK(W){ return W / 1080; }
+
+function render(){
+  if(!imgs.length) return;
+  const [W, H] = dims(), cv = $("cv"), k = 900 / Math.max(W, H);
+  cv.width = Math.round(W * k); cv.height = Math.round(H * k);
+  const L = layoutsFor(imgs.length); if(layoutIdx >= L.length) layoutIdx = 0;
+  rects = paint(cv.getContext("2d"), cv.width, cv.height, L[layoutIdx], $("gap").value * scaleK(W) * k, $("rad").value * scaleK(W) * k, imgs, picked);
+}
+function renderLayouts(){
+  const box = $("layouts"); box.innerHTML = "";
+  layoutsFor(imgs.length).forEach((l, i) => {
+    const b = document.createElement("button"); if(i === layoutIdx) b.className = "on";
+    const c = document.createElement("canvas"); c.width = 60; c.height = 60;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 60, 60);
+    l.forEach(r => { g.fillStyle = "#c9ced8"; g.fillRect(r[0] * 60 + 2, r[1] * 60 + 2, r[2] * 60 - 4, r[3] * 60 - 4); });
+    b.appendChild(c);
+    b.onclick = () => { layoutIdx = i; picked = -1; renderLayouts(); render(); };
+    box.appendChild(b);
+  });
+}
+function renderThumbs(){
+  const t = $("thumbs"); t.innerHTML = "";
+  imgs.forEach((im, i) => {
+    const d = document.createElement("div"); d.innerHTML = '<img><b title="Remove">✕</b>';
+    d.querySelector("img").src = im.src;
+    d.querySelector("b").onclick = () => { imgs.splice(i, 1); picked = -1; refresh(); };
+    t.appendChild(d);
+  });
+}
+function refresh(){
+  $("lay").style.display = imgs.length ? "" : "none";
+  renderThumbs(); renderLayouts(); render();
+}
+async function add(files){
+  const list = [...files].filter(f => /^image\//.test(f.type));
+  for(const f of list){
+    if(imgs.length >= 9){ alert(TT("A collage can hold up to 9 photos.")); break; }
+    const im = new Image(); im.src = URL.createObjectURL(f);
+    try{ await im.decode(); imgs.push(im); }catch(e){ alert(TT("This image could not be opened:") + " " + f.name); }
+  }
+  layoutIdx = 0; refresh();
+}
+$("file").onchange = e => { add(e.target.files); e.target.value = ""; };
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); add(e.dataTransfer.files); };
+["size", "gap", "rad"].forEach(id => $(id).oninput = () => { $("gapv").textContent = $("gap").value; $("radv").textContent = $("rad").value; render(); });
+$("colors").querySelectorAll("button").forEach(b => b.onclick = () => {
+  bg = b.dataset.c; $("colors").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); render();
+});
+$("custom").oninput = () => { bg = $("custom").value; $("colors").querySelectorAll("button").forEach(x => x.classList.remove("on")); render(); };
+
+/* tap a photo, then tap another to swap */
+$("cv").onclick = e => {
+  const cv = $("cv"), r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height;
+  const i = rects.findIndex(q => x >= q[0] && x <= q[0] + q[2] && y >= q[1] && y <= q[1] + q[3]);
+  if(i < 0 || i >= imgs.length) return;
+  if(picked < 0){ picked = i; }
+  else { if(picked !== i){ const t = imgs[picked]; imgs[picked] = imgs[i]; imgs[i] = t; renderThumbs(); } picked = -1; }
+  render();
+};
+
+$("save").onclick = () => {
+  if(imgs.length < 1){ alert(TT("Choose a photo first")); return; }
+  const [W, H] = dims(), c = document.createElement("canvas"); c.width = W; c.height = H;
+  paint(c.getContext("2d"), W, H, layoutsFor(imgs.length)[layoutIdx], $("gap").value * scaleK(W), $("rad").value * scaleK(W), imgs, -1);
+  const type = $("fmt").value, ext = type === "image/png" ? "png" : "jpg";
+  c.toBlob(b => DPLResult.file(b, "collage." + ext), type, 0.92);
+};
+</script>
+</body>
+</html>

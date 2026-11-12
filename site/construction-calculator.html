@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Construction calculator</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .cats{display:flex;gap:6px;flex-wrap:wrap}
+  .cats button{padding:8px 13px !important;font-size:13.5px !important}
+  .cats button.on{background:#e67700;color:#fff;border-color:#e67700}
+  .seg{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:8px 14px !important;background:#fff;font-size:13.5px !important}
+  .seg button.on{background:#1b2030;color:#fff}
+  .lay{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:18px;align-items:start}
+  .f{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f6}
+  .f:last-child{border-bottom:0}
+  .f label{font-size:14px;font-weight:600;color:var(--ink)}
+  .f label small{display:block;font-weight:400;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+  .f .u{position:relative}
+  .f .u input,.f select{width:100% !important}
+  .f .u input{padding-right:42px !important;text-align:right}
+  .f .u span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12.5px;color:var(--ink-3);pointer-events:none}
+  .card{border-radius:14px;padding:14px 18px;border:1px solid var(--line);background:#fff;margin-bottom:10px}
+  .card small{display:block;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:22px;margin-top:3px;color:var(--ink)}
+  .card span{display:block;font-size:13px;color:var(--ink-2);margin-top:2px}
+  .card.main{background:linear-gradient(135deg,#f08c00,#e67700);border:0}
+  .card.main small{color:rgba(255,255,255,.85)} .card.main b{color:#fff;font-size:30px} .card.main span{color:rgba(255,255,255,.9)}
+  .res{position:sticky;top:76px}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.res{position:static}.f{grid-template-columns:1fr 130px}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="top">
+    <div class="cats" id="cats"></div>
+    <span class="seg" id="sys"><button data-s="m" class="on">Metres</button><button data-s="ft">Feet</button></span>
+  </div>
+</div>
+<div class="lay">
+  <div class="box"><h3 id="title"></h3><div id="form"></div><p class="note" id="hint"></p></div>
+  <div class="res" id="res"></div>
+</div>
+<p class="note">Results are estimates for planning and buying. Always add a little extra and check with your engineer or supplier.</p>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+/* small words translated here only, so they never change text elsewhere */
+const BNW = {"tiles": "টি টাইল", "boxes": "বক্স", "gallons": "গ্যালন", "buckets": "বালতি", "bags": "ব্যাগ", "pipes": "টি পাইপ", "each": "প্রতিটি", "for": "", "Imperial": "ইম্পেরিয়াল"};
+const W = s => (window.DPL_LANG === "bn" && BNW[s] != null) ? BNW[s] : s;
+let sys = "m", cur = "tiles";
+const nf = (n, d) => (isFinite(n) ? n : 0).toLocaleString("en-US", {maximumFractionDigits: d == null ? 2 : d, minimumFractionDigits: 0});
+/* field kinds: L = long length (m / ft), S = short length (cm / in), N = plain number, P = percent, sel = choice */
+const CALC = {
+  tiles: {name: "🟫 Tiles", fields: [
+      ["len", "Room length", "L", 5], ["wid", "Room width", "L", 4],
+      ["tile", "Tile size", "sel", "60x60", [["20x20", "20 × 20 cm"], ["30x30", "30 × 30 cm"], ["40x40", "40 × 40 cm"], ["30x60", "30 × 60 cm"], ["60x60", "60 × 60 cm"], ["60x120", "60 × 120 cm"], ["80x80", "80 × 80 cm"], ["100x100", "100 × 100 cm"]]],
+      ["waste", "Extra for cutting and breakage", "P", 10], ["box", "Tiles in one box", "N", 4]],
+    hint: "For walls, use the wall length and height instead of room length and width.",
+    calc(v){
+      const area = v.len * v.wid, [a, b] = v.tile.split("x").map(Number), ta = a * b / 10000;
+      const tiles = Math.ceil(area / ta * (1 + v.waste / 100)), boxes = v.box ? Math.ceil(tiles / v.box) : 0;
+      return [["Tiles needed", nf(tiles, 0) + " " + W("tiles"), boxes ? nf(boxes, 0) + " " + W("boxes") : ""],
+              ["Floor area", areaTxt(area), ""], ["One tile covers", nf(ta, 3) + " m²", ""]];
+    }},
+  paint: {name: "🎨 Paint", fields: [
+      ["len", "Room length", "L", 5], ["wid", "Room width", "L", 4], ["hei", "Wall height", "L", 3],
+      ["doors", "Doors", "N", 1], ["wins", "Windows", "N", 2], ["ceil", "Ceiling", "sel", "no", [["no", "Walls only"], ["yes", "Walls and ceiling"]]],
+      ["coats", "Coats", "N", 2], ["cov", "Coverage (on the tin)", "N", 10, null, "m²/L"]],
+    hint: "A door is counted as 1.9 m² and a window as 1.4 m². Coverage is usually 8 to 12 m² per litre per coat.",
+    calc(v){
+      let area = 2 * (v.len + v.wid) * v.hei - v.doors * 1.9 - v.wins * 1.4;
+      if(v.ceil === "yes") area += v.len * v.wid;
+      area = Math.max(0, area);
+      const litres = v.cov ? area * v.coats / v.cov : 0;
+      return [["Paint needed", nf(Math.ceil(litres * 10) / 10, 1) + " L", nf(litres / 3.785, 1) + " " + W("gallons") + " · " + nf(Math.ceil(litres / 18), 0) + " × 18 L " + W("buckets")],
+              ["Area to paint", areaTxt(area), ""], ["Primer (1 coat)", nf(v.cov ? area / v.cov : 0, 1) + " L", ""]];
+    }},
+  concrete: {name: "🧱 Concrete", fields: [
+      ["len", "Length", "L", 5], ["wid", "Width", "L", 4], ["thk", "Thickness", "S", 15],
+      ["mix", "Mix", "sel", "1.5", [["1.5", "M20  (1 : 1.5 : 3)"], ["2", "M15  (1 : 2 : 4)"], ["3", "M10  (1 : 3 : 6)"], ["1", "M25  (1 : 1 : 2)"]]],
+      ["bag", "Cement bag", "sel", "50", [["50", "50 kg"], ["40", "40 kg"]]]],
+    hint: "Uses a dry-volume factor of 1.54. For ready-mix, order the wet volume plus 5%.",
+    calc(v){
+      const wet = v.len * v.wid * v.thk, dry = wet * 1.54, s = Number(v.mix), parts = 1 + s + s * 2;
+      const cem = dry / parts, bags = cem * 1440 / Number(v.bag);
+      return [["Concrete", nf(wet, 2) + " m³", nf(wet * 35.3147, 1) + " ft³"],
+              ["Cement", nf(Math.ceil(bags), 0) + " " + W("bags"), nf(cem * 1440, 0) + " kg"],
+              ["Sand", nf(dry * s / parts, 2) + " m³", nf(dry * s / parts * 35.3147, 1) + " ft³"],
+              ["Gravel (aggregate)", nf(dry * s * 2 / parts, 2) + " m³", nf(dry * s * 2 / parts * 35.3147, 1) + " ft³"],
+              ["Water (about)", nf(cem * 1440 * 0.5, 0) + " L", ""]];
+    }},
+  blocks: {name: "🧱 Blocks", fields: [
+      ["len", "Wall length", "L", 10], ["hei", "Wall height", "L", 3],
+      ["blk", "Block size", "sel", "40x20", [["40x20", "40 × 20 cm block"], ["20x10", "20 × 10 cm block"], ["19x9", "Brick 9.5 × 3 in (Bangladesh)"]]],
+      ["open", "Doors and windows area", "N", 2, null, "m²"], ["waste", "Extra for breakage", "P", 5]],
+    hint: "Includes a 1 cm mortar joint.",
+    calc(v){
+      const area = Math.max(0, v.len * v.hei - v.open);
+      const sz = {"40x20": [0.41, 0.21], "20x10": [0.21, 0.11], "19x9": [0.2513, 0.0862]}[v.blk];
+      const n = Math.ceil(area / (sz[0] * sz[1]) * (1 + v.waste / 100));
+      return [["Blocks needed", nf(n, 0), W("for") + " " + areaTxt(area)], ["Per square metre", nf(1 / (sz[0] * sz[1]), 1), ""]];
+    }},
+  pipes: {name: "🔧 Pipes", fields: [
+      ["run", "Total pipe run", "L", 45], ["piece", "One pipe length", "sel", "6", [["6", "6 m"], ["5.8", "5.8 m"], ["4", "4 m"], ["3", "3 m"]]],
+      ["bends", "Number of bends and tees", "N", 12], ["waste", "Extra for cutting", "P", 10]],
+    hint: "Each bend or tee adds about 0.3 m of pipe for the joints.",
+    calc(v){
+      const len = (v.run + v.bends * 0.3) * (1 + v.waste / 100), n = Math.ceil(len / Number(v.piece));
+      return [["Pipes to buy", nf(n, 0) + " " + W("pipes"), W("each") + " " + v.piece + " m"], ["Total length", nf(len, 1) + " m", nf(len * 3.28084, 1) + " ft"]];
+    }},
+  tank: {name: "💧 Water tank", fields: [
+      ["shape", "Tank shape", "sel", "box", [["box", "Box / rectangular"], ["cyl", "Round (cylinder)"]]],
+      ["len", "Length (or diameter)", "L", 2], ["wid", "Width (box only)", "L", 1.5], ["hei", "Water height", "L", 1.5]],
+    hint: "For a round tank, type the inside diameter as the length.",
+    calc(v){
+      const m3 = v.shape === "cyl" ? Math.PI * Math.pow(v.len / 2, 2) * v.hei : v.len * v.wid * v.hei;
+      return [["Tank holds", nf(m3 * 1000, 0) + " L", nf(m3, 2) + " m³"], ["Gallons", nf(m3 * 1000 / 4.54609, 0) + " " + W("Imperial"), nf(m3 * 1000 / 3.785411784, 0) + " US"]];
+    }}
+};
+function areaTxt(m2){ return nf(m2, 2) + " m² · " + nf(m2 * 10.7639, 1) + " ft²"; }
+function unitOf(k){ return k === "L" ? (sys === "m" ? "m" : "ft") : k === "S" ? (sys === "m" ? "cm" : "in") : k === "P" ? "%" : ""; }
+
+function tabs(){
+  $("cats").innerHTML = "";
+  Object.keys(CALC).forEach(k => {
+    const b = document.createElement("button"); b.textContent = TT(CALC[k].name); if(k === cur) b.className = "on";
+    b.onclick = () => { cur = k; tabs(); form(); }; $("cats").appendChild(b);
+  });
+}
+function form(){
+  const c = CALC[cur]; $("title").textContent = TT(c.name.replace(/^\S+\s/, ""));
+  $("hint").textContent = TT(c.hint); $("form").innerHTML = "";
+  c.fields.forEach(f => {
+    const [id, label, kind, def, opts, unit] = f, row = document.createElement("div"); row.className = "f";
+    const lb = document.createElement("label"); lb.textContent = TT(label); row.appendChild(lb);
+    if(kind === "sel"){
+      const s = document.createElement("select"); s.id = "f_" + id;
+      opts.forEach(o => { const op = document.createElement("option"); op.value = o[0]; op.textContent = TT(o[1]); s.appendChild(op); });
+      s.value = def; s.onchange = calc; row.appendChild(s);
+    } else {
+      const w = document.createElement("div"); w.className = "u";
+      const i = document.createElement("input"); i.type = "number"; i.min = "0"; i.step = "any"; i.id = "f_" + id; i.dataset.k = kind;
+      let d = def; if(sys === "ft" && kind === "L") d = Math.round(def * 3.28084 * 10) / 10; if(sys === "ft" && kind === "S") d = Math.round(def / 2.54 * 10) / 10;
+      i.value = d; if(kind === "L" || kind === "S") i.dataset.base = def; i.oninput = () => { delete i.dataset.base; calc(); };
+      const sp = document.createElement("span"); sp.textContent = unit || unitOf(kind);
+      w.appendChild(i); w.appendChild(sp); row.appendChild(w);
+    }
+    $("form").appendChild(row);
+  });
+  calc();
+}
+function calc(){
+  const c = CALC[cur], v = {};
+  c.fields.forEach(f => {
+    const el = $("f_" + f[0]); if(f[2] === "sel"){ v[f[0]] = el.value; return; }
+    let n = Math.max(0, Number(el.value) || 0);
+    if(f[2] === "L") n = sys === "m" ? n : n * 0.3048;            /* to metres */
+    if(f[2] === "S") n = sys === "m" ? n / 100 : n * 0.0254;
+    v[f[0]] = n;
+  });
+  $("res").innerHTML = "";
+  c.calc(v).forEach((r, i) => {
+    const d = document.createElement("div"); d.className = "card" + (i ? "" : " main");
+    d.innerHTML = "<small></small><b></b>" + (r[2] ? "<span></span>" : "");
+    d.querySelector("small").textContent = TT(r[0]); d.querySelector("b").textContent = r[1]; if(r[2]) d.querySelector("span").textContent = r[2];
+    $("res").appendChild(d);
+  });
+}
+document.querySelectorAll("#sys button").forEach(b => b.onclick = () => {
+  /* convert what is typed so nothing has to be re-entered; keep the exact metric value so switching back is lossless */
+  const ns = b.dataset.s; if(ns === sys) return;
+  const vals = {};
+  document.querySelectorAll("#form input").forEach(i => {
+    const n = Number(i.value) || 0, k = i.dataset.k;
+    const metric = k === "L" ? (sys === "m" ? n : n * 0.3048) : k === "S" ? (sys === "m" ? n : n * 2.54) : n;
+    vals[i.id] = [i.dataset.base != null && Math.abs(Number(i.dataset.base) - metric) < 0.01 * Math.max(1, metric) ? Number(i.dataset.base) : metric, k];
+  });
+  sys = ns; document.querySelectorAll("#sys button").forEach(x => x.classList.toggle("on", x === b));
+  form();
+  Object.keys(vals).forEach(id => {
+    const [m, k] = vals[id], el = $(id); if(!el) return;
+    if(k === "L") el.value = sys === "ft" ? Math.round(m * 3.28084 * 100) / 100 : Math.round(m * 1000) / 1000;
+    else if(k === "S") el.value = sys === "ft" ? Math.round(m / 2.54 * 10) / 10 : Math.round(m * 10) / 10;
+    else el.value = m;
+    if(k === "L" || k === "S") el.dataset.base = m;
+  });
+  calc();
+});
+tabs(); form();
+</script>
+</body>
+</html>

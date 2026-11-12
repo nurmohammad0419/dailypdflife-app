@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Cover Letter Maker</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#eef1f6;margin:0}
+  .wrap{display:flex;gap:20px;padding:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .form{background:#fff;width:440px;max-width:100%;padding:20px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  .form h2{color:#c2255c;margin-top:0}
+  .form h3{margin:18px 0 8px;color:#444;border-bottom:1px solid #eee;padding-bottom:5px}
+  .form input,.form textarea,.form select{width:100%;padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit}
+  .form textarea{height:90px}
+  .row{display:flex;gap:6px}
+  .auto{width:100%;background:#fff;color:#c2255c;border:2px solid #c2255c;padding:10px;border-radius:8px;cursor:pointer;font-weight:bold;margin-top:6px}
+  .dl{width:100%;background:#c2255c;color:#fff;border:none;padding:14px;font-size:16px;border-radius:8px;cursor:pointer;margin-top:18px}
+  #letter{--c:#c2255c;background:#fff;width:794px;min-height:1123px;box-shadow:0 2px 15px #0003;color:#222;font-size:14px;line-height:1.7}
+  .head{padding:40px 60px 25px}
+  .head h1{margin:0;font-size:30px;color:var(--c)}
+  .head .job{color:#666;font-size:15px;margin:3px 0 10px}
+  .head .ct{font-size:13px;color:#555}
+  .body{padding:20px 60px 50px}
+  .to{margin:20px 0}
+  .to p{margin:0}
+  .subj{font-weight:bold;margin:20px 0}
+  .body p.par{margin:0 0 14px;text-align:justify;white-space:pre-line}
+  .sign{margin-top:35px}
+  .t-modern .head{background:var(--c);color:#fff}
+  .t-modern .head h1,.t-modern .head .job,.t-modern .head .ct{color:#fff}
+  .t-classic .head{text-align:center;border-bottom:3px double var(--c);margin:0 60px;padding:40px 0 20px}
+  .t-classic{font-family:Georgia,serif}
+  .t-simple .head{border-left:8px solid var(--c);margin-top:40px;padding:5px 52px}
+  @media print{
+    body{background:#fff} .form{display:none} .wrap{padding:0}
+    #letter{box-shadow:none;width:100%;min-height:auto}
+    @page{size:A4;margin:0}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="form">
+  <h2>Cover Letter Maker</h2>
+  <h3>Your details</h3>
+  <input id="name" placeholder="Full name">
+  <input id="title" placeholder="Your job title, e.g. Plumbing Engineer">
+  <div class="row"><input id="phone" placeholder="Phone"><input id="email" placeholder="Email"></div>
+  <input id="addr" placeholder="Address">
+  <h3>Where you are sending it</h3>
+  <input id="rName" placeholder="Who you are writing to, e.g. Hiring Manager">
+  <input id="company" placeholder="Company name">
+  <input id="cAddr" placeholder="Company address">
+  <input id="job" placeholder="Position you are applying for">
+  <h3>Quick draft</h3>
+  <div class="row"><input type="number" id="years" placeholder="Years of experience"><input id="skills" placeholder="Key skills"></div>
+  <button class="auto" onclick="autoWrite()">✨ Generate a sample letter</button>
+  <small>This fills in a sample letter in English that you can then edit.</small>
+  <h3>Letter body</h3>
+  <input id="subj" placeholder="Subject">
+  <textarea id="p1" placeholder="First paragraph: who you are and why you are interested"></textarea>
+  <textarea id="p2" placeholder="Second paragraph: experience and skills"></textarea>
+  <textarea id="p3" placeholder="Last paragraph: thanks and next steps"></textarea>
+  <h3>Design</h3>
+  <div class="row">
+    <select id="tpl"><option value="t-modern">Modern</option><option value="t-classic">Classic</option><option value="t-simple">Simple</option></select>
+    <input type="color" id="color" value="#c2255c" style="height:38px">
+  </div>
+  <button class="dl" onclick="window.print()">⬇ Download as PDF</button>
+  <p style="font-size:12px;color:#777">In the print window choose "Save as PDF" and tick "Background graphics".</p>
+</div>
+<div id="letter" class="t-modern">
+  <div class="head">
+    <h1 id="vName">Your Name</h1>
+    <div class="job" id="vTitle"></div>
+    <div class="ct" id="vCt"></div>
+  </div>
+  <div class="body">
+    <p id="vDate"></p>
+    <div class="to"><p id="vR"></p><p id="vCo"></p><p id="vCA"></p></div>
+    <div class="subj" id="vSubj"></div>
+    <p class="par" id="vGreet"></p>
+    <p class="par" id="v1"></p><p class="par" id="v2"></p><p class="par" id="v3"></p>
+    <div class="sign"><p>Sincerely,</p><p><b id="vSign"></b></p></div>
+  </div>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const v = id => $(id).value.trim();
+function autoWrite(){
+  const job = v("job") || "the position", co = v("company") || "your company";
+  const yrs = v("years"), sk = v("skills") || "my field";
+  $("subj").value = "Application for the position of " + job;
+  $("p1").value = "I am writing to express my strong interest in the " + job + " position at " + co +
+    ". With my background and dedication, I am confident that I would be a valuable addition to your team.";
+  $("p2").value = "I have " + (yrs ? yrs + " years of" : "solid") + " professional experience, with strong skills in " + sk +
+    ". Throughout my career, I have consistently delivered quality work, met deadlines, and worked well with teams and clients. " +
+    "I am eager to bring this experience and commitment to " + co + ".";
+  $("p3").value = "Thank you for considering my application. I have attached my CV for your review and would welcome the opportunity " +
+    "to discuss how I can contribute to your team. I look forward to hearing from you.";
+  render();
+}
+function render(){
+  const L = $("letter");
+  L.className = v("tpl"); L.style.setProperty("--c", $("color").value);
+  $("vName").textContent = v("name") || "Your Name";
+  $("vTitle").textContent = v("title");
+  $("vCt").textContent = [v("phone"), v("email"), v("addr")].filter(Boolean).join("  |  ");
+  $("vDate").textContent = new Date().toLocaleDateString("en-GB", {day: "numeric", month: "long", year: "numeric"});
+  $("vR").textContent = v("rName");
+  $("vCo").textContent = v("company");
+  $("vCA").textContent = v("cAddr");
+  $("vSubj").textContent = v("subj") ? "Subject: " + v("subj") : "";
+  $("vGreet").textContent = "Dear " + (v("rName") || "Hiring Manager") + ",";
+  $("v1").textContent = v("p1"); $("v2").textContent = v("p2"); $("v3").textContent = v("p3");
+  $("vSign").textContent = v("name") || "Your Name";
+}
+document.querySelector(".form").addEventListener("input", render);
+document.querySelector(".form").addEventListener("change", render);
+render();
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

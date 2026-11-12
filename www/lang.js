@@ -948,7 +948,28 @@
 "Night mode": "নাইট মোড",
 "Open another PDF": "আরেকটা PDF খুলুন",
 "Save or share": "সেভ বা শেয়ার",
-"Unlock & open": "আনলক করে খুলুন"
+"Unlock & open": "আনলক করে খুলুন",
+"Save / Share": "সেভ / শেয়ার",
+"Save / Share all": "সব সেভ / শেয়ার",
+"Install app": "অ্যাপ ইনস্টল",
+"Add DailyPdfLife to your Home Screen": "DailyPdfLife হোম স্ক্রিনে যোগ করুন",
+"It opens full screen like an app, works offline and keeps your files on your phone.": "এটা অ্যাপের মতো পুরো স্ক্রিনে খোলে, ইন্টারনেট ছাড়াও চলে, আর আপনার ফাইল ফোনেই থাকে।",
+"Tap the Share button": "শেয়ার বাটনে চাপ দিন",
+"at the bottom of Safari": "(Safari-র নিচে)",
+"at the top right of Safari": "(Safari-র উপরে ডানে)",
+"in the browser menu": "(ব্রাউজারের মেনুতে)",
+"Scroll down and tap": "নিচে নেমে চাপ দিন",
+"Add to Home Screen": "Add to Home Screen",
+"The DailyPdfLife icon appears on your Home Screen.": "হোম স্ক্রিনে DailyPdfLife-এর আইকন চলে আসবে।",
+"Got it": "বুঝেছি",
+"Get DailyPdfLife on your phone": "ফোনে DailyPdfLife নিন",
+"The Android app can open PDFs from WhatsApp and your files, and has a smart document scanner.": "Android অ্যাপে WhatsApp ও ফাইল থেকে সরাসরি PDF খোলা যায়, আর আছে স্মার্ট ডকুমেন্ট স্ক্যানার।",
+"Android app": "Android অ্যাপ",
+"Install web app": "ওয়েব অ্যাপ ইনস্টল",
+"Use DailyPdfLife like an app": "DailyPdfLife অ্যাপের মতো ব্যবহার করুন",
+"Add it to your Home Screen. Free, no App Store needed.": "হোম স্ক্রিনে যোগ করুন। ফ্রি, App Store লাগবে না।",
+"How?": "কীভাবে?",
+"Tap Add at the top right.": "উপরে ডানে Add চাপুন।"
 };
 
   var saved = null;

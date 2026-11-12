@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PDF to Excel</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  .drop{display:block;text-align:center;cursor:pointer}
+  .opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:14px}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .opts label.ck{flex-direction:row;align-items:center;gap:7px;padding-bottom:10px}
+  .go{background:#1d6f42;color:#fff;border:0}
+  .stat{font-size:14px;color:var(--ink-2);margin:4px 0 12px;font-weight:600}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs button{padding:6px 12px !important;font-size:13px !important}
+  .tabs button.on{background:#1d6f42;color:#fff;border-color:#1d6f42}
+  .tbl{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .tbl table{border-collapse:collapse;font-size:13px;min-width:100%}
+  .tbl td,.tbl th{border:1px solid #e3e6ee;padding:5px 8px;white-space:nowrap;text-align:start}
+  .tbl th{background:#f1f5f2;color:var(--ink-3);font-weight:650;position:sticky;top:0;font-size:12px}
+  .tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .tbl td.rn{background:#f7f8fb;color:var(--ink-3);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="box">
+  <label class="drop" id="drop">📊 Choose a PDF with tables, or drag it here
+    <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+  </label>
+  <div class="opts">
+    <label>Sheets
+      <select id="mode"><option value="page">One sheet per page</option><option value="one">All pages in one sheet</option></select>
+    </label>
+    <label>Save as
+      <select id="fmt"><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV</option></select>
+    </label>
+    <label class="ck"><input type="checkbox" id="nums" checked> Turn numbers into real numbers</label>
+    <button class="go" id="go">⬇ Convert to Excel</button>
+  </div>
+  <p class="note">Works with PDFs that contain real text (made from Excel, Word or a website). For a scanned paper, use OCR first.</p>
+</div>
+<div class="box" id="out" style="display:none">
+  <p class="stat" id="stat"></p>
+  <div class="tabs" id="tabs"></div>
+  <div class="tbl" id="tbl" data-notr></div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let pages = [], fileName = "tables", cur = 0;
+
+/* ---------- turn the text on one page into rows and columns ---------- */
+function pageToRows(items, pageWidth){
+  const its = items.filter(i => i.str && i.str.trim()).map(i => {
+    const t = i.transform, h = Math.abs(t[3]) || Math.hypot(t[2], t[3]) || 10;
+    return {s: i.str, x: t[4], y: t[5], w: i.width || i.str.length * h * 0.5, h: h};
+  });
+  its.sort((a, b) => b.y - a.y || a.x - b.x);
+  /* 1. lines: items with almost the same baseline */
+  const lines = [];
+  its.forEach(it => {
+    const L = lines[lines.length - 1];
+    if(L && Math.abs(L.y - it.y) < Math.max(2.5, Math.min(L.h, it.h) * 0.5)) L.items.push(it);
+    else lines.push({y: it.y, h: it.h, items: [it]});
+  });
+  /* 2. cells: pieces of a line that sit close together */
+  lines.forEach(L => {
+    L.items.sort((a, b) => a.x - b.x);
+    const cells = [];
+    L.items.forEach(it => {
+      const c = cells[cells.length - 1];
+      const gap = c ? it.x - c.x1 : 1e9;
+      if(c && gap < it.h * 0.9){
+        c.s += (gap > it.h * 0.12 && !/\s$/.test(c.s) && !/^\s/.test(it.s) ? " " : "") + it.s;
+        c.x1 = Math.max(c.x1, it.x + it.w);
+      } else cells.push({s: it.s, x0: it.x, x1: it.x + it.w});
+    });
+    cells.forEach(c => c.s = c.s.replace(/\s+/g, " ").trim());
+    L.cells = cells.filter(c => c.s);
+  });
+  /* 3. columns: merge the horizontal spans of cells in table-like lines */
+  let spans = [];
+  lines.forEach(L => {
+    if(L.cells.length < 2) return;
+    L.cells.forEach(c => { if(c.x1 - c.x0 < pageWidth * 0.4) spans.push([c.x0, c.x1]); });
+  });
+  spans.sort((a, b) => a[0] - b[0]);
+  const bands = [];
+  spans.forEach(s => {
+    const b = bands[bands.length - 1];
+    if(b && s[0] <= b[1] + 1) b[1] = Math.max(b[1], s[1]); else bands.push([s[0], s[1]]);
+  });
+  const col = c => {
+    if(!bands.length) return 0;
+    let best = 0, bestOv = -1e9;
+    bands.forEach((b, i) => {
+      const ov = Math.min(b[1], c.x1) - Math.max(b[0], c.x0);
+      const score = ov > 0 ? ov : -Math.abs((b[0] + b[1]) / 2 - (c.x0 + c.x1) / 2) - 1e5;
+      if(score > bestOv){ bestOv = score; best = i; }
+    });
+    return best;
+  };
+  return lines.filter(L => L.cells.length).map(L => {
+    const row = [];
+    if(L.cells.length === 1 && !bands.length){ row[0] = L.cells[0].s; return row; }
+    L.cells.forEach(c => {
+      const k = L.cells.length === 1 && c.x1 - c.x0 >= pageWidth * 0.4 ? 0 : col(c);
+      row[k] = row[k] ? row[k] + " " + c.s : c.s;
+    });
+    for(let i = 0; i < row.length; i++) if(row[i] === undefined) row[i] = "";
+    return row;
+  });
+}
+
+function toNum(v){
+  if(typeof v !== "string") return v;
+  const s = v.replace(/[\s ]/g, "");
+  let m = s.match(/^\(?(-?)([\d,]*\.?\d+)\)?$/);
+  if(!m || !/\d/.test(s)) return v;
+  if(/^0\d/.test(m[2].replace(/,/g, ""))) return v;              /* keep phone numbers, IDs */
+  if(/,/.test(m[2]) && !/^\d{1,3}(,\d{3})*(\.\d+)?$/.test(m[2])) return v;
+  const n = Number(m[2].replace(/,/g, "")) * ((m[1] || /^\(.*\)$/.test(s)) ? -1 : 1);
+  return isFinite(n) && m[2].replace(/[,.]/g, "").length <= 15 ? n : v;
+}
+
+async function read(f){
+  fileName = f.name.replace(/\.pdf$/i, "");
+  $("out").style.display = ""; $("stat").textContent = TT("Reading the PDF..."); $("tabs").innerHTML = ""; $("tbl").innerHTML = "";
+  let pdf;
+  try{ pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise; }
+  catch(err){
+    pages = [];
+    $("stat").textContent = err && err.name === "PasswordException"
+      ? TT("This PDF is locked with a password. Unlock it first with Unlock PDF.")
+      : TT("This PDF could not be opened. It may be damaged.");
+    return;
+  }
+  pages = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    $("stat").textContent = TT("Reading page") + " " + i + " / " + pdf.numPages;
+    const pg = await pdf.getPage(i);
+    const tc = await pg.getTextContent();
+    pages.push(pageToRows(tc.items, pg.getViewport({scale: 1}).width));
+  }
+  const total = pages.reduce((a, p) => a + p.length, 0);
+  if(!total){
+    $("stat").textContent = TT("No text was found. This looks like a scanned PDF; use OCR to read it first.");
+    return;
+  }
+  $("stat").textContent = pdf.numPages + " " + TT("pages") + " · " + total + " " + TT("rows found");
+  $("tabs").innerHTML = "";
+  if(pages.length > 1) pages.forEach((p, i) => {
+    const b = document.createElement("button"); b.textContent = TT("Page") + " " + (i + 1);
+    b.onclick = () => show(i); $("tabs").appendChild(b);
+  });
+  show(0);
+}
+
+function show(i){
+  cur = i;
+  [...$("tabs").children].forEach((b, k) => b.classList.toggle("on", k === i));
+  const rows = pages[i] || [], ncol = rows.reduce((a, r) => Math.max(a, r.length), 0);
+  const t = document.createElement("table"), hr = t.insertRow();
+  hr.appendChild(document.createElement("th"));
+  for(let c = 0; c < ncol; c++){ const th = document.createElement("th"); th.textContent = XLSX.utils.encode_col(c); hr.appendChild(th); }
+  rows.slice(0, 300).forEach((r, k) => {
+    const tr = t.insertRow(), rn = tr.insertCell(); rn.className = "rn"; rn.textContent = k + 1;
+    for(let c = 0; c < ncol; c++){
+      const td = tr.insertCell(), v = r[c] || "";
+      td.textContent = v; td.dir = "auto";
+      if($("nums").checked && typeof toNum(v) === "number") td.className = "n";
+    }
+  });
+  $("tbl").innerHTML = ""; $("tbl").appendChild(t);
+}
+
+$("file").onchange = e => { if(e.target.files[0]) read(e.target.files[0]); };
+$("drop").ondragover = e => e.preventDefault();
+$("drop").ondrop = e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) read(f); };
+$("nums").onchange = () => { if(pages.length) show(cur); };
+
+$("go").onclick = () => {
+  if(!pages.length || !pages.some(p => p.length)){ alert(TT("Choose a PDF first")); return; }
+  const conv = rows => rows.map(r => r.map(v => $("nums").checked ? toNum(v) : v));
+  const wb = XLSX.utils.book_new();
+  if($("mode").value === "one" || $("fmt").value === "csv"){
+    let all = [];
+    pages.forEach((p, i) => { if(i && all.length) all.push([]); all = all.concat(conv(p)); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(all), "Sheet1");
+  } else {
+    pages.forEach((p, i) => { if(p.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(conv(p)), "Page " + (i + 1)); });
+  }
+  /* comfortable column widths */
+  wb.SheetNames.forEach(n => {
+    const ws = wb.Sheets[n], aoa = XLSX.utils.sheet_to_json(ws, {header: 1, raw: false});
+    const w = [];
+    aoa.forEach(r => r.forEach((v, c) => { w[c] = Math.min(60, Math.max(w[c] || 6, String(v == null ? "" : v).length + 2)); }));
+    ws["!cols"] = w.map(x => ({wch: x || 8}));
+  });
+  if($("fmt").value === "csv"){
+    const csv = "﻿" + XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+    DPLResult.file(new Blob([csv], {type: "text/csv"}), fileName + ".csv");
+  } else {
+    const out = XLSX.write(wb, {bookType: "xlsx", type: "array"});
+    DPLResult.file(new Blob([out], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), fileName + ".xlsx");
+  }
+};
+</script>
+</body>
+</html>

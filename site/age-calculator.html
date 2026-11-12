@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Age calculator</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .lay{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:18px;align-items:start}
+  .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:10px !important;background:#fff}
+  .seg button.on{background:#1b2030;color:#fff}
+  .inrow{display:flex;gap:8px}
+  .inrow select,.inrow input{flex:1;min-width:0}
+  input[type=date]{width:100%}
+  .big{border-radius:16px;padding:22px;background:linear-gradient(135deg,#7048e8,#5f3dc4);color:#fff}
+  .big small{display:block;font-size:12px;letter-spacing:.8px;text-transform:uppercase;opacity:.85;font-weight:700}
+  .big .n{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+  .big .n div{font-size:15px;opacity:.95}
+  .big .n b{display:block;font-size:40px;line-height:1.05;letter-spacing:-1px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px}
+  .card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+  .card small{display:block;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:19px;margin-top:3px;color:var(--ink)}
+  .card span{display:block;font-size:13px;color:var(--ink-2);margin-top:2px}
+  .bad{color:#c92a2a;font-weight:650}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="lay">
+  <div class="box">
+    <h3>Date of birth</h3>
+    <div class="seg" id="cal"><button data-c="g" class="on">Gregorian</button><button data-c="h">Hijri</button></div>
+    <div id="gBox" style="margin-top:10px"><input type="date" id="dob"></div>
+    <div id="hBox" style="margin-top:10px;display:none">
+      <div class="inrow"><select id="hD"></select><select id="hM" style="flex:2"></select><input type="number" id="hY" min="1300" max="1600" placeholder="Year"></div>
+    </div>
+    <h3>Age on this date</h3>
+    <input type="date" id="on">
+    <p class="note">Leave it as today, or pick another date (for example a visa or exam deadline).</p>
+  </div>
+  <div>
+    <div class="big" id="big"><small>Age</small><div class="n" id="ymd"></div></div>
+    <div class="grid" id="more"></div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+/* small words translated here only, so they never change text elsewhere */
+const BNW = {"years": "বছর", "months": "মাস", "days": "দিন", "about": "প্রায়", "Today!": "আজ!"};
+const W = s => (window.DPL_LANG === "bn" && BNW[s] != null) ? BNW[s] : s;
+const DAY = 86400000;
+const MONTHS = ["Muharram", "Safar", "Rabi al-Awwal", "Rabi al-Thani", "Jumada al-Ula", "Jumada al-Akhirah",
+                "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qadah", "Dhu al-Hijjah"];
+let CAL = "islamic-umalqura";
+try{ if(new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {timeZone: "UTC"}).resolvedOptions().calendar !== "islamic-umalqura") CAL = "islamic-civil"; }catch(e){ CAL = "islamic-civil"; }
+const fParts = new Intl.DateTimeFormat("en-u-ca-" + CAL + "-nu-latn", {day: "numeric", month: "numeric", year: "numeric", timeZone: "UTC"});
+const fG = new Intl.DateTimeFormat("en-GB", {day: "numeric", month: "long", year: "numeric", timeZone: "UTC"});
+const fW = new Intl.DateTimeFormat("en-GB", {weekday: "long", timeZone: "UTC"});
+function hij(d){ const p = {}; fParts.formatToParts(d).forEach(x => { if(x.type !== "literal") p[x.type] = parseInt(x.value, 10); }); return {y: p.year, m: p.month, d: p.day}; }
+const key = h => (h.y * 12 + (h.m - 1)) * 31 + h.d;
+function toGreg(y, m, d){
+  let t = Date.UTC(622, 6, 19) + Math.round((y - 1) * 354.36707 + (m - 1) * 29.530589 + (d - 1)) * DAY;
+  const want = key({y: y, m: m, d: d});
+  for(let i = 0; i < 80; i++){ const k = key(hij(new Date(t))); if(k === want) return new Date(t); t += (k < want ? 1 : -1) * DAY; }
+  return null;
+}
+const hDays = (y, m) => toGreg(y, m, 30) ? 30 : 29;
+const utc = s => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const iso = d => d.toISOString().slice(0, 10);
+const nf = n => n.toLocaleString("en-US");
+let cal = "g";
+
+/* exact years, months and days between two dates */
+function diff(a, b){
+  let y = b.getUTCFullYear() - a.getUTCFullYear(), m = b.getUTCMonth() - a.getUTCMonth(), d = b.getUTCDate() - a.getUTCDate();
+  if(d < 0){ m--; d += new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), 0)).getUTCDate(); }
+  if(m < 0){ y--; m += 12; }
+  return {y, m, d};
+}
+function hdiff(a, b){
+  const A = hij(a), B = hij(b);
+  let y = B.y - A.y, m = B.m - A.m, d = B.d - A.d;
+  if(d < 0){ m--; const pm = B.m === 1 ? 12 : B.m - 1, py = B.m === 1 ? B.y - 1 : B.y; d += hDays(py, pm); }
+  if(m < 0){ y--; m += 12; }
+  return {y, m, d};
+}
+function birth(){
+  if(cal === "g") return $("dob").value ? utc($("dob").value) : null;
+  const y = Number($("hY").value), m = Number($("hM").value), d = Number($("hD").value);
+  if(!y || y < 1300 || y > 1600) return null;
+  return toGreg(y, m, d) || "bad";
+}
+function card(label, value, sub){
+  return '<div class="card"><small>' + TT(label) + "</small><b>" + value + "</b>" + (sub ? "<span>" + sub + "</span>" : "") + "</div>";
+}
+function calc(){
+  const b = birth(), on = $("on").value ? utc($("on").value) : null;
+  if(b === "bad"){ $("ymd").innerHTML = '<div class="bad" style="color:#fff">' + MONTHS[$("hM").value - 1] + " " + $("hY").value + " " + TT("has only 29 days.") + "</div>"; $("more").innerHTML = ""; return; }
+  if(!b || !on){ $("ymd").innerHTML = "<div>" + TT("Enter your date of birth.") + "</div>"; $("more").innerHTML = ""; return; }
+  if(b > on){ $("ymd").innerHTML = "<div>" + TT("The date of birth is after the chosen date.") + "</div>"; $("more").innerHTML = ""; return; }
+  const a = diff(b, on);
+  $("ymd").innerHTML = "<div><b>" + a.y + "</b>" + W("years") + "</div><div><b>" + a.m + "</b>" + W("months") + "</div><div><b>" + a.d + "</b>" + W("days") + "</div>";
+  const days = Math.round((on - b) / DAY), h = hdiff(b, on), hb = hij(b);
+  /* next birthday (29 Feb falls on 1 Mar in other years) */
+  let nb = new Date(Date.UTC(on.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()));
+  if(nb < on) nb = new Date(Date.UTC(on.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()));
+  const toNext = Math.round((nb - on) / DAY);
+  let html = "";
+  html += card("Next birthday", toNext === 0 ? "🎉 " + W("Today!") : nf(toNext) + " " + W("days"), TT(fW.format(nb)) + ", " + fG.format(nb));
+  html += card("Age in Hijri years", h.y + " " + W("years") + " " + h.m + " " + W("months"), h.d + " " + W("days"));
+  html += card("Born on", TT(fW.format(b)), fG.format(b));
+  html += card("Hijri birth date", hb.d + " " + MONTHS[hb.m - 1] + " " + hb.y, "AH");
+  html += card("Total months", nf(a.y * 12 + a.m), "+ " + a.d + " " + W("days"));
+  html += card("Total weeks", nf(Math.floor(days / 7)), "+ " + days % 7 + " " + W("days"));
+  html += card("Total days", nf(days), "");
+  html += card("Total hours", "≈ " + nf(days * 24), "");
+  $("more").innerHTML = html;
+}
+for(let i = 1; i <= 30; i++){ const o = document.createElement("option"); o.value = i; o.textContent = i; $("hD").appendChild(o); }
+MONTHS.forEach((n, i) => { const o = document.createElement("option"); o.value = i + 1; o.textContent = (i + 1) + ". " + n; $("hM").appendChild(o); });
+const today = new Date(), t0 = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+$("on").value = iso(t0); $("dob").max = iso(t0);
+document.querySelectorAll("#cal button").forEach(b => b.onclick = () => {
+  /* carry the date over when switching calendars */
+  const cur = birth();
+  cal = b.dataset.c; document.querySelectorAll("#cal button").forEach(x => x.classList.toggle("on", x === b));
+  $("gBox").style.display = cal === "g" ? "" : "none"; $("hBox").style.display = cal === "h" ? "" : "none";
+  if(cur && cur !== "bad"){ if(cal === "g") $("dob").value = iso(cur); else { const h = hij(cur); $("hD").value = h.d; $("hM").value = h.m; $("hY").value = h.y; } }
+  calc();
+});
+["dob", "on", "hD", "hM", "hY"].forEach(id => $(id).addEventListener("input", calc));
+calc();
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Hijri date converter</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .today{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .today div{border-radius:14px;padding:18px 20px;color:#fff}
+  .today .g{background:linear-gradient(135deg,#1c7ed6,#1864ab)}
+  .today .h{background:linear-gradient(135deg,#0ca678,#087f5b)}
+  .today small{display:block;opacity:.85;font-size:12px;letter-spacing:.8px;text-transform:uppercase;font-weight:700}
+  .today b{display:block;font-size:22px;margin-top:6px;letter-spacing:-.3px}
+  .today span{display:block;margin-top:4px;opacity:.92;font-size:15px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .inrow{display:flex;gap:8px;flex-wrap:wrap}
+  .inrow select,.inrow input{flex:1;min-width:90px}
+  .res{margin-top:14px;background:#f5f7fb;border:1px solid var(--line);border-radius:12px;padding:16px;min-height:96px}
+  .res .big{font-size:21px;font-weight:750;color:var(--ink);letter-spacing:-.3px}
+  .res .sub{color:var(--ink-2);margin-top:4px}
+  .res .ar{font-size:19px;margin-top:6px;color:var(--ink);direction:rtl;text-align:right;font-family:"Segoe UI",Tahoma,Arial,sans-serif}
+  .res .bad{color:#c92a2a;font-weight:650}
+  .copy{margin-top:10px;padding:6px 12px !important;font-size:13px !important}
+  @media(max-width:860px){.two,.today{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>Today</h3>
+  <div class="today">
+    <div class="g"><small>Gregorian</small><b id="tg"></b><span id="tgw"></span></div>
+    <div class="h"><small>Hijri (Umm al-Qura)</small><b id="th"></b><span id="tha" dir="rtl"></span></div>
+  </div>
+</div>
+
+<div class="two">
+  <div class="box">
+    <h3>Gregorian → Hijri</h3>
+    <input type="date" id="gIn" style="width:100%">
+    <div class="res" id="gOut"></div>
+  </div>
+  <div class="box">
+    <h3>Hijri → Gregorian</h3>
+    <div class="inrow">
+      <select id="hD"></select>
+      <select id="hM" style="flex:2"></select>
+      <input type="number" id="hY" min="1300" max="1600" placeholder="Year">
+    </div>
+    <div class="res" id="hOut"></div>
+  </div>
+</div>
+<p class="note">Uses the Umm al-Qura calendar, the official calendar of Saudi Arabia. Religious dates such as the start of
+Ramadan or Eid are set by moon sighting and can differ by a day.</p>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const MONTHS = ["Muharram", "Safar", "Rabi al-Awwal", "Rabi al-Thani", "Jumada al-Ula", "Jumada al-Akhirah",
+                "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qadah", "Dhu al-Hijjah"];
+let CAL = "islamic-umalqura";
+try{
+  const test = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {timeZone: "UTC"}).resolvedOptions().calendar;
+  if(test !== "islamic-umalqura") CAL = "islamic-civil";
+}catch(e){ CAL = "islamic-civil"; }
+const fParts = new Intl.DateTimeFormat("en-u-ca-" + CAL + "-nu-latn", {day: "numeric", month: "numeric", year: "numeric", timeZone: "UTC"});
+const fAr = new Intl.DateTimeFormat("ar-SA-u-ca-" + CAL, {weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC"});
+const fG = new Intl.DateTimeFormat("en-GB", {day: "numeric", month: "long", year: "numeric", timeZone: "UTC"});
+const fW = new Intl.DateTimeFormat("en-GB", {weekday: "long", timeZone: "UTC"});
+
+function hij(d){
+  const p = {}; fParts.formatToParts(d).forEach(x => { if(x.type !== "literal") p[x.type] = parseInt(x.value, 10); });
+  return {y: p.year, m: p.month, d: p.day};
+}
+const hText = h => h.d + " " + MONTHS[h.m - 1] + " " + h.y + " AH";
+const key = h => (h.y * 12 + (h.m - 1)) * 31 + h.d;
+const DAY = 86400000;
+
+function toGreg(y, m, d){
+  /* start near the right day, then step until the Hijri date matches */
+  let t = Date.UTC(622, 6, 19) + Math.round((y - 1) * 354.36707 + (m - 1) * 29.530589 + (d - 1)) * DAY;
+  const want = key({y: y, m: m, d: d});
+  for(let i = 0; i < 80; i++){
+    const k = key(hij(new Date(t)));
+    if(k === want) return new Date(t);
+    t += (k < want ? 1 : -1) * DAY;
+    if(i > 70) break;
+  }
+  return null;
+}
+
+function showToday(){
+  const now = new Date(), t = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  $("tg").textContent = fG.format(t); $("tgw").textContent = TT(fW.format(t));
+  const h = hij(t); $("th").textContent = hText(h); $("tha").textContent = fAr.format(t);
+  $("gIn").value = t.toISOString().slice(0, 10);
+  $("hD").value = h.d; $("hM").value = h.m; $("hY").value = h.y;
+}
+function gConvert(){
+  const v = $("gIn").value; if(!v){ $("gOut").innerHTML = ""; return; }
+  const [y, m, d] = v.split("-").map(Number), t = new Date(Date.UTC(y, m - 1, d));
+  const h = hij(t);
+  $("gOut").innerHTML = '<div class="big"></div><div class="sub"></div><div class="ar"></div>' +
+                        '<button class="copy">📋 ' + TT("Copy") + "</button>";
+  $("gOut").querySelector(".big").textContent = hText(h);
+  $("gOut").querySelector(".sub").textContent = TT(fW.format(t)) + ", " + fG.format(t);
+  $("gOut").querySelector(".ar").textContent = fAr.format(t);
+  $("gOut").querySelector(".copy").onclick = () => copy(hText(h));
+}
+function hConvert(){
+  const y = Number($("hY").value), m = Number($("hM").value), d = Number($("hD").value);
+  if(!y || y < 1300 || y > 1600){ $("hOut").innerHTML = '<p class="note">' + TT("Enter a Hijri year between 1300 and 1600.") + "</p>"; return; }
+  const g = toGreg(y, m, d);
+  if(!g){ $("hOut").innerHTML = '<p class="bad">' + MONTHS[m - 1] + " " + y + " " + TT("has only 29 days.") + "</p>"; return; }
+  const txt = TT(fW.format(g)) + ", " + fG.format(g);
+  $("hOut").innerHTML = '<div class="big"></div><div class="sub"></div><button class="copy">📋 ' + TT("Copy") + "</button>";
+  $("hOut").querySelector(".big").textContent = fG.format(g);
+  $("hOut").querySelector(".sub").textContent = TT(fW.format(g)) + " · " + g.toISOString().slice(0, 10);
+  $("hOut").querySelector(".copy").onclick = () => copy(txt);
+}
+function copy(t){
+  try{ navigator.clipboard.writeText(t); }catch(e){}
+}
+for(let i = 1; i <= 30; i++){ const o = document.createElement("option"); o.value = i; o.textContent = i; $("hD").appendChild(o); }
+MONTHS.forEach((n, i) => { const o = document.createElement("option"); o.value = i + 1; o.textContent = (i + 1) + ". " + n; $("hM").appendChild(o); });
+$("gIn").oninput = gConvert;
+["hD", "hM", "hY"].forEach(id => $(id).oninput = hConvert);
+showToday(); gConvert(); hConvert();
+</script>
+</body>
+</html>

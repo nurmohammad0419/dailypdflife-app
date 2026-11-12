@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>OCR — image to text</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:30px;text-align:center}
+  .box{background:#fff;max-width:900px;margin:auto;padding:30px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  h1{color:#e8590c;margin-top:0}
+  .drop{display:block;border:3px dashed #f5b38a;border-radius:12px;padding:35px;cursor:pointer;color:#666}
+  .drop:hover{background:#fff6ef}
+  .langs{margin:18px 0}
+  .langs label{display:inline-block;margin:5px 10px;font-size:15px;cursor:pointer}
+  button{color:#fff;border:none;padding:12px 26px;font-size:15px;border-radius:8px;cursor:pointer;margin:5px;background:#e8590c}
+  button.s{background:#555}
+  #status{color:#555;margin:12px 0;min-height:20px}
+  .bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;max-width:450px;margin:auto;display:none}
+  .bar i{display:block;height:100%;width:0;background:#e8590c;transition:.2s}
+  #preview{max-width:100%;max-height:250px;margin-top:15px;border:1px solid #ddd;border-radius:8px;display:none}
+  textarea{width:100%;height:320px;margin-top:20px;padding:14px;font-size:16px;line-height:1.6;border:1px solid #ccc;border-radius:8px;font-family:inherit}
+  #actions{display:none}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="box">
+  <h1>🔍 OCR: pull text out of an image or PDF</h1>
+  <p>Turns scanned paper, photos and scanned PDFs into text you can copy.</p>
+  <label class="drop" id="drop">
+    📁 Choose an image (JPG, PNG) or a PDF, or drag and drop one
+    <input type="file" id="file" accept="image/*,application/pdf" hidden>
+  </label>
+  <img id="preview">
+  <div class="langs">
+    <b>What language is the text in?</b><br>
+    <label><input type="checkbox" value="eng" checked> English</label>
+    <label><input type="checkbox" value="ben"> Bangla</label>
+    <label><input type="checkbox" value="ara"> العربية</label>
+    <label><input type="checkbox" value="hin"> हिन्दी</label>
+    <label><input type="checkbox" value="urd"> اردو</label>
+  </div>
+  <button onclick="run()">🔍 Extract text</button>
+  <div id="status"></div>
+  <div class="bar" id="bar"><i id="barIn"></i></div>
+  <textarea id="out" placeholder="The extracted text will appear here..."></textarea>
+  <div id="actions">
+    <button class="s" onclick="copyText()">📋 Copy</button>
+    <button class="s" onclick="saveTxt()">⬇ Download TXT</button>
+    <button class="s" onclick="saveDoc()">⬇ Download Word</button>
+  </div>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const $ = id => document.getElementById(id);
+let file = null, name = "text";
+function pick(f){
+  if(!f) return;
+  file = f; name = f.name.replace(/\.[^.]+$/, "");
+  if(f.type.startsWith("image/")){ $("preview").src = URL.createObjectURL(f); $("preview").style.display = "inline"; }
+  else $("preview").style.display = "none";
+  $("status").textContent = "File selected: " + f.name;
+}
+$("file").onchange = e => pick(e.target.files[0]);
+const d = $("drop");
+d.ondragover = e => { e.preventDefault(); d.style.background = "#fff6ef"; };
+d.ondragleave = () => d.style.background = "";
+d.ondrop = e => { e.preventDefault(); d.style.background = ""; pick(e.dataTransfer.files[0]); };
+async function pdfToCanvases(f){
+  const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+  const list = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({scale: 2.5});
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    await page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+    list.push(c);
+  }
+  return list;
+}
+async function run(){
+  if(!file){ alert(T("Choose an image or PDF first")); return; }
+  const langs = [...document.querySelectorAll(".langs input:checked")].map(x => x.value);
+  if(!langs.length){ alert(T("Pick at least one language")); return; }
+  $("out").value = ""; $("actions").style.display = "none";
+  $("bar").style.display = "block"; $("barIn").style.width = "0";
+  let pageNo = 1, pages = 1;
+  const worker = await Tesseract.createWorker(langs.join("+"), 1, {
+    logger: m => {
+      const p = Math.round((m.progress || 0) * 100);
+      $("barIn").style.width = p + "%";
+      if(m.status === "recognizing text")
+        $("status").textContent = "Reading text" + (pages > 1 ? " (page " + pageNo + "/" + pages + ")" : "") + ": " + p + "%";
+      else $("status").textContent = "Loading language data... (takes a moment the first time)";
+    }
+  });
+  try{
+    const images = file.type === "application/pdf" ? await pdfToCanvases(file) : [file];
+    pages = images.length;
+    let all = "";
+    for(const im of images){
+      const { data } = await worker.recognize(im);
+      all += (pages > 1 ? "----- Page " + pageNo + " -----\n" : "") + data.text.trim() + "\n\n";
+      $("out").value = all; pageNo++;
+    }
+    $("status").textContent = all.trim() ? "✅ Done! Fix up the text if you need to." : "No text found.";
+    if(all.trim()) $("actions").style.display = "block";
+  }catch(e){
+    $("status").textContent = "❌ Something went wrong. Check your internet and try again.";
+  }
+  await worker.terminate();
+  $("bar").style.display = "none";
+}
+function copyText(){ navigator.clipboard.writeText($("out").value); $("status").textContent = "📋 Copied!"; }
+function download(blob, fn){ DPLResult.file(blob, fn); }
+function saveTxt(){ download(new Blob(["\ufeff" + $("out").value], {type: "text/plain;charset=utf-8"}), name + ".txt"); }
+function saveDoc(){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const html = $("out").value.split("\n").map(l => "<p>" + (esc(l) || "&nbsp;") + "</p>").join("");
+  const doc = '<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>' + html + "</body></html>";
+  download(new Blob(["\ufeff", doc], {type: "application/msword"}), name + ".doc");
+}
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

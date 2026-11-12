@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PDF to Word</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:30px;text-align:center}
+  h1{color:#2b579a}
+  .box{background:#fff;max-width:700px;margin:auto;padding:30px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  input{margin:20px 0}
+  button{background:#2b579a;color:#fff;border:none;padding:12px 30px;font-size:16px;border-radius:8px;cursor:pointer}
+  #preview{text-align:left;max-height:300px;overflow:auto;border:1px solid #ddd;padding:10px;margin-top:15px;white-space:pre-wrap}
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="box">
+  <h1>PDF to Word</h1>
+  <p>Pick a PDF and its text becomes a Word file. For scanned PDFs use the OCR tool.</p>
+  <input type="file" id="file" accept="application/pdf"><br>
+  <button onclick="convert()">Convert to Word</button>
+  <p id="status"></p>
+  <div id="preview"></div>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+async function convert(){
+  const f = document.getElementById("file").files[0];
+  const status = document.getElementById("status");
+  const preview = document.getElementById("preview");
+  if(!f){ alert(T("Choose a PDF first")); return; }
+  status.textContent = "Working...";
+  const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+  let html = "", plain = "";
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const lines = {};
+    content.items.forEach(it => {
+      const y = Math.round(it.transform[5]);
+      (lines[y] = lines[y] || []).push(it);
+    });
+    const ys = Object.keys(lines).map(Number).sort((a,b) => b - a);
+    ys.forEach(y => {
+      const text = lines[y].sort((a,b) => a.transform[4] - b.transform[4])
+                           .map(it => it.str).join(" ").trim();
+      if(text){ html += "<p>" + esc(text) + "</p>"; plain += text + "\n"; }
+    });
+    if(i < pdf.numPages){
+      html += '<br style="page-break-before:always">';
+      plain += "\n----- Page " + (i+1) + " -----\n";
+    }
+  }
+  if(!plain.trim()){
+    status.textContent = "No text found in this PDF (it is probably a scan). Use the OCR tool instead.";
+    return;
+  }
+  const doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+    'xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>' +
+    html + "</body></html>";
+  DPLResult.file(new Blob(["\ufeff", doc], {type: "application/msword"}),
+                 f.name.replace(/\.pdf$/i, "") + ".doc");
+  preview.textContent = plain;
+  status.textContent = "Done! Your Word file is ready.";
+}
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

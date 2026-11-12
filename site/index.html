@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>DailyPdfLife — Every PDF &amp; document task in one place</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="description" content="Free online PDF tools: merge, split, compress, edit, PDF to Word, CV and invoice makers, OCR, QR codes and more.">
+<meta property="og:title" content="DailyPdfLife — Every PDF &amp; document task in one place">
+<meta property="og:description" content="48 free tools: merge, split, compress, PDF to Word, CV and invoice makers, OCR, QR codes.">
+<meta property="og:image" content="banner.svg">
+<meta property="og:url" content="https://dailypdflife.com">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<style>
+  .hero{background:linear-gradient(120deg,#1b2030 0%,#2a1f2b 60%,#3a2026 100%);color:#fff;
+        border-radius:20px;padding:30px 30px 26px;margin-bottom:22px;position:relative;overflow:hidden}
+  .hero:after{content:"";position:absolute;right:-90px;top:-120px;width:420px;height:420px;
+        background:radial-gradient(closest-side,rgba(229,50,45,.45),transparent 70%)}
+  .hero h1{margin:0 0 8px;font-size:30px;letter-spacing:-.8px;font-weight:760;position:relative}
+  .hero h1 em{font-style:normal;color:#ff7a62}
+  .hero p{margin:0 0 20px;color:#b9c0cf;font-size:15.5px;max-width:560px;position:relative}
+  .sbox{position:relative;max-width:520px}
+  .sbox input{width:100%;padding:13px 16px 13px 44px !important;border:0 !important;border-radius:12px !important;
+        font-size:15px !important;background:rgba(255,255,255,.96) !important}
+  .sbox span{position:absolute;left:15px;top:11px;font-size:16px;opacity:.5}
+  .stats{display:flex;gap:22px;margin-top:18px;position:relative;flex-wrap:wrap}
+  .stats div{font-size:13px;color:#aab2c2}
+  .stats b{display:block;font-size:19px;color:#fff;font-weight:700}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .chips button{padding:8px 15px;border-radius:30px;font-size:13.5px;font-weight:650;
+        border:1px solid var(--line);background:#fff;color:var(--ink-2)}
+  .chips button.on{background:#1b2030;border-color:#1b2030;color:#fff}
+
+  .tsec h2{font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);
+        margin:26px 0 10px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .tsec h2 span{background:#e9edf5;color:var(--ink-3);border-radius:20px;padding:1px 8px;font-size:11.5px}
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
+  .tcard{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+        border-radius:var(--r-lg);padding:15px;text-decoration:none;color:inherit;
+        transition:border-color .15s,box-shadow .15s,transform .15s}
+  .tcard:hover{border-color:var(--c);box-shadow:0 10px 26px rgba(20,25,40,.1);transform:translateY(-2px)}
+  .tcard .ic{width:40px;height:40px;border-radius:11px;background:var(--c);color:#fff;flex:none;
+        display:flex;align-items:center;justify-content:center;font-size:19px}
+  .tcard .tx{min-width:0}
+  .tcard b{display:block;font-size:14.5px;font-weight:680;margin-bottom:2px}
+  .tcard i{font-style:normal;font-size:13px;color:var(--ink-3);line-height:1.45;display:block}
+  .none{display:none;color:var(--ink-3);padding:30px 4px}
+  .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px;
+        display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  @media(max-width:620px){.hero{padding:22px 18px}.hero h1{font-size:23px}}
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="hero">
+  <h1>Every <em>PDF &amp; document</em> task, in one place</h1>
+  <p>48 free tools that run inside your browser. Nothing is uploaded, nothing is stored, no sign-up needed.</p>
+  <div class="sbox"><span>🔍</span><input id="q" placeholder="Search tools… e.g. merge, CV, passport"></div>
+  <div class="stats">
+    <div><b>48</b>tools</div>
+    <div><b>0</b>files uploaded</div>
+    <div><b>Free</b>no account</div>
+  </div>
+</div>
+
+<div class="chips" id="chips"><button class="on" data-f="all">All</button><button data-f="PDF tools">PDF tools</button><button data-f="Convert">Convert</button><button data-f="Image tools">Image tools</button><button data-f="Document makers">Document makers</button><button data-f="Smart tools">Smart tools</button><button data-f="Calculators">Calculators</button></div>
+
+      <section class="tsec" data-c="PDF tools">
+        <h2>PDF tools <span>17</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="pdf-viewer.html" style="--c:#e5322d" data-k="pdf viewer open and read a pdf: zoom, search and night mode. viewer reader read open">
+          <span class="ic">📖</span>
+          <span class="tx"><b>PDF viewer</b><i>Open and read a PDF: zoom, search and night mode.</i></span>
+        </a>
+        <a class="tcard" href="merge-and-jpg.html#merge" style="--c:#e5322d" data-k="merge pdf join several pdfs into one file. merge join">
+          <span class="ic">⧉</span>
+          <span class="tx"><b>Merge PDF</b><i>Join several PDFs into one file.</i></span>
+        </a>
+        <a class="tcard" href="split-and-compress.html#split" style="--c:#f76707" data-k="split pdf split pages apart or pull out the ones you need. split pages">
+          <span class="ic">✂</span>
+          <span class="tx"><b>Split PDF</b><i>Split pages apart or pull out the ones you need.</i></span>
+        </a>
+        <a class="tcard" href="split-and-compress.html#compress" style="--c:#7b3fe4" data-k="compress pdf make a pdf file smaller. compress size">
+          <span class="ic">⇲</span>
+          <span class="tx"><b>Compress PDF</b><i>Make a PDF file smaller.</i></span>
+        </a>
+        <a class="tcard" href="pdf-editor.html" style="--c:#c2255c" data-k="edit pdf add text, shapes, images and signatures. edit sign annotate">
+          <span class="ic">✏</span>
+          <span class="tx"><b>Edit PDF</b><i>Add text, shapes, images and signatures.</i></span>
+        </a>
+        <a class="tcard" href="more-tools.html#rotate" style="--c:#f08c00" data-k="rotate pdf turn pages right, left or upside down. rotate">
+          <span class="ic">↻</span>
+          <span class="tx"><b>Rotate PDF</b><i>Turn pages right, left or upside down.</i></span>
+        </a>
+        <a class="tcard" href="more-tools.html#numbers" style="--c:#1c7ed6" data-k="page numbers put a number on every page. page number">
+          <span class="ic">#</span>
+          <span class="tx"><b>Page numbers</b><i>Put a number on every page.</i></span>
+        </a>
+        <a class="tcard" href="more-tools.html#watermark" style="--c:#0ca678" data-k="watermark stamp a watermark across every page. watermark">
+          <span class="ic">💧</span>
+          <span class="tx"><b>Watermark</b><i>Stamp a watermark across every page.</i></span>
+        </a>
+        <a class="tcard" href="pdf-password.html" style="--c:#c92a2a" data-k="protect pdf lock a pdf with a password. password protect">
+          <span class="ic">🔒</span>
+          <span class="tx"><b>Protect PDF</b><i>Lock a PDF with strong AES-256 encryption.</i></span>
+        </a>
+                <a class="tcard" href="organize-pdf.html" style="--c:#1971c2" data-k="organize pdf reorder, rotate, remove and combine pages. organize reorder sort delete pages">
+          <span class="ic">▦</span>
+          <span class="tx"><b>Organize PDF</b><i>Reorder, rotate, remove and combine pages.</i></span>
+        </a>
+        <a class="tcard" href="unlock-pdf.html" style="--c:#0b7285" data-k="unlock pdf remove the password and restrictions from a pdf. unlock password remove decrypt">
+          <span class="ic">🔓</span>
+          <span class="tx"><b>Unlock PDF</b><i>Remove the password and restrictions from a PDF.</i></span>
+        </a>
+        <a class="tcard" href="fill-pdf-forms.html" style="--c:#5f3dc4" data-k="fill pdf forms type into the boxes of a fillable pdf form. fill form acroform">
+          <span class="ic">☑</span>
+          <span class="tx"><b>Fill PDF forms</b><i>Type into the boxes of a fillable PDF form.</i></span>
+        </a>
+        <a class="tcard" href="redact-pdf.html" style="--c:#212529" data-k="redact pdf black out private text and remove it for good. redact black out hide private">
+          <span class="ic">⬛</span>
+          <span class="tx"><b>Redact PDF</b><i>Black out private text and remove it for good.</i></span>
+        </a>
+        <a class="tcard" href="crop-pdf.html" style="--c:#e8590c" data-k="crop pdf trim the margins or cut pages to a smaller area. crop trim margins">
+          <span class="ic">⌗</span>
+          <span class="tx"><b>Crop PDF</b><i>Trim the margins or cut pages to a smaller area.</i></span>
+        </a>
+        <a class="tcard" href="remove-pages.html" style="--c:#e03131" data-k="remove pages delete the pages you don't need from a pdf. remove delete pages">
+          <span class="ic">🗑</span>
+          <span class="tx"><b>Remove pages</b><i>Delete the pages you don't need from a PDF.</i></span>
+        </a>
+        <a class="tcard" href="remove-pages.html#extract" style="--c:#1971c2" data-k="extract pages save only the pages you choose as a new pdf. extract select pages">
+          <span class="ic">📤</span>
+          <span class="tx"><b>Extract pages</b><i>Save only the pages you choose as a new PDF.</i></span>
+        </a>
+        <a class="tcard" href="stamp-pdf.html" style="--c:#c92a2a" data-k="stamp pdf add a paid or approved stamp, or your company seal. stamp seal paid approved signature image">
+          <span class="ic">🔖</span>
+          <span class="tx"><b>Stamp PDF</b><i>Add a PAID or APPROVED stamp, or your company seal.</i></span>
+        </a>
+        </div>
+      </section>
+      <section class="tsec" data-c="Convert">
+        <h2>Convert <span>8</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="pdf-to-word.html" style="--c:#2b579a" data-k="pdf to word pull the text out of a pdf into word. word doc">
+          <span class="ic">W</span>
+          <span class="tx"><b>PDF to Word</b><i>Pull the text out of a PDF into Word.</i></span>
+        </a>
+        <a class="tcard" href="pdf-to-jpg.html" style="--c:#f59f00" data-k="pdf to jpg turn every page into a jpg image. jpg image">
+          <span class="ic">🖼</span>
+          <span class="tx"><b>PDF to JPG</b><i>Turn every page into a JPG image.</i></span>
+        </a>
+        <a class="tcard" href="merge-and-jpg.html#jpg" style="--c:#2e9d4a" data-k="jpg to pdf turn images into a pdf. jpg image pdf">
+          <span class="ic">📷</span>
+          <span class="tx"><b>JPG to PDF</b><i>Turn images into a PDF.</i></span>
+        </a>
+                <a class="tcard" href="word-to-pdf.html" style="--c:#1864ab" data-k="word to pdf turn a word (.docx) document into a pdf. word docx doc pdf">
+          <span class="ic">W</span>
+          <span class="tx"><b>Word to PDF</b><i>Turn a Word (.docx) document into a PDF.</i></span>
+        </a>
+        <a class="tcard" href="heic-to-jpg.html" style="--c:#f59f00" data-k="heic to jpg convert iphone photos to jpg or png. heic heif iphone jpg">
+          <span class="ic">📱</span>
+          <span class="tx"><b>HEIC to JPG</b><i>Convert iPhone photos to JPG or PNG.</i></span>
+        </a>
+        <a class="tcard" href="scan-to-pdf.html" style="--c:#2b8a3e" data-k="scan to pdf photograph paper pages and make a clean pdf. scan camera photo document">
+          <span class="ic">📄</span>
+          <span class="tx"><b>Scan to PDF</b><i>Photograph paper pages and make a clean PDF.</i></span>
+        </a>
+        <a class="tcard" href="excel-to-pdf.html" style="--c:#1d6f42" data-k="excel to pdf turn an excel or csv sheet into a neat pdf. excel xlsx xls csv sheet spreadsheet">
+          <span class="ic">X</span>
+          <span class="tx"><b>Excel to PDF</b><i>Turn an Excel or CSV sheet into a neat PDF.</i></span>
+        </a>
+        <a class="tcard" href="pdf-to-excel.html" style="--c:#2f9e44" data-k="pdf to excel pull tables out of a pdf into an excel sheet. excel xlsx table csv">
+          <span class="ic">📊</span>
+          <span class="tx"><b>PDF to Excel</b><i>Pull tables out of a PDF into an Excel sheet.</i></span>
+        </a>
+        </div>
+      </section>
+      <section class="tsec" data-c="Image tools">
+        <h2>Image tools <span>10</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="remove-bg.html" style="--c:#7b3fe4" data-k="remove background cut the background out of a photo with ai. background remove">
+          <span class="ic">🪄</span>
+          <span class="tx"><b>Remove background</b><i>Cut the background out of a photo with AI.</i></span>
+        </a>
+        <a class="tcard" href="image-tools.html#compress" style="--c:#1c7ed6" data-k="compress image shrink an image while keeping it sharp. image compress">
+          <span class="ic">🗜</span>
+          <span class="tx"><b>Compress image</b><i>Shrink an image while keeping it sharp.</i></span>
+        </a>
+        <a class="tcard" href="image-tools.html#resize" style="--c:#f08c00" data-k="resize image change an image's size in pixels or percent. image resize">
+          <span class="ic">↔</span>
+          <span class="tx"><b>Resize image</b><i>Change an image's size in pixels or percent.</i></span>
+        </a>
+        <a class="tcard" href="image-tools.html#convert" style="--c:#0ca678" data-k="convert image convert between jpg, png and webp. image convert webp">
+          <span class="ic">⇄</span>
+          <span class="tx"><b>Convert image</b><i>Convert between JPG, PNG and WEBP.</i></span>
+        </a>
+        <a class="tcard" href="passport-photo.html" style="--c:#1971c2" data-k="passport photo make passport and visa photos ready to print. passport visa">
+          <span class="ic">🪪</span>
+          <span class="tx"><b>Passport photo</b><i>Make passport and visa photos ready to print.</i></span>
+        </a>
+                <a class="tcard" href="crop-image.html" style="--c:#c2255c" data-k="crop image cut a photo to any shape, rotate or flip it. crop image cut photo">
+          <span class="ic">✂</span>
+          <span class="tx"><b>Crop image</b><i>Cut a photo to any shape, rotate or flip it.</i></span>
+        </a>
+        <a class="tcard" href="photo-collage.html" style="--c:#d6336c" data-k="photo collage put several photos together in one picture. collage grid combine photos">
+          <span class="ic">🧩</span>
+          <span class="tx"><b>Photo collage</b><i>Put several photos together in one picture.</i></span>
+        </a>
+        <a class="tcard" href="image-watermark.html" style="--c:#0ca678" data-k="image watermark add your name or logo to photos. watermark logo copyright photo">
+          <span class="ic">💧</span>
+          <span class="tx"><b>Image watermark</b><i>Add your name or logo to photos.</i></span>
+        </a>
+        <a class="tcard" href="blur-image.html" style="--c:#5f3dc4" data-k="blur & hide blur faces, numbers or private details in a photo. blur pixelate hide censor face">
+          <span class="ic">🫥</span>
+          <span class="tx"><b>Blur & hide</b><i>Blur faces, numbers or private details in a photo.</i></span>
+        </a>
+        <a class="tcard" href="text-on-photo.html" style="--c:#e8590c" data-k="text on photo write captions, quotes or meme text on a picture. text caption meme quote">
+          <span class="ic">🅰</span>
+          <span class="tx"><b>Text on photo</b><i>Write captions, quotes or meme text on a picture.</i></span>
+        </a>
+        </div>
+      </section>
+      <section class="tsec" data-c="Document makers">
+        <h2>Document makers <span>3</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="cv-maker.html" style="--c:#7b3fe4" data-k="cv maker build a clean cv and download it as a pdf. cv resume">
+          <span class="ic">📄</span>
+          <span class="tx"><b>CV maker</b><i>Build a clean CV and download it as a PDF.</i></span>
+        </a>
+        <a class="tcard" href="invoice-maker.html" style="--c:#0b7285" data-k="invoice & quotation create professional invoices and quotations. invoice bill">
+          <span class="ic">🧾</span>
+          <span class="tx"><b>Invoice & quotation</b><i>Create professional invoices and quotations.</i></span>
+        </a>
+        <a class="tcard" href="cover-letter.html" style="--c:#c2255c" data-k="cover letter write a cover letter for a job application. cover letter job">
+          <span class="ic">✉</span>
+          <span class="tx"><b>Cover letter</b><i>Write a cover letter for a job application.</i></span>
+        </a>
+        </div>
+      </section>
+      <section class="tsec" data-c="Smart tools">
+        <h2>Smart tools <span>3</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="ocr.html" style="--c:#e8590c" data-k="ocr pull text out of a photo or a scanned pdf. ocr scan text">
+          <span class="ic">🔍</span>
+          <span class="tx"><b>OCR</b><i>Pull text out of a photo or a scanned PDF.</i></span>
+        </a>
+        <a class="tcard" href="qr-code.html" style="--c:#212529" data-k="qr code make qr codes for links, whatsapp and wifi. qr whatsapp wifi">
+          <span class="ic">🔳</span>
+          <span class="tx"><b>QR code</b><i>Make QR codes for links, WhatsApp and WiFi.</i></span>
+        </a>
+                <a class="tcard" href="hijri-converter.html" style="--c:#0ca678" data-k="hijri date converter convert between hijri and gregorian dates. hijri islamic umm al-qura date arabic">
+          <span class="ic">☪</span>
+          <span class="tx"><b>Hijri date converter</b><i>Convert between Hijri and Gregorian dates.</i></span>
+        </a>
+        </div>
+      </section>
+      <section class="tsec" data-c="Calculators">
+        <h2>Calculators <span>7</span></h2>
+        <div class="tgrid">
+        <a class="tcard" href="vat-calculator.html" style="--c:#0b7285" data-k="vat calculator add or remove vat for saudi arabia, uae and more. vat tax calculator saudi">
+          <span class="ic">%</span>
+          <span class="tx"><b>VAT calculator</b><i>Add or remove VAT for Saudi Arabia, UAE and more.</i></span>
+        </a>
+        <a class="tcard" href="zakat-calculator.html" style="--c:#087f5b" data-k="zakat calculator work out the zakat due on your savings, gold and silver. zakat nisab gold silver islamic">
+          <span class="ic">☾</span>
+          <span class="tx"><b>Zakat calculator</b><i>Work out the zakat due on your savings, gold and silver.</i></span>
+        </a>
+        <a class="tcard" href="loan-calculator.html" style="--c:#1c7ed6" data-k="loan & emi monthly payment and total profit for any loan or finance. loan emi finance car installment">
+          <span class="ic">🏦</span>
+          <span class="tx"><b>Loan & EMI</b><i>Monthly payment and total profit for any loan or finance.</i></span>
+        </a>
+        <a class="tcard" href="percentage-calculator.html" style="--c:#7048e8" data-k="percentage percent of, increase, decrease and discount. percent percentage discount">
+          <span class="ic">٪</span>
+          <span class="tx"><b>Percentage</b><i>Percent of, increase, decrease and discount in one place.</i></span>
+        </a>
+        <a class="tcard" href="age-calculator.html" style="--c:#d6336c" data-k="age calculator exact age in years, months and days, also in hijri. age birthday hijri">
+          <span class="ic">🎂</span>
+          <span class="tx"><b>Age calculator</b><i>Exact age in years, months and days, also in Hijri.</i></span>
+        </a>
+        <a class="tcard" href="unit-converter.html" style="--c:#1971c2" data-k="unit converter length, area, weight, pressure, flow, pipe sizes. unit convert feet metre kg psi bar pipe">
+          <span class="ic">⇆</span>
+          <span class="tx"><b>Unit converter</b><i>Length, area, weight, pressure, flow, pipe sizes and more.</i></span>
+        </a>
+        <a class="tcard" href="construction-calculator.html" style="--c:#e67700" data-k="construction tiles, paint, concrete, blocks, pipes and water tanks. tile paint cement concrete block pipe tank">
+          <span class="ic">🏗</span>
+          <span class="tx"><b>Construction</b><i>Tiles, paint, concrete, blocks, pipes and water tanks.</i></span>
+        </a>
+        </div>
+      </section>
+<p class="none" id="none">No tools matched that. Try another word.</p>
+
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+let cat = "all";
+const q = document.getElementById("q");
+function apply(){
+  const s = q.value.trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll(".tsec").forEach(sec => {
+    let n = 0;
+    sec.querySelectorAll(".tcard").forEach(c => {
+      const ok = (cat === "all" || sec.dataset.c === cat) && (!s || c.dataset.k.includes(s));
+      c.style.display = ok ? "" : "none"; if(ok) n++;
+    });
+    sec.style.display = n ? "" : "none"; shown += n;
+  });
+  document.getElementById("none").style.display = shown ? "none" : "block";
+}
+q.addEventListener("input", apply);
+document.querySelectorAll("#chips button").forEach(b => b.onclick = () => {
+  cat = b.dataset.f;
+  document.querySelectorAll("#chips button").forEach(x => x.classList.toggle("on", x === b));
+  apply();
+});
+</script>
+</body>
+</html>

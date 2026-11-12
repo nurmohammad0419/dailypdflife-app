@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Unlock PDF</title>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="qpdf-run.js"></script>
+<style>
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row input[type=password],.row input[type=text]{flex:1;min-width:220px}
+  .go{background:#0b7285;color:#fff;border:0;margin-top:14px}
+  .ok{color:#17935a;font-weight:650}
+  .bad{color:#c92a2a;font-weight:650}
+  .info{background:#f4f8ff;border:1px solid #dbe6ff;border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink-2)}
+  .info b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose the locked PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <h3>2. Enter its password</h3>
+  <div class="row">
+    <input type="password" id="pw" placeholder="Password (leave empty if the file only blocks printing or copying)">
+    <label><input type="checkbox" id="show"> Show</label>
+  </div>
+  <button class="go" id="go">🔓 Unlock PDF</button>
+  <p id="status"></p>
+</div>
+<div class="box info">
+  <p><b>What this does:</b> removes the password and the printing or copying restrictions from a PDF you can
+  already open. The text, pages and quality stay exactly the same.</p>
+  <p><b>You need the password.</b> This tool does not guess or crack passwords. Only unlock files you own or
+  have permission to change.</p>
+</div>
+
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+$("show").onchange = () => $("pw").type = $("show").checked ? "text" : "password";
+$("pw").onkeydown = e => { if(e.key === "Enter") $("go").click(); };
+
+$("go").onclick = async () => {
+  const f = $("file").files[0], st = $("status");
+  if(!f){ alert(TT("Choose a PDF first")); return; }
+  const btn = $("go"); btn.disabled = true;
+  st.className = ""; st.textContent = TT("Working... the PDF engine loads the first time (about 1 MB).");
+  try{
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    const pw = $("pw").value;
+    const r = await DPLqpdf.run(["--password=" + pw, "--decrypt", "/in.pdf", "/out.pdf"], bytes);
+    if(r.out && r.out.length && r.code !== 2){
+      const was = await DPLqpdf.run(["--password=" + pw, "--is-encrypted", "/in.pdf"], bytes);
+      if(was.code !== 0){
+        st.className = "ok"; st.textContent = TT("This PDF is not locked — it has no password or restrictions.");
+      }else{
+        st.className = "ok"; st.textContent = TT("Done! The password and restrictions have been removed.");
+        DPLResult.file(new Blob([r.out], {type: "application/pdf"}), f.name.replace(/\.pdf$/i, "") + "-unlocked.pdf");
+      }
+    }else{
+      st.className = "bad";
+      st.textContent = pw ? TT("Wrong password. Please check it and try again.")
+                          : TT("This PDF needs a password to open. Enter it above.");
+    }
+  }catch(err){
+    st.className = "bad"; st.textContent = TT("Something went wrong. Check your internet and try again.");
+  }
+  btn.disabled = false;
+};
+</script>
+</body>
+</html>

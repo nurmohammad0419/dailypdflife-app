@@ -1,0 +1,25 @@
+{
+  "name": "DailyPdfLife – PDF tools, scanner & viewer",
+  "short_name": "DailyPdfLife",
+  "description": "Free PDF and document tools that work right on your phone: scan, view, merge, compress, convert and more.",
+  "id": "/",
+  "start_url": "/index.html?source=homescreen",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "en",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Scan to PDF", "short_name": "Scan", "url": "/scan-to-pdf.html", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "PDF viewer", "short_name": "Viewer", "url": "/pdf-viewer.html", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Merge PDF", "short_name": "Merge", "url": "/merge-and-jpg.html#merge", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Compress PDF", "short_name": "Compress", "url": "/split-and-compress.html#compress", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

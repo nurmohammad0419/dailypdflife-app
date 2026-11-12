@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>CV Maker</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;background:#eef1f6;margin:0}
+  .wrap{display:flex;gap:20px;padding:20px;flex-wrap:wrap;justify-content:center}
+  .form{background:#fff;width:420px;max-width:100%;padding:20px;border-radius:12px;box-shadow:0 2px 10px #0002}
+  .form h2{color:#7b3fe4;margin-top:0}
+  .form h3{margin:20px 0 8px;color:#444;border-bottom:1px solid #eee;padding-bottom:5px}
+  .form input,.form textarea{width:100%;padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit}
+  .form textarea{height:70px}
+  .entry{background:#f8f9fc;padding:10px;border-radius:8px;margin-bottom:8px;position:relative}
+  .del{position:absolute;top:5px;right:8px;cursor:pointer;color:#e5322d;border:none;background:none;font-size:16px}
+  .add{background:#eee;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+  .colors span{display:inline-block;width:28px;height:28px;border-radius:50%;cursor:pointer;margin-right:6px;border:3px solid #fff;box-shadow:0 0 0 1px #ccc}
+  .dl{width:100%;background:#7b3fe4;color:#fff;border:none;padding:14px;font-size:16px;border-radius:8px;cursor:pointer;margin-top:20px}
+  #cv{--c:#2b579a;background:#fff;width:794px;min-height:1123px;display:flex;box-shadow:0 2px 15px #0003}
+  .side{width:260px;background:var(--c);color:#fff;padding:30px 22px}
+  .photo{width:140px;height:140px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 20px;border:4px solid #fff5}
+  .side h4{text-transform:uppercase;letter-spacing:1px;font-size:13px;border-bottom:1px solid #fff6;padding-bottom:5px;margin:22px 0 10px}
+  .side p,.side li{font-size:13px;margin:5px 0;word-break:break-word}
+  .side ul{padding-left:18px;margin:0}
+  .main{flex:1;padding:35px 30px}
+  .main h1{margin:0;font-size:32px;color:var(--c)}
+  .job{font-size:17px;color:#666;margin:5px 0 20px}
+  .main h4{color:var(--c);text-transform:uppercase;letter-spacing:1px;font-size:14px;border-bottom:2px solid var(--c);padding-bottom:5px;margin:22px 0 10px}
+  .it{margin-bottom:12px}
+  .it b{font-size:15px}
+  .it .meta{color:#777;font-size:13px}
+  .it p{margin:4px 0 0;font-size:13px;line-height:1.5;color:#333}
+  .summary{font-size:13px;line-height:1.6;color:#333}
+  @media print{
+    body{background:#fff}
+    .form{display:none}
+    .wrap{padding:0}
+    #cv{box-shadow:none;width:100%;min-height:auto}
+    @page{size:A4;margin:0}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="form">
+  <h2>CV Maker</h2>
+  <h3>Personal details</h3>
+  <input id="name" placeholder="Full name">
+  <input id="title" placeholder="Job title, e.g. Plumbing Engineer">
+  <input id="phone" placeholder="Phone number">
+  <input id="email" placeholder="Email">
+  <input id="address" placeholder="Address">
+  Photo: <input type="file" id="photo" accept="image/*">
+  <textarea id="summary" placeholder="Two or three lines about yourself"></textarea>
+  <h3>Work experience</h3>
+  <div id="expList"></div>
+  <button class="add" onclick="addExp()">+ Add experience</button>
+  <h3>Education</h3>
+  <div id="eduList"></div>
+  <button class="add" onclick="addEdu()">+ Add education</button>
+  <h3>Skills & languages</h3>
+  <input id="skills" placeholder="Skills, separated by commas">
+  <input id="langs" placeholder="Languages, e.g. Bangla, English, Arabic">
+  <h3>Pick a colour</h3>
+  <div class="colors">
+    <span style="background:#2b579a" onclick="color('#2b579a')"></span>
+    <span style="background:#2e9d4a" onclick="color('#2e9d4a')"></span>
+    <span style="background:#e5322d" onclick="color('#e5322d')"></span>
+    <span style="background:#7b3fe4" onclick="color('#7b3fe4')"></span>
+    <span style="background:#333" onclick="color('#333')"></span>
+  </div>
+  <button class="dl" onclick="window.print()">⬇ Download as PDF</button>
+  <p style="font-size:12px;color:#777">In the print window choose "Save as PDF" and tick "Background graphics".</p>
+</div>
+<div id="cv">
+  <div class="side">
+    <img id="vPhoto" class="photo" style="display:none">
+    <h4>Contact</h4>
+    <p id="vPhone"></p><p id="vEmail"></p><p id="vAddress"></p>
+    <h4>Skills</h4><ul id="vSkills"></ul>
+    <h4>Languages</h4><ul id="vLangs"></ul>
+  </div>
+  <div class="main">
+    <h1 id="vName">Your Name</h1>
+    <div class="job" id="vTitle">Your job title</div>
+    <h4>Profile</h4><div class="summary" id="vSummary"></div>
+    <h4>Work experience</h4><div id="vExp"></div>
+    <h4>Education</h4><div id="vEdu"></div>
+  </div>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function entry(listId, fields){
+  const d = document.createElement("div"); d.className = "entry";
+  d.innerHTML = '<button class="del" onclick="this.parentNode.remove();render()">✕</button>' +
+    fields.map(f => f[0] === "t"
+      ? '<textarea data-k="' + f[1] + '" placeholder="' + f[2] + '"></textarea>'
+      : '<input data-k="' + f[1] + '" placeholder="' + f[2] + '">').join("");
+  $(listId).appendChild(d);
+}
+function addExp(){ entry("expList", [["i","a","Job title"],["i","b","Company"],["i","c","Dates, e.g. 2020 - present"],["t","d","What you did there"]]); }
+function addEdu(){ entry("eduList", [["i","a","Degree"],["i","b","Institution"],["i","c","Year"]]); }
+function items(listId){
+  return [...$(listId).querySelectorAll(".entry")].map(e => {
+    const o = {}; e.querySelectorAll("[data-k]").forEach(x => o[x.dataset.k] = esc(x.value)); return o;
+  });
+}
+const listHtml = v => v.split(",").map(s => s.trim()).filter(Boolean).map(s => "<li>" + esc(s) + "</li>").join("");
+function render(){
+  $("vName").textContent = $("name").value || "Your Name";
+  $("vTitle").textContent = $("title").value || "Your job title";
+  $("vPhone").textContent = $("phone").value ? "📞 " + $("phone").value : "";
+  $("vEmail").textContent = $("email").value ? "✉ " + $("email").value : "";
+  $("vAddress").textContent = $("address").value ? "📍 " + $("address").value : "";
+  $("vSummary").textContent = $("summary").value;
+  $("vSkills").innerHTML = listHtml($("skills").value);
+  $("vLangs").innerHTML = listHtml($("langs").value);
+  $("vExp").innerHTML = items("expList").map(x =>
+    '<div class="it"><b>' + x.a + '</b><div class="meta">' + x.b + (x.c ? " | " + x.c : "") +
+    '</div><p>' + x.d.replace(/\n/g, "<br>") + '</p></div>').join("");
+  $("vEdu").innerHTML = items("eduList").map(x =>
+    '<div class="it"><b>' + x.a + '</b><div class="meta">' + x.b + (x.c ? " | " + x.c : "") + '</div></div>').join("");
+}
+function color(c){ $("cv").style.setProperty("--c", c); }
+$("photo").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("vPhoto").src = r.result; $("vPhoto").style.display = "block"; };
+  r.readAsDataURL(f);
+};
+document.querySelector(".form").addEventListener("input", render);
+addExp(); addEdu(); render();
+</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>
