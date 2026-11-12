@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Saudi VAT Calculator – Add or Remove 15% VAT | DailyPdfLife</title>
+<meta name="description" content="Free Saudi VAT calculator. Add 15% VAT to a price or remove it to find the net amount. Instant results in SAR for invoices and receipts. No sign-up.">
+<link rel="canonical" href="https://dailypdflife.com/saudi-vat-calculator">
+<meta property="og:title" content="Saudi VAT Calculator – Add or Remove 15% VAT | DailyPdfLife">
+<meta property="og:description" content="Free Saudi VAT calculator. Add 15% VAT to a price or remove it to find the net amount. Instant results in SAR for invoices and receipts. No sign-up.">
+<meta property="og:url" content="https://dailypdflife.com/saudi-vat-calculator">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<meta name="dpl-h1" content="Saudi VAT Calculator (15%)">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<style>
+  .lay{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:18px;align-items:start}
+  .seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .seg button{border:0 !important;border-radius:0 !important;padding:11px !important;background:#fff}
+  .seg button.on{background:#1b2030;color:#fff}
+  .amt{display:flex;gap:8px}
+  .amt input{flex:1 1 auto;min-width:0;width:auto !important;font-size:22px !important;font-weight:700;padding:12px 14px !important}
+  .amt select{flex:0 0 100px;width:100px !important}
+  .rates{display:flex;flex-wrap:wrap;gap:6px}
+  .rates button{padding:7px 11px !important;font-size:13px !important}
+  .rates button.on{background:#0b7285;color:#fff;border-color:#0b7285}
+  .rates input{width:90px}
+  .out{display:grid;gap:12px}
+  .card{border-radius:14px;padding:18px 20px;border:1px solid var(--line);background:#fff}
+  .card small{display:block;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:26px;margin-top:4px;letter-spacing:-.4px;color:var(--ink)}
+  .card.tot{background:linear-gradient(135deg,#0b7285,#095c6b);border:0}
+  .card.tot small{color:rgba(255,255,255,.75)} .card.tot b{color:#fff;font-size:32px}
+  .card.vat b{color:#0b7285}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="lay">
+  <div class="box">
+    <h3>Calculation</h3>
+    <div class="seg" id="mode">
+      <button data-m="add" class="on">＋ Add VAT</button>
+      <button data-m="remove">− Remove VAT</button>
+    </div>
+    <p class="note" id="modeHint" style="margin:8px 0 0"></p>
+    <h3>Amount</h3>
+    <div class="amt">
+      <input type="number" id="amount" inputmode="decimal" placeholder="0.00" value="1000" min="0" step="0.01">
+      <select id="cur"><option>SAR</option><option>AED</option><option>BHD</option><option>OMR</option><option>BDT</option><option>USD</option><option>EUR</option></select>
+    </div>
+    <h3>VAT rate</h3>
+    <div class="rates" id="rates">
+      <button data-r="15" data-c="SAR" class="on">🇸🇦 15%</button>
+      <button data-r="5" data-c="AED">🇦🇪 5%</button>
+      <button data-r="10" data-c="BHD">🇧🇭 10%</button>
+      <button data-r="5" data-c="OMR">🇴🇲 5%</button>
+      <button data-r="15" data-c="BDT">🇧🇩 15%</button>
+      <input type="number" id="rate" value="15" min="0" max="100" step="0.01" title="Custom rate %">
+    </div>
+  </div>
+  <div class="box">
+    <h3>Result</h3>
+    <div class="out">
+      <div class="card"><small>Amount before VAT</small><b id="net"></b></div>
+      <div class="card vat"><small id="vatL">VAT</small><b id="vat"></b></div>
+      <div class="card tot"><small>Total with VAT</small><b id="tot"></b></div>
+      <div class="acts">
+        <button id="copy">📋 Copy summary</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="box seo">
+  <h2>About the Saudi VAT calculator</h2>
+  <p>Work out VAT on any amount at Saudi Arabia&#x27;s 15% rate. Enter a price to add VAT and see the gross total, or enter a gross amount to remove VAT and find the net price and the tax portion. It is built for riyals and is handy for invoices, quotations, receipts and everyday shopping. Free to use, no sign-up, and your numbers stay in your browser.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>What is the VAT rate in Saudi Arabia?</summary><p>The standard VAT rate in Saudi Arabia is 15%.</p></details><details><summary>How do I remove VAT from a total?</summary><p>Enter the gross amount and choose “Remove VAT”. The tool divides it by 1.15 to show the net price and the VAT included.</p></details><details><summary>Can I use it for invoices?</summary><p>Yes. It shows the net amount, the VAT amount and the gross total, which is what an invoice needs.</p></details>
+  <p class="links">Related tools: <a href="invoice-maker.html">Invoice maker</a> <a href="uae-vat-calculator.html">UAE VAT calculator (5%)</a> <a href="vat-calculator.html">All VAT rates</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the VAT rate in Saudi Arabia?", "acceptedAnswer": {"@type": "Answer", "text": "The standard VAT rate in Saudi Arabia is 15%."}}, {"@type": "Question", "name": "How do I remove VAT from a total?", "acceptedAnswer": {"@type": "Answer", "text": "Enter the gross amount and choose “Remove VAT”. The tool divides it by 1.15 to show the net price and the VAT included."}}, {"@type": "Question", "name": "Can I use it for invoices?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It shows the net amount, the VAT amount and the gross total, which is what an invoice needs."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let mode = "add";
+const dec = c => (c === "BHD" || c === "OMR") ? 3 : 2;
+const fmt = (n, c) => c + " " + n.toLocaleString("en-US", {minimumFractionDigits: dec(c), maximumFractionDigits: dec(c)});
+
+function calc(){
+  const a = Math.max(0, Number($("amount").value) || 0), r = Math.max(0, Number($("rate").value) || 0), c = $("cur").value;
+  let net, vat, tot;
+  if(mode === "add"){ net = a; vat = a * r / 100; tot = a + vat; }
+  else { tot = a; net = a / (1 + r / 100); vat = tot - net; }
+  $("net").textContent = fmt(net, c); $("vat").textContent = fmt(vat, c); $("tot").textContent = fmt(tot, c);
+  $("vatL").textContent = TT("VAT") + " (" + r + "%)";
+  $("modeHint").textContent = mode === "add" ? TT("The amount you enter does not include VAT yet.")
+                                             : TT("The amount you enter already includes VAT.");
+  document.querySelectorAll("#rates button").forEach(b => b.classList.toggle("on", Number(b.dataset.r) === r && b.dataset.c === c));
+  return {net, vat, tot, r, c};
+}
+document.querySelectorAll("#mode button").forEach(b => b.onclick = () => {
+  mode = b.dataset.m; document.querySelectorAll("#mode button").forEach(x => x.classList.toggle("on", x === b)); calc();
+});
+document.querySelectorAll("#rates button").forEach(b => b.onclick = () => { $("rate").value = b.dataset.r; $("cur").value = b.dataset.c; calc(); });
+["amount", "rate", "cur"].forEach(id => $(id).oninput = calc);
+$("copy").onclick = () => {
+  const x = calc();
+  const t = TT("Amount before VAT") + ": " + fmt(x.net, x.c) + "\n" + TT("VAT") + " (" + x.r + "%): " + fmt(x.vat, x.c) + "\n" + TT("Total with VAT") + ": " + fmt(x.tot, x.c);
+  try{ navigator.clipboard.writeText(t); $("copy").textContent = "✓ " + TT("Copied"); setTimeout(() => $("copy").textContent = "📋 " + TT("Copy summary"), 1500); }catch(e){}
+};
+calc();
+</script>
+</body>
+</html>
