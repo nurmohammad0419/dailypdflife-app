@@ -2,6 +2,7 @@
   // Cloudflare: publish the website in site/ as static files
   "name": "dailypdflife-site",
   "compatibility_date": "2026-11-01",
+  "workers_dev": true,
   "assets": {
     "directory": "./site"
   }
