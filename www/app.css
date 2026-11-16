@@ -214,3 +214,18 @@ small,.tip,.note{color:var(--ink-3);font-size:12.8px}
   .shell{padding:0 !important}
   .box,.panel,.form{border:0 !important;box-shadow:none !important}
 }
+
+/* about / FAQ text under a tool */
+.seo{line-height:1.65;color:var(--ink-2)}
+.seo h2{font-size:18px;color:var(--ink);margin:4px 0 8px;letter-spacing:-.2px}
+.seo h2+p{margin-top:0}
+.seo p{margin:0 0 14px;font-size:15px}
+.seo details{border-top:1px solid var(--line);padding:11px 0}
+.seo details:last-of-type{border-bottom:1px solid var(--line)}
+.seo summary{cursor:pointer;font-weight:650;color:var(--ink);font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.seo summary::-webkit-details-marker{display:none}
+.seo summary::after{content:"+";font-weight:700;color:var(--ink-3)}
+.seo details[open] summary::after{content:"−"}
+.seo details p{margin:8px 0 0}
+.seo .links{font-size:14px;margin-top:14px}
+.seo .links a{margin-right:12px}

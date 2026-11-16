@@ -27,7 +27,7 @@
     ".dpla-hero a,.dpla-hero button{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;border:0;border-radius:18px;",
     "padding:18px 16px;color:#fff;text-decoration:none;font:700 17px system-ui,sans-serif;box-shadow:0 8px 22px rgba(20,25,40,.16)}",
     ".dpla-hero span{font-size:30px;line-height:1}",
-    ".dpla-hero small{font-weight:500;font-size:12.5px;opacity:.9}",
+    ".dpla-hero small{font-weight:500;font-size:12.5px;color:#fff !important;opacity:.9}",
     ".dpla-hero .scan{background:linear-gradient(135deg,#2b8a3e,#1f6f31)}",
     ".dpla-hero .view{background:linear-gradient(135deg,#e5322d,#b4231f)}",
     ".dpla-scanbox{background:linear-gradient(135deg,#2b8a3e,#1f6f31);color:#fff;border-radius:18px;padding:20px;margin-bottom:16px}",

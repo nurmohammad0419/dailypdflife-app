@@ -156,10 +156,14 @@
     var shell = el("div", "shell");
     document.body.appendChild(shell);
 
+    /* a page can set its own main heading: <meta name="dpl-h1" content="..."> */
+    var h1m = document.querySelector('meta[name="dpl-h1"]');
+    var dm = document.querySelector('meta[name="description"]');
+    if (!current && h1m) current = { t: [h1m.content, "", "", "", dm ? dm.content : ""], g: "Calculators" };
     if (current) {
       shell.appendChild(el("div", "phead",
         '<div class="crumb">' + current.g + "</div>" +
-        "<h1>" + current.t[0] + "</h1>" +
+        "<h1>" + (h1m ? h1m.content : current.t[0]) + "</h1>" +
         "<p>" + current.t[4] + "</p>"));
     }
     kids.forEach(function (k) { shell.appendChild(k); });
