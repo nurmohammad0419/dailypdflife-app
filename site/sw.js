@@ -1,6 +1,6 @@
 /* DailyPdfLife service worker: makes the site work offline and open fast
    when it is added to the Home Screen. */
-const VERSION = "dpl-2d8700c660";
+const VERSION = "dpl-651cb154e7";
 const CORE = ["about.html", "age-calculator.html", "app.css", "banner.svg", "blur-image.html", "construction-calculator.html", "contact.html", "cover-letter.html", "crop-image.html", "crop-pdf.html", "cropbox.js", "cv-maker.html", "excel-to-pdf.html", "favicon.svg", "fill-pdf-forms.html", "heic-to-jpg.html", "hijri-converter.html", "image-tools.html", "image-watermark.html", "index.html", "install.js", "invoice-maker.html", "lang.js", "loan-calculator.html", "logo.svg", "manifest.webmanifest", "merge-and-jpg.html", "more-tools.html", "nav.js", "ocr.html", "organize-pdf.html", "passport-photo.html", "pdf-editor.html", "pdf-password.html", "pdf-to-excel.html", "pdf-to-jpg.html", "pdf-to-word.html", "pdf-viewer.html", "percentage-calculator.html", "photo-collage.html", "privacy.html", "qpdf-run.js", "qr-code.html", "redact-pdf.html", "remove-bg.html", "remove-pages.html", "result.js", "saudi-vat-calculator.html", "scan-to-pdf.html", "split-and-compress.html", "stamp-pdf.html", "terms.html", "text-on-photo.html", "uae-vat-calculator.html", "unit-converter.html", "unlock-pdf.html", "vat-calculator.html", "word-to-pdf.html", "zakat-calculator.html", "icon-192.png", "apple-touch-icon.png", "logo.png"];
 /* libraries from these hosts never change for the same address, so keep them */
 const LIB_HOSTS = ["cdnjs.cloudflare.com", "unpkg.com", "cdn.jsdelivr.net"];

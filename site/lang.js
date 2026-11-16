@@ -1025,7 +1025,9 @@
 "How accurate is it?": "হিসাব কতটা সঠিক?",
 "It gives a close estimate for ordering. Add about 5–10% extra for waste and spillage on site.": "অর্ডারের জন্য কাছাকাছি হিসাব দেয়। কাজের জায়গার অপচয়ের জন্য ৫–১০% বেশি ধরুন।",
 "Hijri – Gregorian Date Converter": "হিজরি – ইংরেজি তারিখ কনভার্টার",
-"Invoice maker": "ইনভয়েস মেকার"
+"Invoice maker": "ইনভয়েস মেকার",
+"The DailyPdfLife Android app": "DailyPdfLife Android অ্যাপ",
+"The Android app works the same way as the website: your files are opened and processed on your phone and are never uploaded to us.\nThe app asks for the camera only when you scan or take a photo. The smart scanner is provided by Google Play services and runs on your device.\nFinished files are saved in the Download/DailyPdfLife folder on your phone. The app does not collect personal data and does not show ads.": "Android অ্যাপও ওয়েবসাইটের মতোই কাজ করে: আপনার ফাইল আপনার ফোনেই খোলা ও প্রসেস হয়, আমাদের কাছে কখনো আপলোড হয় না। স্ক্যান বা ছবি তোলার সময়েই শুধু অ্যাপ ক্যামেরা ব্যবহার করে। স্মার্ট স্ক্যানারটা Google Play services-এর, আর সেটাও আপনার ফোনেই চলে। তৈরি ফাইল ফোনের Download/DailyPdfLife ফোল্ডারে সেভ হয়। অ্যাপ কোনো ব্যক্তিগত তথ্য সংগ্রহ করে না এবং কোনো বিজ্ঞাপন দেখায় না।"
 };
 
   var saved = null;
