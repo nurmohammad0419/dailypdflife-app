@@ -281,3 +281,144 @@ ARTICLES.append(dict(
 
 <p class="note">This article is general information, not financial advice. Banks' actual terms, fees and calculation methods vary; always read the official offer and the key facts statement before signing.</p>
 """))
+
+ARTICLES.append(dict(
+ slug="guide-sign-pdf-on-phone",
+ h1="How to sign a PDF on your phone without printing it",
+ title="How to Sign a PDF on Your Phone Without Printing | DailyPdfLife",
+ desc="Sign contracts, forms and offer letters on your phone in a few minutes: draw your signature, place it on the PDF, add the date and your company seal, and send it back.",
+ date="2026-11-27",
+ tools=[("PDF editor","pdf-editor.html"),("Fill PDF forms","fill-pdf-forms.html"),("Stamp PDF","stamp-pdf.html")],
+ body="""
+<p>An offer letter, a tenancy contract or a school form arrives on WhatsApp with the message “please sign and send back today”. Printing it, signing with a pen and scanning it again takes time, and you may not even have a printer. You can do the whole job on your phone in a few minutes, and the result looks cleaner than a photographed page.</p>
+
+<h2>Step 1: Open the PDF in the editor</h2>
+<p>Save the PDF to your phone, then open the <a href="pdf-editor.html">PDF editor</a> and choose the file. The pages appear on screen. If the document is password-protected, unlock it first with <a href="unlock-pdf.html">Unlock PDF</a>.</p>
+
+<h2>Step 2: Fill in the blanks</h2>
+<p>If the PDF has proper fillable boxes, <a href="fill-pdf-forms.html">Fill PDF forms</a> is the fastest way to type your answers; save it, then come back to the editor to sign. If the form is just printed lines, choose the <b>Text</b> tool in the editor, tap on the line and type your name, the date, your ID or Iqama number and any other details. Make the text size match the form so it looks neat.</p>
+
+<h2>Step 3: Draw your signature</h2>
+<ol>
+<li>Tap <b>Signature</b>.</li>
+<li>Turn your phone sideways for more room and sign with your finger, slowly, the way you sign on paper. A stylus gives an even better result.</li>
+<li>Tap <b>Clear</b> to try again, or <b>Use it</b> when you're happy.</li>
+<li>Drag the signature onto the signature line and resize it so it fits naturally, not too big.</li>
+</ol>
+<p>Choose dark blue or black ink. Many offices prefer blue because it shows the document was signed rather than photocopied.</p>
+
+<h2>Step 4: Add the date, initials and seal</h2>
+<p>Contracts often need your initials at the bottom of every page. Add a small text box with your initials on each page, or place a small copy of your signature. Businesses can add the company seal with <a href="stamp-pdf.html">Stamp PDF</a>: upload a photo of the seal on white paper and turn on “make the white background see-through” so it looks like a real stamp.</p>
+
+<h2>Step 5: Save and send</h2>
+<p>Tap <b>Save PDF</b>, open the saved file once to check every page, then send it back by email or WhatsApp. If the file is large, use <a href="split-and-compress.html#compress">Compress PDF</a> first.</p>
+
+<h2>Is a drawn signature legally valid?</h2>
+<p>For everyday documents such as offer letters, school forms, quotations and many private contracts, a signature drawn on a PDF is widely accepted, in the same way as a scanned signed copy. Some government transactions, banking documents and high-value contracts require a certified digital signature or an official e-signature service, such as those offered through national platforms. When in doubt, ask the person who sent the document which form of signature they accept.</p>
+
+<h2>Keep your signature safe</h2>
+<p>Don't send a clean image of your signature to people you don't know, and don't leave it in shared folders. DailyPdfLife's editor runs in your browser, so your signature and documents are not uploaded to any server.</p>
+"""))
+
+ARTICLES.append(dict(
+ slug="guide-zakat-on-gold-and-savings",
+ h1="How to calculate zakat on gold, cash and savings: a worked example",
+ title="How to Calculate Zakat on Gold, Cash & Savings – Worked Example | DailyPdfLife",
+ desc="A simple step-by-step method to work out zakat at 2.5%: nisab by gold or silver, 21K and 22K gold, savings, debts, with a full worked example in riyals.",
+ date="2026-11-27",
+ tools=[("Zakat calculator","zakat-calculator.html"),("Hijri date converter","hijri-converter.html"),("Unit converter","unit-converter.html")],
+ body="""
+<p>Zakat is one of the five pillars of Islam: 2.5% of qualifying wealth, paid once a lunar year by every Muslim whose wealth stays above a minimum amount called the nisab. The idea is simple, but questions come up every year: Which gold counts? How do I value 21-karat jewellery? Do I subtract my loan? This guide walks through the usual method with an example. The <a href="zakat-calculator.html">Zakat calculator</a> does the arithmetic for you.</p>
+
+<h2>Step 1: Choose your zakat date</h2>
+<p>Zakat is due when your wealth has stayed at or above the nisab for one full lunar (Hijri) year, called the hawl. Many people pick a fixed date, such as 1 Ramadan, and calculate every year on that day. Use the <a href="hijri-converter.html">Hijri date converter</a> to find the matching Gregorian date each year.</p>
+
+<h2>Step 2: Work out the nisab</h2>
+<p>The nisab is the value of <b>85 grams of gold</b> or <b>595 grams of silver</b> on your zakat date. Check today's price per gram with a jeweller or bank.</p>
+<ul>
+<li>If 24K gold is SAR 400 per gram: gold nisab = 85 × 400 = SAR 34,000.</li>
+<li>If silver is SAR 5 per gram: silver nisab = 595 × 5 = SAR 2,975.</li>
+</ul>
+<p>Because silver is much cheaper, the silver nisab is far lower, so more people pass it. Many scholars recommend the silver nisab as the more cautious choice for cash savings; others use gold. Follow the view of a scholar you trust.</p>
+
+<h2>Step 3: Add up what you own</h2>
+<ul>
+<li>Cash at home and in your wallet.</li>
+<li>Money in current and savings accounts.</li>
+<li>Gold and silver, valued at today's price.</li>
+<li>Money others owe you that you expect to receive.</li>
+<li>Shares, funds and investments at today's value.</li>
+<li>Goods you hold for sale in a business, at selling price.</li>
+</ul>
+<p>Your home, car, furniture, clothes and the tools you use for work do not count.</p>
+
+<h2>Valuing 21K and 22K gold</h2>
+<p>Jewellery in the Gulf and South Asia is usually 21K or 22K, which is not pure gold. Multiply the weight by the karat and divide by 24 to get the pure gold content: 50 grams of 21K gold = 50 × 21 ÷ 24 = 43.75 grams of pure gold. Multiply by the 24K price to get its value. For weights in tola, 1 tola = 11.664 grams; the <a href="unit-converter.html">Unit converter</a> converts for you. Scholars differ on whether gold jewellery that is worn regularly is zakatable; many say it is, others exempt it.</p>
+
+<h2>Step 4: Subtract debts due now</h2>
+<p>Subtract debts and bills you must pay soon, such as an instalment due this month, unpaid rent or salaries you owe. For long-term loans such as home finance, many scholars allow subtracting only the payments currently due, not the whole balance.</p>
+
+<h2>Worked example</h2>
+<table class="gt">
+<tr><th>Item</th><th>Value (SAR)</th></tr>
+<tr><td>Bank savings</td><td>28,000</td></tr>
+<tr><td>Cash at home</td><td>2,000</td></tr>
+<tr><td>50 g of 21K gold (43.75 g pure × 400)</td><td>17,500</td></tr>
+<tr><td>Money a friend owes you</td><td>3,000</td></tr>
+<tr><td>Minus: credit card bill due now</td><td>−2,500</td></tr>
+<tr><td><b>Net zakatable wealth</b></td><td><b>48,000</b></td></tr>
+</table>
+<p>48,000 is above the nisab whether you use gold (34,000) or silver (2,975), so zakat is due: 48,000 × 2.5% = <b>SAR 1,200</b>. The prices in this example are only for illustration.</p>
+
+<h2>Who receives zakat</h2>
+<p>The Quran (9:60) names eight groups, including the poor, the needy and those in debt. Many people give through trusted charities or official platforms, or directly to relatives in need who are eligible. This guide explains a general method; for your own situation, especially business assets, pensions or shared property, ask a qualified scholar.</p>
+"""))
+
+ARTICLES.append(dict(
+ slug="guide-cv-for-gulf-jobs",
+ h1="How to write a CV for jobs in Saudi Arabia, UAE and the Gulf",
+ title="CV Format for Saudi Arabia, UAE & Gulf Jobs – Tips & Example | DailyPdfLife",
+ desc="What Gulf employers expect on a CV: personal details, visa status, photo, experience written as results, skills, languages and certificates, with a section-by-section layout.",
+ date="2026-11-27",
+ tools=[("CV maker","cv-maker.html"),("Cover letter","cover-letter.html"),("Passport photo","passport-photo.html")],
+ body="""
+<p>Recruiters in Saudi Arabia, the UAE, Qatar and the rest of the Gulf often receive hundreds of CVs for one job and spend less than a minute on each. A clear CV that gives them the details they care about, in the order they expect, makes a real difference. Gulf CVs also differ from UK or US CVs in a few ways, mainly in personal details. Here is a section-by-section guide you can follow in the free <a href="cv-maker.html">CV maker</a>.</p>
+
+<h2>1. Header and personal details</h2>
+<p>Put your full name as it appears in your passport, your job title (for example “Mechanical Site Engineer – MEP”), mobile number with country code, email and city. Gulf employers commonly expect a few more details than Western ones:</p>
+<ul>
+<li><b>Nationality</b> and, if you are already in the country, your <b>visa or Iqama status</b>, for example “Iqama transferable” or “Available on visit visa”.</li>
+<li><b>Driving licence</b>, especially a Saudi, UAE or GCC licence, which matters for field and sales roles.</li>
+<li><b>Notice period</b> or availability date.</li>
+<li>A <b>professional photo</b> is common and often expected. Use a plain background and business clothes; the <a href="passport-photo.html">Passport photo</a> tool can clean up the background.</li>
+</ul>
+<p>Date of birth and marital status are still often included in the region, but they are optional. Never include your passport or Iqama number on a CV you send to many companies.</p>
+
+<h2>2. Profile</h2>
+<p>Three or four lines that say who you are, your years of experience, your main area and what you're looking for. Example: “MEP engineer with 8 years in hospital and residential projects in Saudi Arabia. Experienced in plumbing and fire-fighting design review, site supervision and handover. Saudi Council of Engineers registered.”</p>
+
+<h2>3. Work experience</h2>
+<p>List jobs from newest to oldest with job title, company, city and dates. Under each, write two to five bullet points that show <b>results</b>, not just duties. Compare:</p>
+<ul>
+<li>Weak: “Responsible for site supervision.”</li>
+<li>Strong: “Supervised 25 technicians on a 300-bed hospital project; handed over on schedule with zero lost-time incidents.”</li>
+</ul>
+<p>Numbers such as project size, budget, team size, sales targets or time saved make your experience easy to judge. Mention well-known clients or projects; recognisable names help in the Gulf.</p>
+
+<h2>4. Education and certificates</h2>
+<p>Give your highest qualification, the institution and the year. Professional registrations and certificates often matter as much as degrees: Saudi Council of Engineers or UAE engineering registration, NEBOSH or OSHA safety, PMP, accounting qualifications, nursing and medical licences (often with DataFlow verification). List them clearly with the year.</p>
+
+<h2>5. Skills and languages</h2>
+<p>List specific skills: software (AutoCAD, Revit, SAP, Excel, Tally), equipment and technical areas. For languages, English and Arabic are especially valued; give an honest level for each, plus your other languages such as Bangla, Urdu, Hindi or Tagalog, which can help in teams and customer roles.</p>
+
+<h2>6. Length, format and file</h2>
+<ul>
+<li>Keep it to <b>two pages</b>, or one if you have under five years' experience.</li>
+<li>Use a simple layout. Many companies use applicant tracking systems that read text, so avoid putting important words inside images.</li>
+<li>Use words from the job advert, such as the exact job title and required skills, where they truthfully describe you.</li>
+<li>Send it as a <b>PDF</b> named clearly, for example <code>Ahmed-Rahman-MEP-Engineer-CV.pdf</code>.</li>
+</ul>
+
+<h2>7. Add a short cover letter</h2>
+<p>A brief cover letter or email that names the job and gives two reasons you fit helps you stand out. The <a href="cover-letter.html">Cover letter</a> maker gives you a starting draft to edit. Finally, check spelling, phone number and email twice; a single wrong digit can cost you an interview.</p>
+"""))
