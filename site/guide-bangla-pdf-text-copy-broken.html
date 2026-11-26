@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Bangla PDF Text Copies as Broken Letters? Causes &amp; Fixes | DailyPdfLife</title>
+<meta name="description" content="Copied Bangla text from a PDF turns into wrong letters or English gibberish? Learn why it happens with Bijoy (SutonnyMJ) and Unicode fonts, and how to get clean text with OCR.">
+<link rel="canonical" href="https://dailypdflife.com/guide-bangla-pdf-text-copy-broken">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Bangla PDF Text Copies as Broken Letters? Causes &amp; Fixes | DailyPdfLife">
+<meta property="og:description" content="Copied Bangla text from a PDF turns into wrong letters or English gibberish? Learn why it happens with Bijoy (SutonnyMJ) and Unicode fonts, and how to get clean text with OCR.">
+<meta property="og:url" content="https://dailypdflife.com/guide-bangla-pdf-text-copy-broken">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<meta name="dpl-h1" content="Why Bangla text breaks when you copy it from a PDF, and how to fix it">
+<meta name="dpl-crumb" content="Guides">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<article class="box seo guide art" data-notr>
+<p class="meta">DailyPdfLife guides · Updated 2026-11-28</p>
+<p>You find the Bangla text you need in a PDF, such as a government notice, an exam result, a book chapter or a form, but when you copy and paste it, it turns into nonsense: English letters like <code>Avgvi †mvbvi evsjv</code>, or Bangla letters in the wrong order with broken conjuncts (যুক্তাক্ষর). This is a very common problem, and it has two main causes.</p>
+
+<h2>Cause 1: The PDF was made with a Bijoy (ANSI) font</h2>
+<p>For many years, most Bangla typing in Bangladesh used the Bijoy keyboard with fonts such as SutonnyMJ. These fonts don't use Unicode, the international standard for text. Instead they draw Bangla shapes on top of ordinary English character codes. On screen the text looks perfectly Bangla, but the real characters underneath are English letters and symbols. When you copy it, you get the English codes, which is why “আমার সোনার বাংলা” pastes as something like <code>Avgvi †mvbvi evsjv</code>.</p>
+<p><b>How to tell:</b> if the pasted text is mostly English letters and symbols such as <code>†</code>, <code>‡</code> and <code>Ô</code>, it's Bijoy text.</p>
+<p><b>Fix:</b> paste the gibberish into a Bijoy-to-Unicode converter, such as the converter built into the Avro Keyboard software or one of the many free online converters. The output is proper Unicode Bangla you can use anywhere.</p>
+
+<h2>Cause 2: The PDF lost the link between shapes and letters</h2>
+<p>Bangla is a complex script: a single shape on screen can be several letters joined together, and some vowel signs are drawn before the consonant they follow. When a PDF is created, the program should store a map that says which letters make up each shape. Some programs and printers save the shapes without a proper map. The PDF looks fine but copying gives missing letters, wrong order or boxes.</p>
+<p><b>How to tell:</b> the pasted text is Bangla but with jumbled vowel signs, missing conjuncts or empty boxes.</p>
+<p><b>Fix:</b> use OCR, which reads the text from the picture of the page instead of from the broken map.</p>
+<ol>
+<li>Open <a href="ocr.html">OCR</a> and choose the PDF, or a screenshot of the part you need.</li>
+<li>Select <b>Bangla</b> as the language.</li>
+<li>Tap <b>Extract text</b>, then copy it or download it as a Word file.</li>
+<li>Read it through and correct any mistakes. OCR is very good on clear printed text, but conjuncts and small print can sometimes be misread.</li>
+</ol>
+
+<h2>Scanned PDFs</h2>
+<p>If the PDF is a scan of paper, there is no text in it at all, only pictures, so nothing can be copied. OCR is the only way to get the text. For the best results, scan with good light and straight pages using <a href="scan-to-pdf.html">Scan to PDF</a> before running OCR.</p>
+
+<h2>Making Bangla PDFs that copy correctly</h2>
+<p>If you create documents yourself, type with a Unicode keyboard (Avro in Unicode mode, Google Input Tools or the phone's Bangla keyboard) and a Unicode font such as Kalpurush, SolaimanLipi, Nikosh or Noto Sans Bengali. Save to PDF from Word, Google Docs or LibreOffice. DailyPdfLife's <a href="pdf-editor.html">PDF editor</a>, <a href="word-to-pdf.html">Word to PDF</a> and <a href="cv-maker.html">CV maker</a> all handle Unicode Bangla, so the text in your PDF stays real, searchable Bangla that others can copy.</p>
+<p class="links">Tools used in this guide: <a href="ocr.html">OCR</a> <a href="pdf-to-word.html">PDF to Word</a> <a href="pdf-editor.html">PDF editor</a></p>
+</article>
+<section class="box seo more" data-notr><h2>More guides</h2><p class="links stack"><a href="guide-unlock-bank-statement-pdf.html">How to remove the password from a bank statement PDF</a> <a href="guide-passport-photo-size.html">Passport and visa photo sizes by country, and how to make one at home</a> <a href="guide-reduce-pdf-size.html">How to reduce PDF file size for email and online portals</a> <a href="guide-saudi-vat-15-percent.html">Saudi VAT at 15%: how to add and remove VAT, with examples</a> <a href="guide-scan-documents-phone.html">How to scan documents with your phone and send them as one PDF</a> <a href="guide-flat-vs-reducing-rate.html">Flat rate vs reducing balance: what your car or personal loan really costs</a> <a href="guide-sign-pdf-on-phone.html">How to sign a PDF on your phone without printing it</a> <a href="guide-zakat-on-gold-and-savings.html">How to calculate zakat on gold, cash and savings: a worked example</a> <a href="guide-cv-for-gulf-jobs.html">How to write a CV for jobs in Saudi Arabia, UAE and the Gulf</a> <a href="guide-documents-for-visa-iqama-applications.html">How to prepare documents as PDF for visa, Iqama and online applications</a> <a href="guide-heic-photos-not-opening.html">iPhone HEIC photos won&#x27;t open? Here&#x27;s why, and how to fix it</a></p></section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Why Bangla text breaks when you copy it from a PDF, and how to fix it", "description": "Copied Bangla text from a PDF turns into wrong letters or English gibberish? Learn why it happens with Bijoy (SutonnyMJ) and Unicode fonts, and how to get clean text with OCR.", "datePublished": "2026-11-28", "dateModified": "2026-11-28", "mainEntityOfPage": "https://dailypdflife.com/guide-bangla-pdf-text-copy-broken", "image": "https://dailypdflife.com/banner.png", "author": {"@type": "Organization", "name": "DailyPdfLife"}, "publisher": {"@type": "Organization", "name": "DailyPdfLife", "logo": {"@type": "ImageObject", "url": "https://dailypdflife.com/logo.png"}}}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

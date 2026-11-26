@@ -422,3 +422,129 @@ ARTICLES.append(dict(
 <h2>7. Add a short cover letter</h2>
 <p>A brief cover letter or email that names the job and gives two reasons you fit helps you stand out. The <a href="cover-letter.html">Cover letter</a> maker gives you a starting draft to edit. Finally, check spelling, phone number and email twice; a single wrong digit can cost you an interview.</p>
 """))
+
+ARTICLES.append(dict(
+ slug="guide-documents-for-visa-iqama-applications",
+ h1="How to prepare documents as PDF for visa, Iqama and online applications",
+ title="Prepare Documents as PDF for Visa, Iqama & Online Applications | DailyPdfLife",
+ desc="A checklist for getting passport copies, photos, certificates and statements ready for online portals: scanning, file size, naming, merging and keeping copies safe.",
+ date="2026-11-28",
+ tools=[("Scan to PDF","scan-to-pdf.html"),("Merge PDF","merge-and-jpg.html#merge"),("Compress PDF","split-and-compress.html#compress")],
+ body="""
+<p>Visa applications, residency renewals, family visit requests, university admissions and job portals all ask for the same kind of thing: clear copies of your documents, uploaded as PDF or JPG, under a certain size. Most rejections and delays come from small problems such as a blurry passport copy, a file that's too big, or pages uploaded in the wrong order. This checklist helps you get everything right the first time.</p>
+
+<h2>1. Read the requirements first</h2>
+<p>Before scanning anything, note exactly what the portal or office asks for:</p>
+<ul>
+<li>Which documents, and whether each one should be a separate file or all in one.</li>
+<li>Allowed formats (PDF, JPG, PNG) and the maximum size per file, often 1 MB or 2 MB, sometimes as low as 200 KB.</li>
+<li>Whether colour copies are required, and whether translations or attestations are needed.</li>
+<li>Photo rules: size, background colour, file size in KB and sometimes exact pixels.</li>
+</ul>
+<p>Write these down; it saves re-doing the work later.</p>
+
+<h2>2. Scan each document properly</h2>
+<p>Use <a href="scan-to-pdf.html">Scan to PDF</a> on your phone. Put the document on a dark surface in good daylight, let the tool find the edges, and choose:</p>
+<ul>
+<li><b>Enhanced colour</b> for passports, ID cards, Iqama, driving licences and anything with photos, stamps or holograms.</li>
+<li><b>Document</b> (black and white) for typed letters, contracts and statements, which gives smaller, sharper files.</li>
+</ul>
+<p>For a passport, scan the photo page and, if asked, the page with your current visa or entry stamp. For ID cards, scan the front and back.</p>
+
+<h2>3. Get your photo right</h2>
+<p>Use the <a href="passport-photo.html">Passport photo maker</a> to set the correct size and background. If the portal gives a KB limit, use <a href="image-tools.html#compress">Compress image</a>; if it gives pixels, use <a href="image-tools.html#resize">Resize image</a> first. Our <a href="guide-passport-photo-size.html">passport photo size guide</a> lists common sizes.</p>
+
+<h2>4. Combine, order and shrink</h2>
+<ol>
+<li>If the portal wants one file, use <a href="merge-and-jpg.html#merge">Merge PDF</a> and pick the files in the order they are listed in the requirements.</li>
+<li>Fix any page that is sideways or out of order with <a href="organize-pdf.html">Organize PDF</a>.</li>
+<li>Check the size. If it's over the limit, use <a href="split-and-compress.html#compress">Compress PDF</a> on Medium, and zoom in afterwards to make sure numbers and names are still readable.</li>
+<li>Remove password protection from bank statements with <a href="unlock-pdf.html">Unlock PDF</a>, as most portals can't open locked files.</li>
+</ol>
+
+<h2>5. Name files clearly</h2>
+<p>Use names that say what each file is, for example <code>Passport-Rahman-Ahmed.pdf</code>, <code>Salary-Certificate-2026-11.pdf</code> or <code>Bank-Statement-Aug-Oct-2026.pdf</code>. Avoid names like <code>IMG_20261127_0932.pdf</code>; officers and recruiters notice the difference, and you'll find the right file faster next time.</p>
+
+<h2>6. Check before you submit</h2>
+<ul>
+<li>Open every file once on your phone: are all pages there, straight and readable?</li>
+<li>Are expiry dates valid? Many applications need a passport valid for at least six months.</li>
+<li>Do names match exactly across documents, including spelling and order?</li>
+</ul>
+
+<h2>7. Keep a safe set for next time</h2>
+<p>Save your final, clean copies in one private folder on your phone or computer so the next renewal takes minutes instead of hours. When you send copies of IDs to agents or landlords, you can mark them with their purpose using <a href="image-watermark.html">Image watermark</a>, for example “Copy for visa application only”, which makes misuse harder. All DailyPdfLife tools work in your browser, so these sensitive documents are never uploaded to our servers.</p>
+"""))
+
+ARTICLES.append(dict(
+ slug="guide-heic-photos-not-opening",
+ h1="iPhone HEIC photos won't open? Here's why, and how to fix it",
+ title="iPhone HEIC Photos Won't Open on Windows or Portals – How to Fix | DailyPdfLife",
+ desc="Why iPhone photos are saved as HEIC, why Windows PCs and upload portals reject them, and three easy fixes: convert to JPG, change your camera setting or transfer settings.",
+ date="2026-11-28",
+ tools=[("HEIC to JPG","heic-to-jpg.html"),("Compress image","image-tools.html#compress"),("JPG to PDF","merge-and-jpg.html#jpg")],
+ body="""
+<p>You copy photos from your iPhone to an office computer, or try to upload a photo to a job or visa portal, and you get an error: “file type not supported”, or the file shows a blank icon with the ending <code>.HEIC</code>. Nothing is wrong with your photo. It's simply saved in a format that many systems still don't understand.</p>
+
+<h2>What is HEIC?</h2>
+<p>Since iOS 11, iPhones save photos in HEIF/HEIC format by default (the “High Efficiency” setting). A HEIC photo looks the same as a JPG but is roughly half the file size, which saves storage space on your phone. The problem is compatibility: many older Windows computers, Android phones, websites and government or company upload forms accept only JPG or PNG.</p>
+
+<h2>Fix 1: Convert HEIC to JPG (fastest)</h2>
+<ol>
+<li>Open <a href="heic-to-jpg.html">HEIC to JPG</a> on any phone or computer.</li>
+<li>Choose your HEIC photos. You can select many at once.</li>
+<li>Pick JPG and a quality of about 90%.</li>
+<li>Tap <b>Convert</b>, then <b>Download all</b>.</li>
+</ol>
+<p>The conversion happens in your browser, so your personal photos are not uploaded to anyone. If the portal also has a size limit, run the JPGs through <a href="image-tools.html#compress">Compress image</a>. If it wants a PDF, use <a href="merge-and-jpg.html#jpg">JPG to PDF</a>.</p>
+
+<h2>Fix 2: Make your iPhone save JPG from now on</h2>
+<p>Go to <b>Settings → Camera → Formats</b> and choose <b>Most Compatible</b>. New photos will be saved as JPG (and videos as H.264). Photos you already took stay HEIC, so you'll still need Fix 1 for those. The trade-off is that new photos take more storage space.</p>
+
+<h2>Fix 3: Let the iPhone convert when transferring</h2>
+<p>Go to <b>Settings → Photos</b> and, under “Transfer to Mac or PC”, choose <b>Automatic</b>. When you copy photos to a computer with a cable, the iPhone converts them to JPG on the way. Note that this does not apply when you send photos by some apps or cloud services.</p>
+
+<h2>What about Windows?</h2>
+<p>Recent versions of Windows 10 and 11 can show HEIC photos after installing Microsoft's HEIF and HEVC image extensions from the Microsoft Store. That lets you view them on that computer, but websites and portals may still reject the files, so converting to JPG is usually the more reliable solution.</p>
+
+<h2>Sending photos by WhatsApp or email</h2>
+<p>When you send a photo through WhatsApp, it is normally converted to JPG automatically, but it is also compressed and loses quality. For documents and ID photos where sharpness matters, convert to JPG first and send as a document instead of as a photo.</p>
+
+<h2>Quick answers</h2>
+<p><b>Does converting reduce quality?</b> At 90% JPG quality, you won't see a difference in normal use.</p>
+<p><b>JPG or PNG?</b> JPG for photos; it's smaller and accepted everywhere. PNG is bigger and best for screenshots and graphics.</p>
+<p><b>Can I convert Live Photos?</b> The still image is converted; the short video part is not included.</p>
+"""))
+
+ARTICLES.append(dict(
+ slug="guide-bangla-pdf-text-copy-broken",
+ h1="Why Bangla text breaks when you copy it from a PDF, and how to fix it",
+ title="Bangla PDF Text Copies as Broken Letters? Causes & Fixes | DailyPdfLife",
+ desc="Copied Bangla text from a PDF turns into wrong letters or English gibberish? Learn why it happens with Bijoy (SutonnyMJ) and Unicode fonts, and how to get clean text with OCR.",
+ date="2026-11-28",
+ tools=[("OCR","ocr.html"),("PDF to Word","pdf-to-word.html"),("PDF editor","pdf-editor.html")],
+ body="""
+<p>You find the Bangla text you need in a PDF, such as a government notice, an exam result, a book chapter or a form, but when you copy and paste it, it turns into nonsense: English letters like <code>Avgvi †mvbvi evsjv</code>, or Bangla letters in the wrong order with broken conjuncts (যুক্তাক্ষর). This is a very common problem, and it has two main causes.</p>
+
+<h2>Cause 1: The PDF was made with a Bijoy (ANSI) font</h2>
+<p>For many years, most Bangla typing in Bangladesh used the Bijoy keyboard with fonts such as SutonnyMJ. These fonts don't use Unicode, the international standard for text. Instead they draw Bangla shapes on top of ordinary English character codes. On screen the text looks perfectly Bangla, but the real characters underneath are English letters and symbols. When you copy it, you get the English codes, which is why “আমার সোনার বাংলা” pastes as something like <code>Avgvi †mvbvi evsjv</code>.</p>
+<p><b>How to tell:</b> if the pasted text is mostly English letters and symbols such as <code>†</code>, <code>‡</code> and <code>Ô</code>, it's Bijoy text.</p>
+<p><b>Fix:</b> paste the gibberish into a Bijoy-to-Unicode converter, such as the converter built into the Avro Keyboard software or one of the many free online converters. The output is proper Unicode Bangla you can use anywhere.</p>
+
+<h2>Cause 2: The PDF lost the link between shapes and letters</h2>
+<p>Bangla is a complex script: a single shape on screen can be several letters joined together, and some vowel signs are drawn before the consonant they follow. When a PDF is created, the program should store a map that says which letters make up each shape. Some programs and printers save the shapes without a proper map. The PDF looks fine but copying gives missing letters, wrong order or boxes.</p>
+<p><b>How to tell:</b> the pasted text is Bangla but with jumbled vowel signs, missing conjuncts or empty boxes.</p>
+<p><b>Fix:</b> use OCR, which reads the text from the picture of the page instead of from the broken map.</p>
+<ol>
+<li>Open <a href="ocr.html">OCR</a> and choose the PDF, or a screenshot of the part you need.</li>
+<li>Select <b>Bangla</b> as the language.</li>
+<li>Tap <b>Extract text</b>, then copy it or download it as a Word file.</li>
+<li>Read it through and correct any mistakes. OCR is very good on clear printed text, but conjuncts and small print can sometimes be misread.</li>
+</ol>
+
+<h2>Scanned PDFs</h2>
+<p>If the PDF is a scan of paper, there is no text in it at all, only pictures, so nothing can be copied. OCR is the only way to get the text. For the best results, scan with good light and straight pages using <a href="scan-to-pdf.html">Scan to PDF</a> before running OCR.</p>
+
+<h2>Making Bangla PDFs that copy correctly</h2>
+<p>If you create documents yourself, type with a Unicode keyboard (Avro in Unicode mode, Google Input Tools or the phone's Bangla keyboard) and a Unicode font such as Kalpurush, SolaimanLipi, Nikosh or Noto Sans Bengali. Save to PDF from Word, Google Docs or LibreOffice. DailyPdfLife's <a href="pdf-editor.html">PDF editor</a>, <a href="word-to-pdf.html">Word to PDF</a> and <a href="cv-maker.html">CV maker</a> all handle Unicode Bangla, so the text in your PDF stays real, searchable Bangla that others can copy.</p>
+"""))
