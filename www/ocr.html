@@ -11,7 +11,13 @@
 <meta name="apple-mobile-web-app-title" content="DailyPdfLife">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>OCR — image to text</title>
+<title>OCR Online Free – Image &amp; Scanned PDF to Text | DailyPdfLife</title>
+<meta name="description" content="Extract text from images and scanned PDFs with free OCR. Supports English, Bangla, Arabic, Hindi and Urdu. Copy the text or save it as TXT or Word.">
+<link rel="canonical" href="https://dailypdflife.com/ocr">
+<meta property="og:title" content="OCR Online Free – Image &amp; Scanned PDF to Text | DailyPdfLife">
+<meta property="og:description" content="Extract text from images and scanned PDFs with free OCR. Supports English, Bangla, Arabic, Hindi and Urdu. Copy the text or save it as TXT or Word.">
+<meta property="og:url" content="https://dailypdflife.com/ocr">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="vendor/pdf.min.js"></script>
 <style>
@@ -136,6 +142,18 @@ function saveDoc(){
   download(new Blob(["\ufeff", doc], {type: "application/msword"}), name + ".doc");
 }
 </script>
+<section class="box seo guide" data-notr>
+  <h2>About OCR</h2>
+  <p>OCR (optical character recognition) reads the words in a picture and turns them into real text you can copy, edit and search. Use it on photos of documents, screenshots, scanned PDFs, business cards and printed letters. It understands English, Bangla, Arabic, Hindi and Urdu, and it runs in your browser so your documents stay private.</p>
+  <h2>How to extract text from an image</h2>
+  <ol><li>Choose a JPG or PNG image, or a scanned PDF.</li><li>Pick the language of the text.</li><li>Tap <b>Extract text</b> and wait a few seconds per page.</li><li>Copy the text, or download it as TXT or as a Word file.</li></ol>
+  <h2>For the best accuracy</h2>
+  <p>Use a sharp, well-lit image where the text is straight and fills most of the picture. Our <a href="scan-to-pdf.html">Scan to PDF</a> tool can straighten and clean a photo first. Printed text is read much better than handwriting. Always check names and numbers in the result, because similar-looking characters such as 0 and O or 1 and l can be mixed up. If your PDF already has selectable text, <a href="pdf-to-word.html">PDF to Word</a> is faster and exact.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Which languages are supported?</summary><p>English, Bangla, Arabic, Hindi and Urdu.</p></details><details><summary>Can it read handwriting?</summary><p>Neat handwriting sometimes works, but OCR is designed for printed text.</p></details><details><summary>Can it read a multi-page scanned PDF?</summary><p>Yes, each page is read in turn.</p></details><details><summary>Is my document uploaded?</summary><p>No, text recognition happens on your device.</p></details>
+  <p class="links">Related tools: <a href="scan-to-pdf.html">Scan to PDF</a> <a href="pdf-to-word.html">PDF to Word</a> <a href="pdf-to-excel.html">PDF to Excel</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Which languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "English, Bangla, Arabic, Hindi and Urdu."}}, {"@type": "Question", "name": "Can it read handwriting?", "acceptedAnswer": {"@type": "Answer", "text": "Neat handwriting sometimes works, but OCR is designed for printed text."}}, {"@type": "Question", "name": "Can it read a multi-page scanned PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, each page is read in turn."}}, {"@type": "Question", "name": "Is my document uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No, text recognition happens on your device."}}]}</script>
 <script src="nav.js"></script>
 <script src="install.js"></script>
 </body>

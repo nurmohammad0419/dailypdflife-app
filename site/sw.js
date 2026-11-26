@@ -1,7 +1,7 @@
 /* DailyPdfLife service worker: makes the site work offline and open fast
    when it is added to the Home Screen. */
-const VERSION = "dpl-651cb154e7";
-const CORE = ["about.html", "age-calculator.html", "app.css", "banner.svg", "blur-image.html", "construction-calculator.html", "contact.html", "cover-letter.html", "crop-image.html", "crop-pdf.html", "cropbox.js", "cv-maker.html", "excel-to-pdf.html", "favicon.svg", "fill-pdf-forms.html", "heic-to-jpg.html", "hijri-converter.html", "image-tools.html", "image-watermark.html", "index.html", "install.js", "invoice-maker.html", "lang.js", "loan-calculator.html", "logo.svg", "manifest.webmanifest", "merge-and-jpg.html", "more-tools.html", "nav.js", "ocr.html", "organize-pdf.html", "passport-photo.html", "pdf-editor.html", "pdf-password.html", "pdf-to-excel.html", "pdf-to-jpg.html", "pdf-to-word.html", "pdf-viewer.html", "percentage-calculator.html", "photo-collage.html", "privacy.html", "qpdf-run.js", "qr-code.html", "redact-pdf.html", "remove-bg.html", "remove-pages.html", "result.js", "saudi-vat-calculator.html", "scan-to-pdf.html", "split-and-compress.html", "stamp-pdf.html", "terms.html", "text-on-photo.html", "uae-vat-calculator.html", "unit-converter.html", "unlock-pdf.html", "vat-calculator.html", "word-to-pdf.html", "zakat-calculator.html", "icon-192.png", "apple-touch-icon.png", "logo.png"];
+const VERSION = "dpl-0d99165352";
+const CORE = ["about", "age-calculator", "app.css", "banner.svg", "blur-image", "construction-calculator", "contact", "cover-letter", "crop-image", "crop-pdf", "cropbox.js", "cv-maker", "excel-to-pdf", "favicon.svg", "fill-pdf-forms", "guide-bangla-pdf-text-copy-broken", "guide-cv-for-gulf-jobs", "guide-documents-for-visa-iqama-applications", "guide-flat-vs-reducing-rate", "guide-heic-photos-not-opening", "guide-passport-photo-size", "guide-reduce-pdf-size", "guide-saudi-vat-15-percent", "guide-scan-documents-phone", "guide-sign-pdf-on-phone", "guide-unlock-bank-statement-pdf", "guide-zakat-on-gold-and-savings", "guides", "heic-to-jpg", "hijri-converter", "image-tools", "image-watermark", "./", "install.js", "invoice-maker", "lang.js", "loan-calculator", "logo.svg", "manifest.webmanifest", "merge-and-jpg", "more-tools", "nav.js", "ocr", "organize-pdf", "passport-photo", "pdf-editor", "pdf-password", "pdf-to-excel", "pdf-to-jpg", "pdf-to-word", "pdf-viewer", "percentage-calculator", "photo-collage", "privacy", "qpdf-run.js", "qr-code", "redact-pdf", "remove-bg", "remove-pages", "result.js", "saudi-vat-calculator", "scan-to-pdf", "split-and-compress", "stamp-pdf", "terms", "text-on-photo", "uae-vat-calculator", "unit-converter", "unlock-pdf", "vat-calculator", "word-to-pdf", "zakat-calculator", "icon-192.png", "apple-touch-icon.png", "logo.png"];
 /* libraries from these hosts never change for the same address, so keep them */
 const LIB_HOSTS = ["cdnjs.cloudflare.com", "unpkg.com", "cdn.jsdelivr.net"];
 /* big AI models (background removal, OCR languages) are not stored: too large for a phone */
@@ -43,7 +43,7 @@ self.addEventListener("fetch", e => {
       fetch(req).then(res => {
         if (res.ok && url.origin === location.origin) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(stripQuery(req), copy)); }
         return res;
-      }).catch(() => caches.match(stripQuery(req)).then(r => r || caches.match("index.html")))
+      }).catch(() => caches.match(stripQuery(req)).then(r => r || caches.match("./")))
     );
     return;
   }
@@ -63,4 +63,5 @@ self.addEventListener("fetch", e => {
     })));
   }
 });
-function stripQuery(req){ const u = new URL(req.url); u.search = ""; u.hash = ""; if (u.pathname.endsWith("/")) u.pathname += "index.html"; return u.toString(); }
+/* pages are saved under their clean address (/about, not /about.html) */
+function stripQuery(req){ const u = new URL(req.url); u.search = ""; u.hash = ""; u.pathname = u.pathname.replace(/index\.html$/, "").replace(/\.html$/, ""); return u.toString(); }

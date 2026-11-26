@@ -49,6 +49,10 @@ for f in os.listdir(WWW):
         s = s.replace(k, v)
     if f.endswith(".html"):
         s = ADS.sub("", s)
+        # the website links to clean addresses (/merge-and-jpg); inside the app the files keep .html
+        s = re.sub(r'href=(["\'])/(#[^"\']*)?\1', lambda m: f'href={m.group(1)}index.html{m.group(2) or ""}{m.group(1)}', s)
+        s = re.sub(r'href=(["\'])([a-z0-9-]+)(#[^"\']*)?\1',
+                   lambda m: f'href={m.group(1)}{m.group(2)}.html{m.group(3) or ""}{m.group(1)}' if os.path.exists(os.path.join(WWW, m.group(2) + ".html")) else m.group(0), s)
         if "app-shell.js" not in s:
             s = s.replace('<script src="lang.js"></script>', '<script src="lang.js"></script>\n<script src="app-shell.js"></script>', 1)
         pages += 1

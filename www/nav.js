@@ -76,6 +76,7 @@
   }
 
   var file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  if (file.indexOf(".") < 0) file += ".html";   /* clean addresses like /merge-and-jpg */
   var hash = (location.hash || "").toLowerCase();
   var isHome = file === "index.html" || file === "";
 
@@ -111,7 +112,9 @@
 
   var rail = el("nav", "rail");
   var html = '<a class="home' + (isHome ? " on" : "") + '" href="index.html">' +
-             '<span class="ic" style="background:#1b2030">⌂</span>All tools</a>';
+             '<span class="ic" style="background:#1b2030">⌂</span>All tools</a>' +
+             '<a class="' + (file.indexOf("guide") === 0 ? "on" : "") + '" href="guides.html">' +
+             '<span class="ic" style="background:#495057">📘</span>Guides</a>';
   GROUPS.forEach(function (g) {
     html += "<h6>" + g[0] + "</h6>";
     g[1].forEach(function (t) {
@@ -159,7 +162,8 @@
     /* a page can set its own main heading: <meta name="dpl-h1" content="..."> */
     var h1m = document.querySelector('meta[name="dpl-h1"]');
     var dm = document.querySelector('meta[name="description"]');
-    if (!current && h1m) current = { t: [h1m.content, "", "", "", dm ? dm.content : ""], g: "Calculators" };
+    var cm = document.querySelector('meta[name="dpl-crumb"]');
+    if (!current && h1m) current = { t: [h1m.content, "", "", "", dm ? dm.content : ""], g: cm ? cm.content : "Calculators" };
     if (current) {
       shell.appendChild(el("div", "phead",
         '<div class="crumb">' + current.g + "</div>" +
@@ -169,7 +173,7 @@
     kids.forEach(function (k) { shell.appendChild(k); });
     shell.appendChild(el("footer", "sitefoot",
       "<span>\u00a9 2026 DailyPdfLife.com \u00b7 Your files never leave your device.</span>" +
-      '<nav><a href="about.html">About</a><a href="contact.html">Contact</a>' +
+      '<nav><a href="guides.html">Guides</a><a href="about.html">About</a><a href="contact.html">Contact</a>' +
       '<a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Use</a></nav>'));
 
     if (current) {
@@ -177,6 +181,14 @@
       [].forEach.call(shell.querySelectorAll(".box h1,.panel h1,.panel h2,.form h2"), function (h) {
         var got = h.textContent.toLowerCase().replace(/[^a-z0-9]/g, "");
         if (got && (got === want || want.indexOf(got) === 0 || got.indexOf(want) === 0)) h.style.display = "none";
+      });
+    }
+
+    /* on the live site, link to clean addresses (/merge-and-jpg) so search engines see no redirects */
+    if (/(^|\.)dailypdflife\.com$/.test(location.hostname)) {
+      [].forEach.call(document.querySelectorAll("a[href]"), function (a) {
+        var h = a.getAttribute("href"), m = /^([a-z0-9-]+)\.html(#.*)?$/.exec(h);
+        if (m) a.setAttribute("href", (m[1] === "index" ? "/" : m[1]) + (m[2] || ""));
       });
     }
 

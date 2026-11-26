@@ -76,6 +76,7 @@
   }
 
   var file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  if (file.indexOf(".") < 0) file += ".html";   /* clean addresses like /merge-and-jpg */
   var hash = (location.hash || "").toLowerCase();
   var isHome = file === "index.html" || file === "";
 
@@ -180,6 +181,14 @@
       [].forEach.call(shell.querySelectorAll(".box h1,.panel h1,.panel h2,.form h2"), function (h) {
         var got = h.textContent.toLowerCase().replace(/[^a-z0-9]/g, "");
         if (got && (got === want || want.indexOf(got) === 0 || got.indexOf(want) === 0)) h.style.display = "none";
+      });
+    }
+
+    /* on the live site, link to clean addresses (/merge-and-jpg) so search engines see no redirects */
+    if (/(^|\.)dailypdflife\.com$/.test(location.hostname)) {
+      [].forEach.call(document.querySelectorAll("a[href]"), function (a) {
+        var h = a.getAttribute("href"), m = /^([a-z0-9-]+)\.html(#.*)?$/.exec(h);
+        if (m) a.setAttribute("href", (m[1] === "index" ? "/" : m[1]) + (m[2] || ""));
       });
     }
 

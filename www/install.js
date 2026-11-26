@@ -123,6 +123,7 @@
     }
     /* a gentle banner on the home page for iPhone users, at most every two weeks */
     var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    if (page.indexOf(".") < 0) page += ".html";
     if (IOS && (page === "index.html" || page === "") && !hiddenRecently()) {
       setTimeout(function () {
         var b = document.createElement("div"); b.className = "dpli-ban";
