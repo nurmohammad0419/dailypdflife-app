@@ -2,6 +2,7 @@
    The pages are written in English; Bangla is applied on the fly when chosen. */
 (function () {
   var BN = {
+"Guides": "গাইড",
 "(page": "(পেজ",
 "+ Add experience": "+ অভিজ্ঞতা যোগ করুন",
 "+ Add item": "+ আইটেম যোগ করুন",

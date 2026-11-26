@@ -111,7 +111,9 @@
 
   var rail = el("nav", "rail");
   var html = '<a class="home' + (isHome ? " on" : "") + '" href="index.html">' +
-             '<span class="ic" style="background:#1b2030">⌂</span>All tools</a>';
+             '<span class="ic" style="background:#1b2030">⌂</span>All tools</a>' +
+             '<a class="' + (file.indexOf("guide") === 0 ? "on" : "") + '" href="guides.html">' +
+             '<span class="ic" style="background:#495057">📘</span>Guides</a>';
   GROUPS.forEach(function (g) {
     html += "<h6>" + g[0] + "</h6>";
     g[1].forEach(function (t) {
@@ -159,7 +161,8 @@
     /* a page can set its own main heading: <meta name="dpl-h1" content="..."> */
     var h1m = document.querySelector('meta[name="dpl-h1"]');
     var dm = document.querySelector('meta[name="description"]');
-    if (!current && h1m) current = { t: [h1m.content, "", "", "", dm ? dm.content : ""], g: "Calculators" };
+    var cm = document.querySelector('meta[name="dpl-crumb"]');
+    if (!current && h1m) current = { t: [h1m.content, "", "", "", dm ? dm.content : ""], g: cm ? cm.content : "Calculators" };
     if (current) {
       shell.appendChild(el("div", "phead",
         '<div class="crumb">' + current.g + "</div>" +
@@ -169,7 +172,7 @@
     kids.forEach(function (k) { shell.appendChild(k); });
     shell.appendChild(el("footer", "sitefoot",
       "<span>\u00a9 2026 DailyPdfLife.com \u00b7 Your files never leave your device.</span>" +
-      '<nav><a href="about.html">About</a><a href="contact.html">Contact</a>' +
+      '<nav><a href="guides.html">Guides</a><a href="about.html">About</a><a href="contact.html">Contact</a>' +
       '<a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Use</a></nav>'));
 
     if (current) {
