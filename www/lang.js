@@ -1362,11 +1362,36 @@
 "Give the exact location: city, district, street, a landmark, or share your live location.": "ঠিক লোকেশন বলুন: শহর, এলাকা, রাস্তা, পরিচিত জায়গা, বা লাইভ লোকেশন শেয়ার করুন।",
 "Say how many people are hurt and if anyone is not breathing or bleeding heavily.": "কতজন আহত, কেউ শ্বাস নিচ্ছে না বা বেশি রক্তক্ষরণ হচ্ছে কিনা বলুন।",
 "Don't hang up until the operator tells you to. Keep your phone free for their call back.": "অপারেটর না বলা পর্যন্ত ফোন রাখবেন না। তারা আবার কল করতে পারে, ফোন খালি রাখুন।",
-"In most countries you can call the emergency number even with no credit or no SIM card.": "বেশিরভাগ দেশে ব্যালেন্স বা সিম ছাড়াও জরুরি নম্বরে কল করা যায়।"
+"In most countries you can call the emergency number even with no credit or no SIM card.": "বেশিরভাগ দেশে ব্যালেন্স বা সিম ছাড়াও জরুরি নম্বরে কল করা যায়।",
+"Photo size / country": "ছবির সাইজ / দেশ",
+"🎯 Auto-fit my face": "🎯 মুখ নিজে থেকে বসান",
+"Upload a photo: the face is found and placed at the right size for you. You can then fine-tune it.": "ছবি দিন: মুখ খুঁজে সঠিক সাইজে বসানো হবে। তারপর চাইলে নিজে ঠিক করুন।",
+"Straighten": "সোজা করুন",
+"Show guides (face oval, head and chin lines)": "গাইড দেখান (মুখের ডিম্বাকার, মাথা ও থুতনির দাগ)",
+"For online forms (optional)": "অনলাইন ফর্মের জন্য (ঐচ্ছিক)",
+"⬇ Download photo (JPG)": "⬇ ছবি ডাউনলোড (JPG)",
+"🖨 4×6 inch print sheet": "🖨 ৪×৬ ইঞ্চি প্রিন্ট শিট",
+"↺ Reset position": "↺ আগের অবস্থানে",
+"Top of head": "মাথার উপর",
+"Chin": "থুতনি",
+"Head height": "মাথার উচ্চতা",
+"aim for": "হওয়া উচিত",
+"Centred": "মাঝখানে আছে",
+"Move to the centre": "মাঝখানে সরান",
+"Head straight": "মাথা সোজা",
+"Straighten the head": "মাথা সোজা করুন",
+"Plain background": "সাদামাটা ব্যাকগ্রাউন্ড",
+"Tip: remove the background": "পরামর্শ: ব্যাকগ্রাউন্ড সরান",
+"Face not detected: place it by hand": "মুখ পাওয়া যায়নি: নিজে বসান",
+"Finding your face…": "মুখ খোঁজা হচ্ছে…",
+"Face found and placed. Adjust with zoom or drag if needed.": "মুখ পাওয়া গেছে ও বসানো হয়েছে। দরকার হলে জুম বা টেনে ঠিক করুন।",
+"Couldn't find a face automatically. Drag and zoom so the head fits between the lines.": "নিজে থেকে মুখ পাওয়া যায়নি। টেনে আর জুম করে মাথা দুই দাগের মাঝে আনুন।",
+"Background removed. Pick a colour below.": "ব্যাকগ্রাউন্ড সরানো হয়েছে। নিচে রং বাছুন।",
+"Drag to move · pinch or scroll to zoom · the head should fit between the two lines.": "টেনে সরান · দুই আঙুলে বা স্ক্রল করে জুম · মাথা দুই দাগের মাঝে থাকবে।"
 };
 
   /* short words translated only when they are the whole text of an element, so they never change longer sentences */
-  var BNX = {"Emergency": "জরুরি", "Bold": "বোল্ড", "Minimal": "সাধারণ", "Front": "সামনে", "Back": "পেছন", "Design": "ডিজাইন", "Shape": "আকার", "Year": "সাল", "Month": "মাস", "Paper": "কাগজ", "Language": "ভাষা", "Country": "দেশ", "Police": "পুলিশ", "Ambulance": "অ্যাম্বুলেন্স", "Hospital": "হাসপাতাল", "Event": "ইভেন্ট", "Student": "ছাত্র/ছাত্রী", "Employee": "কর্মী", "Visitor": "ভিজিটর", "Weekend": "সাপ্তাহিক ছুটি", "Pharmacy": "ফার্মেসি", "Embassy": "দূতাবাস", "Coastguard": "কোস্টগার্ড", "Draw": "আঁকুন", "Type": "টাইপ", "Upload": "আপলোড", "Clear": "মুছুন", "City": "শহর", "Date": "তারিখ", "Method": "পদ্ধতি", "From": "থেকে", "To": "তে", "Amount": "পরিমাণ", "Currency": "মুদ্রা", "Size": "সাইজ", "Style": "ধরন", "Caption": "ক্যাপশন", "Before": "আগে", "After": "পরে", "Colour": "রং", "Pen": "কলম", "Thin": "চিকন", "Medium": "মাঝারি", "Bold": "মোটা", "Age": "বয়স", "Scale": "মাপকাঠি", "Look": "ধরন", "Quality": "মান", "Format": "ফরম্যাট", "Pages": "পাতা", "Margins": "মার্জিন", "Resolution": "রেজোলিউশন", "Adjust": "ঠিক করুন", "Contrast": "কনট্রাস্ট", "Years": "বছর", "Months": "মাস", "Weeks": "সপ্তাহ", "Days": "দিন", "Hours": "ঘণ্টা", "Free": "ফ্রি", "tools": "টুল", "files uploaded": "ফাইল আপলোড", "no account": "অ্যাকাউন্ট লাগে না", "removed": "বাদ", "added": "যোগ", "changed": "বদলানো", "same": "একই", "words": "শব্দ", "pages": "পাতা", "days": "দিন", "weeks": "সপ্তাহ", "years": "বছর", "months": "মাস"};
+  var BNX = {"Zoom": "জুম", "Background": "ব্যাকগ্রাউন্ড", "Emergency": "জরুরি", "Bold": "বোল্ড", "Minimal": "সাধারণ", "Front": "সামনে", "Back": "পেছন", "Design": "ডিজাইন", "Shape": "আকার", "Year": "সাল", "Month": "মাস", "Paper": "কাগজ", "Language": "ভাষা", "Country": "দেশ", "Police": "পুলিশ", "Ambulance": "অ্যাম্বুলেন্স", "Hospital": "হাসপাতাল", "Event": "ইভেন্ট", "Student": "ছাত্র/ছাত্রী", "Employee": "কর্মী", "Visitor": "ভিজিটর", "Weekend": "সাপ্তাহিক ছুটি", "Pharmacy": "ফার্মেসি", "Embassy": "দূতাবাস", "Coastguard": "কোস্টগার্ড", "Draw": "আঁকুন", "Type": "টাইপ", "Upload": "আপলোড", "Clear": "মুছুন", "City": "শহর", "Date": "তারিখ", "Method": "পদ্ধতি", "From": "থেকে", "To": "তে", "Amount": "পরিমাণ", "Currency": "মুদ্রা", "Size": "সাইজ", "Style": "ধরন", "Caption": "ক্যাপশন", "Before": "আগে", "After": "পরে", "Colour": "রং", "Pen": "কলম", "Thin": "চিকন", "Medium": "মাঝারি", "Bold": "মোটা", "Age": "বয়স", "Scale": "মাপকাঠি", "Look": "ধরন", "Quality": "মান", "Format": "ফরম্যাট", "Pages": "পাতা", "Margins": "মার্জিন", "Resolution": "রেজোলিউশন", "Adjust": "ঠিক করুন", "Contrast": "কনট্রাস্ট", "Years": "বছর", "Months": "মাস", "Weeks": "সপ্তাহ", "Days": "দিন", "Hours": "ঘণ্টা", "Free": "ফ্রি", "tools": "টুল", "files uploaded": "ফাইল আপলোড", "no account": "অ্যাকাউন্ট লাগে না", "removed": "বাদ", "added": "যোগ", "changed": "বদলানো", "same": "একই", "words": "শব্দ", "pages": "পাতা", "days": "দিন", "weeks": "সপ্তাহ", "years": "বছর", "months": "মাস"};
 
   var saved = null;
   try { saved = localStorage.getItem("dpl_lang"); } catch (e) {}

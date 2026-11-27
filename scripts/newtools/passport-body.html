@@ -1,0 +1,244 @@
+<style>
+  .pp{display:grid;grid-template-columns:minmax(310px,380px) minmax(0,1fr);gap:18px;align-items:start}
+  .ctl label.l{display:block;font-size:12.5px;font-weight:650;color:var(--ink);margin:10px 0 4px}
+  .ctl select,.ctl input[type=number]{width:100%}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .zrow{display:grid;grid-template-columns:40px 1fr 40px;gap:8px;align-items:center}
+  .zrow button{padding:6px 0 !important;font-size:18px;font-weight:700}
+  .rng{display:grid;grid-template-columns:86px 1fr 40px;gap:8px;align-items:center;font-size:13px;margin:4px 0}
+  .rng output{font-size:12px;color:var(--ink-3);text-align:right}
+  .auto{width:100%;background:linear-gradient(90deg,#1971c2,#7b3fe4);color:#fff;border:0;padding:12px !important;font-size:15px;margin-top:6px}
+  .rm{width:100%;background:#7b3fe4;color:#fff;border:0;padding:12px !important;margin-top:4px}
+  .colors{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .colors button{width:32px;height:32px;padding:0 !important;border-radius:50% !important;border:3px solid #fff !important;box-shadow:0 0 0 1px #c9ced8}
+  .colors button.on{box-shadow:0 0 0 2px #111827}
+  .colors input[type=color]{width:34px;height:34px;padding:0 !important;border:0 !important;background:none}
+  .dl{width:100%;background:#e5322d;color:#fff;border:0;padding:13px !important;font-size:15px;margin-top:10px}
+  .g{width:100%;background:#2b8a3e;color:#fff;border:0;padding:11px !important;margin-top:6px}
+  .stagebox{background:#e9ecf3 !important;text-align:center}
+  .stage{position:relative;display:inline-block;touch-action:none;cursor:grab;user-select:none;max-width:100%}
+  .stage:active{cursor:grabbing}
+  #cv{display:block;height:min(62vh,520px);max-width:100%;box-shadow:0 6px 24px rgba(20,25,40,.22);background:#fff}
+  #ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .check{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  .check span{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;border:1px solid var(--line)}
+  .check .ok{background:#e6f7ed;color:#1f7a3a;border-color:#b2e2c3}
+  .check .bad{background:#fff4e5;color:#a35200;border-color:#ffd8a8}
+  .hint{font-size:13px;color:var(--ink-3);margin:10px 0 0}
+  .busy{color:#5f3dc4;font-weight:600}
+  @media(max-width:900px){.pp{grid-template-columns:1fr}.stagebox{order:-1}#cv{height:auto;width:min(100%,360px)}}
+</style>
+<div class="box"><input type="file" id="file" accept="image/*"></div>
+<div class="pp">
+<div class="box ctl">
+  <label class="l" style="margin-top:0">Photo size / country</label>
+  <select id="size">
+    <option value="35,45,0.75,0.09">35 × 45 mm · Saudi visa, UAE, Bangladesh, India, UK, EU</option>
+    <option value="40,60,0.6,0.1">40 × 60 mm (4 × 6 cm) · Saudi passport &amp; Iqama</option>
+    <option value="45,55,0.67,0.09">45 × 55 mm · Bangladesh e-passport printout</option>
+    <option value="51,51,0.59,0.12">2 × 2 inch (51 × 51 mm) · USA, India visa/OCI</option>
+    <option value="50,70,0.48,0.15">50 × 70 mm · Canada</option>
+    <option value="33,48,0.72,0.1">33 × 48 mm · Malaysia</option>
+    <option value="30,40,0.72,0.1">30 × 40 mm · ID forms</option>
+    <option value="custom">Custom size</option>
+  </select>
+  <div class="two" id="customBox" hidden><input type="number" id="cw" value="35" placeholder="Width mm"><input type="number" id="ch" value="45" placeholder="Height mm"></div>
+  <button class="auto" id="autoBtn">🎯 Auto-fit my face</button>
+  <p class="hint" id="faceMsg">Upload a photo: the face is found and placed at the right size for you. You can then fine-tune it.</p>
+  <label class="l">Zoom</label>
+  <div class="zrow"><button id="zout">−</button><input type="range" id="zoom" min="0.2" max="5" step="0.01" value="1"><button id="zin">+</button></div>
+  <div class="rng"><span>Straighten</span><input type="range" id="rot" min="-15" max="15" step="0.5" value="0"><output id="rotO">0°</output></div>
+  <div class="rng"><span>Brightness</span><input type="range" id="bright" min="70" max="140" value="100"><output id="brO">100</output></div>
+  <div class="rng"><span>Contrast</span><input type="range" id="contrast" min="70" max="140" value="100"><output id="ctO">100</output></div>
+  <label class="l">Background</label>
+  <button class="rm" id="rmBtn">🪄 Remove background (AI)</button>
+  <p class="hint" id="rmStatus"></p>
+  <div class="colors" id="colors"></div>
+  <label style="display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:10px"><input type="checkbox" id="guides" checked> Show guides (face oval, head and chin lines)</label>
+  <label class="l">For online forms (optional)</label>
+  <div class="two"><input type="number" id="px" placeholder="Pixels, e.g. 600"><input type="number" id="kb" placeholder="Max KB, e.g. 240"></div>
+  <button class="dl" id="single">⬇ Download photo (JPG)</button>
+  <button class="g" id="s46">🖨 4×6 inch print sheet</button>
+  <button class="g" id="sa4">🖨 A4 print sheet</button>
+  <button id="reset" style="width:100%;margin-top:8px;font-size:13px">↺ Reset position</button>
+</div>
+<div class="box stagebox">
+  <div class="stage" id="stage"><canvas id="cv"></canvas><canvas id="ov"></canvas></div>
+  <div class="check" id="check"></div>
+  <p class="hint">Drag to move · pinch or scroll to zoom · the head should fit between the two lines.<br>Rules differ by country and embassy, so check the official requirements before you apply.</p>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const DPI = 300, mm2px = mm => Math.round(mm / 25.4 * DPI);
+const cv = $("cv"), ov = $("ov");
+let img = null, orig = null, bg = "#ffffff", face = null;
+/* placement: the image point (ax, ay) is drawn at output point (px, py), scaled by s and rotated by rot degrees */
+const P = {ax: 0, ay: 0, px: 0, py: 0, s: 1, rot: 0};
+let coverS = 1;
+function spec(){ const v = $("size").value; if(v === "custom") return {w: +$("cw").value || 35, h: +$("ch").value || 45, head: 0.72, top: 0.1};
+  const a = v.split(",").map(Number); return {w: a[0], h: a[1], head: a[2], top: a[3]}; }
+const COLORS = [["#ffffff", "White"], ["#f4f4f2", "Off-white"], ["#e6e8eb", "Light grey"], ["#dbe9f7", "Light blue"], ["#4a7fc9", "Blue"]];
+COLORS.forEach(c => { const b = document.createElement("button"); b.style.background = c[0]; b.title = TT(c[1]); b.dataset.c = c[0]; if(c[0] === bg) b.className = "on";
+  b.onclick = () => { bg = c[0]; mark(); draw(); }; $("colors").appendChild(b); });
+const pick = document.createElement("input"); pick.type = "color"; pick.value = "#ffffff"; pick.title = TT("Other colour"); pick.oninput = () => { bg = pick.value; mark(); draw(); }; $("colors").appendChild(pick);
+function mark(){ [...$("colors").querySelectorAll("button")].forEach(b => b.classList.toggle("on", b.dataset.c === bg)); }
+function setup(keep){
+  const S = spec(); cv.width = mm2px(S.w); cv.height = mm2px(S.h); ov.width = cv.width; ov.height = cv.height;
+  if(img){ coverS = Math.max(cv.width / img.naturalWidth, cv.height / img.naturalHeight);
+    if(!keep){ if(face) autoFit(); else { P.ax = img.naturalWidth / 2; P.ay = img.naturalHeight / 2; P.px = cv.width / 2; P.py = cv.height / 2; P.s = coverS; P.rot = 0; } } }
+  syncUI(); draw();
+}
+function paint(c){
+  const W = c.width, H = c.height, k = W / cv.width, g = c.getContext("2d");
+  g.save(); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  if(img){ g.filter = "brightness(" + $("bright").value + "%) contrast(" + $("contrast").value + "%)";
+    g.translate(P.px * k, P.py * k); g.rotate(P.rot * Math.PI / 180); g.scale(P.s * k, P.s * k); g.imageSmoothingQuality = "high";
+    g.drawImage(img, -P.ax, -P.ay); }
+  g.restore();
+}
+function toOut(x, y){ const a = P.rot * Math.PI / 180, dx = (x - P.ax) * P.s, dy = (y - P.ay) * P.s;
+  return {x: P.px + dx * Math.cos(a) - dy * Math.sin(a), y: P.py + dx * Math.sin(a) + dy * Math.cos(a)}; }
+function guides(){
+  const g = ov.getContext("2d"), W = ov.width, H = ov.height, S = spec(); g.clearRect(0, 0, W, H);
+  if(!$("guides").checked) return;
+  const top = S.top * H, chin = top + S.head * H, lw = Math.max(2, W / 260);
+  g.setLineDash([lw * 5, lw * 4]); g.lineWidth = lw; g.strokeStyle = "rgba(229,50,45,.9)";
+  g.beginPath(); g.ellipse(W / 2, (top + chin) / 2 + (chin - top) * 0.04, (chin - top) * 0.36, (chin - top) * 0.47, 0, 0, Math.PI * 2); g.stroke();
+  g.strokeStyle = "rgba(25,113,194,.9)"; [[top, "Top of head"], [chin, "Chin"]].forEach(([y, t]) => { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+    g.setLineDash([]); g.fillStyle = "rgba(25,113,194,.9)"; g.font = `600 ${W / 24}px Inter, Arial, sans-serif`; g.fillText(TT(t), W * 0.03, y - W * 0.015); g.setLineDash([lw * 5, lw * 4]); });
+  g.strokeStyle = "rgba(0,0,0,.18)"; g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke();
+}
+function checks(){
+  const S = spec(), out = [];
+  if(!img){ $("check").innerHTML = ""; return; }
+  if(face){ const c = toOut(face.crownX, face.crownY), n = toOut(face.chinX, face.chinY), e = toOut(face.eyeX, face.eyeY);
+    const headMM = Math.hypot(n.x - c.x, n.y - c.y) / cv.height * S.h, want = S.head * S.h;
+    const okH = Math.abs(headMM - want) <= S.h * 0.045; out.push([okH, TT("Head height") + " " + headMM.toFixed(1) + " mm" + (okH ? "" : " (" + TT("aim for") + " " + want.toFixed(0) + ")")]);
+    const off = Math.abs(e.x - cv.width / 2) / cv.width; out.push([off < 0.04, off < 0.04 ? TT("Centred") : TT("Move to the centre")]);
+    const tilt = Math.abs(face.roll + P.rot); out.push([tilt < 2, tilt < 2 ? TT("Head straight") : TT("Straighten the head")]);
+  } else out.push([false, TT("Face not detected: place it by hand")]);
+  out.push([bg !== null && img !== orig, img !== orig ? TT("Plain background") : TT("Tip: remove the background")]);
+  $("check").innerHTML = out.map(o => `<span class="${o[0] ? "ok" : "bad"}">${o[0] ? "✓" : "!"} ${o[1]}</span>`).join("");
+}
+function draw(){ paint(cv); guides(); checks(); }
+function syncUI(){ $("zoom").value = (P.s / coverS).toFixed(2); $("rot").value = P.rot; $("rotO").textContent = P.rot + "°"; }
+
+/* ---------- face detection (MediaPipe, loaded on first use) ---------- */
+const FD = "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/";
+let detector = null, loading = null;
+function loadDetector(){
+  if(loading) return loading;
+  loading = new Promise((ok, bad) => { const s = document.createElement("script"); s.src = FD + "face_detection.js"; s.crossOrigin = "anonymous";
+    s.onload = () => { try{ detector = new FaceDetection({locateFile: f => FD + f}); detector.setOptions({model: "short", minDetectionConfidence: 0.5}); ok(detector); }catch(e){ bad(e); } };
+    s.onerror = bad; document.head.appendChild(s); });
+  return loading;
+}
+async function detect(image){
+  const d = await loadDetector();
+  /* the detector works best on a moderate-size image */
+  const k = Math.min(1, 1024 / Math.max(image.naturalWidth, image.naturalHeight)), c = document.createElement("canvas");
+  c.width = Math.round(image.naturalWidth * k); c.height = Math.round(image.naturalHeight * k); c.getContext("2d").drawImage(image, 0, 0, c.width, c.height);
+  const res = await new Promise((ok, bad) => { d.onResults(ok); d.send({image: c}).catch(bad); });
+  const det = (res.detections || []).sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height)[0];
+  if(!det) return null;
+  const W = image.naturalWidth, H = image.naturalHeight, lm = det.landmarks;
+  /* keypoints: 0 right eye, 1 left eye, 2 nose, 3 mouth, 4 right ear, 5 left ear */
+  const ex = (lm[0].x + lm[1].x) / 2 * W, ey = (lm[0].y + lm[1].y) / 2 * H, mx = lm[3].x * W, my = lm[3].y * H;
+  const roll = Math.atan2((lm[1].y - lm[0].y) * H, (lm[1].x - lm[0].x) * W) * 180 / Math.PI;
+  const dEM = Math.hypot(mx - ex, my - ey), Hh = dEM / 0.31;            /* eye-to-mouth is about 31% of crown-to-chin */
+  const ux = (mx - ex) / dEM, uy = (my - ey) / dEM;                      /* direction from eyes down the face */
+  return {eyeX: ex, eyeY: ey, roll, crownX: ex - ux * Hh * 0.47, crownY: ey - uy * Hh * 0.47, chinX: ex + ux * Hh * 0.53, chinY: ey + uy * Hh * 0.53, Hh};
+}
+function autoFit(){
+  if(!img || !face){ return; } const S = spec(), H = cv.height;
+  P.rot = Math.max(-15, Math.min(15, -Math.round(face.roll * 2) / 2));
+  P.s = S.head * H / face.Hh;
+  P.ax = face.eyeX; P.ay = face.eyeY; P.px = cv.width / 2; P.py = S.top * H + S.head * H * 0.47;
+  syncUI(); draw();
+}
+async function findFace(){
+  if(!orig) return; $("faceMsg").className = "hint busy"; $("faceMsg").textContent = TT("Finding your face…");
+  try{ face = await detect(orig); }catch(e){ face = null; }
+  $("faceMsg").className = "hint";
+  $("faceMsg").textContent = face ? "✓ " + TT("Face found and placed. Adjust with zoom or drag if needed.") : TT("Couldn't find a face automatically. Drag and zoom so the head fits between the lines.");
+  if(face) autoFit(); else draw();
+}
+$("autoBtn").onclick = () => { if(!img) return alert(TT("Choose a photo first")); if(face) autoFit(); else findFace(); };
+
+/* ---------- loading ---------- */
+let file = null;
+$("file").onchange = e => { const f = e.target.files[0]; if(!f) return; file = f;
+  const i = new Image(); i.onload = () => { img = orig = i; face = null; $("rmStatus").textContent = ""; setup(); findFace(); };
+  i.onerror = () => alert(TT("This image could not be opened. For iPhone HEIC photos, use HEIC to JPG first.")); i.src = URL.createObjectURL(f); };
+$("size").onchange = () => { $("customBox").hidden = $("size").value !== "custom"; setup(); };
+["cw", "ch"].forEach(id => $(id).oninput = () => setup());
+$("guides").onchange = draw;
+
+/* ---------- zoom, move, rotate ---------- */
+function zoomAt(f, cx, cy){ if(!img) return; const ns = Math.max(coverS * 0.2, Math.min(coverS * 5, P.s * f)), r = ns / P.s;
+  P.px = cx + (P.px - cx) * r; P.py = cy + (P.py - cy) * r; P.s = ns; syncUI(); draw(); }
+$("zoom").oninput = () => zoomAt(Number($("zoom").value) * coverS / P.s, cv.width / 2, cv.height / 2);
+$("zin").onclick = () => zoomAt(1.06, cv.width / 2, cv.height / 2); $("zout").onclick = () => zoomAt(1 / 1.06, cv.width / 2, cv.height / 2);
+$("rot").oninput = () => { P.rot = Number($("rot").value); $("rotO").textContent = P.rot + "°"; draw(); };
+$("bright").oninput = () => { $("brO").textContent = $("bright").value; draw(); };
+$("contrast").oninput = () => { $("ctO").textContent = $("contrast").value; draw(); };
+$("reset").onclick = () => { face ? autoFit() : setup(); };
+const pts = new Map(); let last = null;
+const toCv = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height}; };
+$("stage").addEventListener("pointerdown", e => { pts.set(e.pointerId, toCv(e)); $("stage").setPointerCapture(e.pointerId); last = null; });
+$("stage").addEventListener("pointermove", e => {
+  if(!pts.has(e.pointerId) || !img) return; const p = toCv(e), prev = pts.get(e.pointerId); pts.set(e.pointerId, p);
+  if(pts.size === 1){ P.px += p.x - prev.x; P.py += p.y - prev.y; draw(); }
+  else if(pts.size === 2){ const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mid = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+    if(last){ P.px += mid.x - last.mid.x; P.py += mid.y - last.mid.y; zoomAt(d / last.d, mid.x, mid.y); } last = {d, mid}; }
+});
+["pointerup", "pointercancel"].forEach(t => $("stage").addEventListener(t, e => { pts.delete(e.pointerId); last = null; }));
+$("stage").addEventListener("wheel", e => { if(!img) return; e.preventDefault(); const p = toCv(e); zoomAt(e.deltaY < 0 ? 1.05 : 1 / 1.05, p.x, p.y); }, {passive: false});
+
+/* ---------- saving ---------- */
+function photoCanvas(){ const c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; paint(c); return c; }
+const blobOf = (c, q) => new Promise(r => c.toBlob(r, "image/jpeg", q));
+$("single").onclick = async () => {
+  if(!img) return alert(TT("Choose a photo first")); const S = spec(); let c = photoCanvas();
+  const px = Number($("px").value); if(px){ const k = document.createElement("canvas"); k.width = px; k.height = Math.round(px * cv.height / cv.width);
+    const g = k.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(c, 0, 0, k.width, k.height); c = k; }
+  const kb = Number($("kb").value) * 1024; let b = await blobOf(c, 0.95);
+  if(kb && b.size > kb){ let lo = 0.3, hi = 0.95, best = null; for(let i = 0; i < 8; i++){ const q = (lo + hi) / 2, t = await blobOf(c, q); if(t.size <= kb){ best = t; lo = q; } else hi = q; }
+    b = best || await blobOf(c, 0.3); }
+  DPLResult.file(b, "passport-photo-" + (px ? c.width + "x" + c.height + "px" : S.w + "x" + S.h + "mm") + ".jpg");
+};
+function sheet(kind){
+  if(!img) return alert(TT("Choose a photo first"));
+  const one = photoCanvas(), margin = mm2px(kind === "a4" ? 6 : 2), gap = mm2px(2);
+  let [pw, ph] = kind === "a4" ? [210, 297] : [101.6, 152.4];
+  const fit = (w, h) => Math.floor((mm2px(w) - 2 * margin + gap) / (one.width + gap)) * Math.floor((mm2px(h) - 2 * margin + gap) / (one.height + gap));
+  if(fit(ph, pw) > fit(pw, ph)) [pw, ph] = [ph, pw];          /* turn the sheet if more photos fit */
+  const Sh = document.createElement("canvas"); Sh.width = mm2px(pw); Sh.height = mm2px(ph);
+  const g = Sh.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, Sh.width, Sh.height);
+  const cols = Math.floor((Sh.width - 2 * margin + gap) / (one.width + gap)), rows = Math.floor((Sh.height - 2 * margin + gap) / (one.height + gap));
+  const sx = (Sh.width - (cols * one.width + (cols - 1) * gap)) / 2, sy = (Sh.height - (rows * one.height + (rows - 1) * gap)) / 2;
+  g.strokeStyle = "#c8ccd4"; g.lineWidth = 2;
+  for(let r = 0; r < rows; r++) for(let c = 0; c < cols; c++){ const x = sx + c * (one.width + gap), y = sy + r * (one.height + gap); g.drawImage(one, x, y); g.strokeRect(x, y, one.width, one.height); }
+  Sh.toBlob(b => DPLResult.file(b, "passport-sheet-" + kind + "-" + rows * cols + "-copies.jpg"), "image/jpeg", 0.95);
+}
+$("s46").onclick = () => sheet("4x6"); $("sa4").onclick = () => sheet("a4");
+window.__pp = {set: i => { img = i; draw(); }, get file(){ return file; }, status: t => $("rmStatus").textContent = t};
+setup();
+</script>
+<script type="module">
+import { removeBackground } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal/+esm";
+document.getElementById("rmBtn").onclick = async () => {
+  const pp = window.__pp, f = pp.file; const TT = s => (window.T ? T(s) : s);
+  if(!f){ alert(TT("Choose a photo first")); return; }
+  pp.status(TT("Working… the first time takes a moment while the AI model downloads."));
+  try{
+    const blob = await removeBackground(f, {progress: (key, cur, total) => { if(total) pp.status(TT("Downloading:") + " " + Math.round(cur / total * 100) + "%"); }});
+    const i = new Image(); i.onload = () => { pp.set(i); pp.status("✓ " + TT("Background removed. Pick a colour below.")); }; i.src = URL.createObjectURL(blob);
+  }catch(e){ pp.status(TT("Something went wrong, please try again.")); }
+};
+</script>
+<p class="lic">Background removal is powered by
+  <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">IMG.LY background-removal</a>,
+  licensed under AGPL-3.0. The code of this page is offered under the same licence — use your browser's "View page source" to get it.</p>
