@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Flatten PDF Online – Lock Form Fields &amp; Annotations | DailyPdfLife</title>
+<meta name="description" content="Flatten a PDF so filled-in form fields, comments and stamps become part of the page and can&#x27;t be edited. Keep text sharp or flatten everything into images.">
+<link rel="canonical" href="https://dailypdflife.com/flatten-pdf">
+<meta property="og:title" content="Flatten PDF Online – Lock Form Fields &amp; Annotations | DailyPdfLife">
+<meta property="og:description" content="Flatten a PDF so filled-in form fields, comments and stamps become part of the page and can&#x27;t be edited. Keep text sharp or flatten everything into images.">
+<meta property="og:url" content="https://dailypdflife.com/flatten-pdf">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 4px}
+  .mode{display:block;border:2px solid var(--line);border-radius:16px;padding:16px 18px;cursor:pointer;background:#fff}
+  .mode b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+  .mode span{font-size:13.5px;color:var(--ink-2);line-height:1.45;display:block}
+  .mode input{float:right;margin:2px 0 0 8px}
+  .mode:has(input:checked){border-color:#5f3dc4;background:#f7f4ff}
+  .pri{background:#5f3dc4;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  .opt{margin-top:12px;font-size:14px}
+  @media(max-width:700px){.modes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <h3>2. How to flatten</h3>
+  <div class="modes">
+    <label class="mode"><input type="radio" name="m" value="forms" checked><b>Lock form fields</b><span>Filled-in boxes, ticks and dropdowns become normal page content. Text stays sharp and searchable.</span></label>
+    <label class="mode"><input type="radio" name="m" value="image"><b>Flatten everything</b><span>Every page is turned into a single picture: comments, stamps, highlights and forms included. Nothing can be edited after this.</span></label>
+  </div>
+  <div class="opt" id="qBox" hidden>Quality <select id="dpi"><option value="1.5">Normal (smaller file)</option><option value="2.2" selected>High</option><option value="3">Very high (print)</option></select></div>
+  <button class="pri" id="go">▤ Flatten PDF</button>
+  <p class="note" id="status"></p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+document.querySelectorAll("input[name=m]").forEach(r => r.onchange = () => $("qBox").hidden = r.value !== "image" || !r.checked);
+async function flattenImages(bytes, scale, msg){
+  const pdf = await pdfjsLib.getDocument({data: bytes.slice()}).promise, out = await PDFLib.PDFDocument.create();
+  for(let i = 1; i <= pdf.numPages; i++){
+    msg(TT("Page") + " " + i + " / " + pdf.numPages);
+    const page = await pdf.getPage(i), v1 = page.getViewport({scale: 1}), vp = page.getViewport({scale});
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await page.render({canvasContext: g, viewport: vp}).promise;
+    const jpg = await out.embedJpg(await (await new Promise(r => c.toBlob(r, "image/jpeg", 0.9))).arrayBuffer());
+    const p = out.addPage([v1.width, v1.height]); p.drawImage(jpg, {x: 0, y: 0, width: v1.width, height: v1.height});
+  }
+  return out.save();
+}
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PDF first"));
+  const bytes = new Uint8Array(await f.arrayBuffer()), name = f.name.replace(/\.pdf$/i, "");
+  const mode = document.querySelector("input[name=m]:checked").value, msg = s => $("status").textContent = s;
+  msg(TT("Working…"));
+  try{
+    let out;
+    if(mode === "forms"){
+      const doc = await PDFLib.PDFDocument.load(bytes, {ignoreEncryption: true}), form = doc.getForm();
+      if(!form.getFields().length){ msg(""); if(confirm(TT("This PDF has no form fields. Flatten everything into pictures instead?"))) out = await flattenImages(bytes, 2.2, msg); else return; }
+      else { form.flatten(); out = await doc.save(); }
+    } else out = await flattenImages(bytes, Number($("dpi").value), msg);
+    msg(""); DPLResult.file(out, name + "-flat.pdf");
+  }catch(err){ msg(""); alert(TT("Could not flatten this PDF:") + " " + err.message + "\n" + TT("Try “Flatten everything” instead.")); }
+};
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About Flatten PDF</h2>
+  <p>A filled PDF form can still be edited by anyone who opens it, and some programs show the answers differently or even lose them. Flattening turns the answers, ticks and dropdown choices into normal page content, so the document looks the same everywhere and can no longer be changed. Choose <b>Lock form fields</b> to keep text sharp and searchable, or <b>Flatten everything</b> to turn each page into a single picture, including comments, highlights and stamps.</p>
+  <h2>How to flatten a PDF</h2>
+  <ol><li>Choose your PDF.</li><li>Pick <b>Lock form fields</b> or <b>Flatten everything</b>.</li><li>For “Flatten everything”, choose the quality.</li><li>Tap <b>Flatten PDF</b> and save the new file.</li></ol>
+  <h2>When to flatten</h2>
+  <p>Flatten the final copy of an application form before you send it, invoices and quotations you don't want changed, and documents with comments or stamps that must print correctly. Keep your editable original in case you need to change something later. To fill the form first, use <a href="fill-pdf-forms">Fill PDF forms</a>.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Will the text stay searchable?</summary><p>With Lock form fields, yes. Flatten everything turns pages into pictures, so text can't be selected.</p></details><details><summary>Can I undo flattening?</summary><p>No, so keep your original file.</p></details><details><summary>Why does my PDF say it has no form fields?</summary><p>It may be a printed form without fillable boxes. Use Flatten everything instead.</p></details><details><summary>Is my file uploaded?</summary><p>No, flattening happens in your browser.</p></details>
+  <p class="links">Related tools: <a href="fill-pdf-forms">Fill PDF forms</a> <a href="sign-pdf">Sign PDF</a> <a href="pdf-password">Protect PDF</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Will the text stay searchable?", "acceptedAnswer": {"@type": "Answer", "text": "With Lock form fields, yes. Flatten everything turns pages into pictures, so text can't be selected."}}, {"@type": "Question", "name": "Can I undo flattening?", "acceptedAnswer": {"@type": "Answer", "text": "No, so keep your original file."}}, {"@type": "Question", "name": "Why does my PDF say it has no form fields?", "acceptedAnswer": {"@type": "Answer", "text": "It may be a printed form without fillable boxes. Use Flatten everything instead."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No, flattening happens in your browser."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Photo Enhancer Online – Brighten, Sharpen &amp; Fix Colours | DailyPdfLife</title>
+<meta name="description" content="Improve dark, dull or blurry photos in one tap with Auto enhance, or adjust brightness, contrast, colour, warmth, shadows and sharpness. Free, private, no upload.">
+<link rel="canonical" href="https://dailypdflife.com/photo-enhancer">
+<meta property="og:title" content="Photo Enhancer Online – Brighten, Sharpen &amp; Fix Colours | DailyPdfLife">
+<meta property="og:description" content="Improve dark, dull or blurry photos in one tap with Auto enhance, or adjust brightness, contrast, colour, warmth, shadows and sharpness. Free, private, no upload.">
+<meta property="og:url" content="https://dailypdflife.com/photo-enhancer">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+
+<style>
+  .lay{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+  .side{position:sticky;top:80px}
+  .rng{display:grid;grid-template-columns:96px 1fr 38px;align-items:center;gap:8px;font-size:13.5px;margin:8px 0}
+  .rng span{font-weight:600;color:var(--ink)}
+  .rng output{font-size:12.5px;color:var(--ink-3);text-align:right}
+  .auto{width:100%;background:linear-gradient(90deg,#7b3fe4,#e5322d);color:#fff;border:0;padding:12px !important;font-size:15px;margin-bottom:6px}
+  .pri{width:100%;background:#111827;color:#fff;border:0;padding:12px !important;margin-top:12px}
+  .stage{position:relative;background:#eef0f4;border-radius:14px;padding:12px;display:flex;justify-content:center;user-select:none}
+  #cv{max-width:100%;max-height:72vh;border-radius:6px;box-shadow:0 3px 14px rgba(20,25,40,.15)}
+  .hold{position:absolute;right:20px;top:20px;background:rgba(17,24,39,.8);color:#fff;border:0;border-radius:999px !important;padding:8px 14px !important;font-size:13px}
+  .presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+  .presets button{padding:8px !important;font-size:13px}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.side{position:static}}
+</style>
+</head>
+<body>
+<div class="box"><input type="file" id="file" accept="image/*"></div>
+<div class="lay" id="lay" hidden>
+  <div class="box side">
+    <button class="auto" id="auto">✨ Auto enhance</button>
+    <div class="presets">
+      <button data-p="doc">📄 Document</button><button data-p="vivid">🌈 Vivid</button>
+      <button data-p="warm">☀ Warm</button><button data-p="bw">◐ B &amp; W</button>
+    </div>
+    <h3>Adjust</h3>
+    <div id="sliders"></div>
+    <button id="reset" style="width:100%;margin-top:6px">↺ Reset</button>
+    <h3>Save as</h3>
+    <select id="fmt" style="width:100%"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
+    <button class="pri" id="save">⬇ Save photo</button>
+  </div>
+  <div class="box"><div class="stage"><canvas id="cv"></canvas><button class="hold" id="hold">👁 Hold to see original</button></div></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const S = [["bright", "Brightness", -100, 100, 0], ["contrast", "Contrast", -100, 100, 0], ["sat", "Colour", -100, 100, 0],
+           ["warm", "Warmth", -100, 100, 0], ["shadow", "Shadows", 0, 100, 0], ["sharp", "Sharpness", 0, 100, 0], ["vig", "Vignette", 0, 100, 0]];
+const v = {}; let img = null, base = null, name = "photo", lv = null, gray = false;
+S.forEach(([k, label, mn, mx, d]) => { v[k] = d; const r = document.createElement("div"); r.className = "rng";
+  r.innerHTML = `<span>${TT(label)}</span><input type="range" min="${mn}" max="${mx}" value="${d}" data-k="${k}"><output>${d}</output>`;
+  r.querySelector("input").oninput = e => { v[k] = Number(e.target.value); r.querySelector("output").textContent = v[k]; schedule(); };
+  $("sliders").appendChild(r); });
+function setAll(o){ Object.assign(v, o); $("sliders").querySelectorAll("input").forEach(i => { i.value = v[i.dataset.k]; i.nextElementSibling.textContent = v[i.dataset.k]; }); schedule(); }
+$("file").onchange = e => { const f = e.target.files[0]; if(!f) return; name = f.name.replace(/\.[^.]+$/, "");
+  const im = new Image(); im.onload = () => { img = im; const k = Math.min(1, 1400 / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+    base = c.getContext("2d").getImageData(0, 0, c.width, c.height); lv = null; gray = false; $("lay").hidden = false; setAll(Object.fromEntries(S.map(s => [s[0], s[4]]))); };
+  im.onerror = () => alert(TT("This image could not be opened. For iPhone HEIC photos, use HEIC to JPG first.")); im.src = URL.createObjectURL(f); };
+/* auto levels: stretch each channel so the darkest 0.5% is black and the brightest 0.5% is white */
+function levels(d){
+  const h = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)], n = d.data.length / 4;
+  for(let i = 0; i < d.data.length; i += 4){ h[0][d.data[i]]++; h[1][d.data[i+1]]++; h[2][d.data[i+2]]++; }
+  return h.map(hh => { let lo = 0, hi = 255, s = 0; while(lo < 255 && (s += hh[lo]) < n * 0.005) lo++; s = 0; while(hi > 0 && (s += hh[hi]) < n * 0.005) hi--; return [lo, Math.max(lo + 1, hi)]; });
+}
+function process(src){
+  const d = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height), a = d.data, W = d.width, H = d.height;
+  const br = v.bright * 1.1, ct = (100 + v.contrast) / 100, ct2 = ct * ct, sat = 1 + v.sat / 100, wm = v.warm * 0.35, sh = v.shadow / 100;
+  for(let i = 0; i < a.length; i += 4){
+    let r = a[i], g = a[i+1], b = a[i+2];
+    if(lv){ r = (r - lv[0][0]) * 255 / (lv[0][1] - lv[0][0]); g = (g - lv[1][0]) * 255 / (lv[1][1] - lv[1][0]); b = (b - lv[2][0]) * 255 / (lv[2][1] - lv[2][0]); }
+    if(sh){ const l = (r + g + b) / 765, lift = sh * 90 * Math.pow(1 - l, 2.2); r += lift; g += lift; b += lift; }
+    r += br; g += br; b += br;
+    r = (r - 128) * ct2 + 128; g = (g - 128) * ct2 + 128; b = (b - 128) * ct2 + 128;
+    const L = 0.299 * r + 0.587 * g + 0.114 * b; r = L + (r - L) * sat; g = L + (g - L) * sat; b = L + (b - L) * sat;
+    r += wm; b -= wm;
+    if(gray){ const y = 0.299 * r + 0.587 * g + 0.114 * b; r = g = b = y; }
+    a[i] = r; a[i+1] = g; a[i+2] = b;
+  }
+  if(v.sharp){ const amt = v.sharp / 60, o = new Uint8ClampedArray(a);
+    for(let y = 1; y < H - 1; y++) for(let x = 1; x < W - 1; x++){ const i = (y * W + x) * 4;
+      for(let c = 0; c < 3; c++){ const n = o[i - 4 + c] + o[i + 4 + c] + o[i - W * 4 + c] + o[i + W * 4 + c]; a[i + c] = o[i + c] + amt * (4 * o[i + c] - n); } } }
+  if(v.vig){ const cx = W / 2, cy = H / 2, md = Math.hypot(cx, cy), s = v.vig / 100 * 0.75;
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const i = (y * W + x) * 4, f = 1 - s * Math.pow(Math.hypot(x - cx, y - cy) / md, 2.2); a[i] *= f; a[i+1] *= f; a[i+2] *= f; } }
+  return d;
+}
+let raf = 0, showOrig = false;
+function schedule(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); }
+function paint(){ if(!base) return; const c = $("cv"); c.width = base.width; c.height = base.height; c.getContext("2d").putImageData(showOrig ? base : process(base), 0, 0); }
+$("auto").onclick = () => { if(!base) return; lv = levels(base); gray = false; setAll({bright: 0, contrast: 12, sat: 14, warm: 0, shadow: 25, sharp: 30, vig: 0}); };
+document.querySelectorAll(".presets button").forEach(b => b.onclick = () => { if(!base) return; lv = levels(base);
+  const p = b.dataset.p; gray = p === "bw";
+  setAll({doc: {bright: 18, contrast: 45, sat: -40, warm: 0, shadow: 40, sharp: 45, vig: 0}, vivid: {bright: 4, contrast: 18, sat: 45, warm: 4, shadow: 15, sharp: 30, vig: 12},
+          warm: {bright: 6, contrast: 10, sat: 12, warm: 35, shadow: 15, sharp: 20, vig: 18}, bw: {bright: 4, contrast: 30, sat: 0, warm: 0, shadow: 15, sharp: 30, vig: 15}}[p]); });
+$("reset").onclick = () => { lv = null; gray = false; setAll(Object.fromEntries(S.map(s => [s[0], s[4]]))); };
+const hold = on => { showOrig = on; schedule(); };
+$("hold").addEventListener("pointerdown", () => hold(true)); ["pointerup", "pointerleave"].forEach(e => $("hold").addEventListener(e, () => hold(false)));
+$("save").onclick = () => {
+  if(!img) return;
+  /* apply the same settings to the full-size photo */
+  const k = Math.min(1, 4000 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k); const g = c.getContext("2d"); g.drawImage(img, 0, 0, c.width, c.height);
+  const full = g.getImageData(0, 0, c.width, c.height), keepLv = lv; if(lv) lv = levels(full);
+  g.putImageData(process(full), 0, 0); lv = keepLv;
+  const type = $("fmt").value, ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[type];
+  c.toBlob(b => DPLResult.file(b, name + "-enhanced." + ext), type, 0.92);
+};
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About the Photo enhancer</h2>
+  <p>Phone photos taken indoors or in the evening often come out dark, grey or slightly soft. The Photo enhancer fixes that: <b>Auto enhance</b> balances the light and colours and sharpens the details in one tap, and the sliders let you fine-tune brightness, contrast, colour, warmth, shadows, sharpness and vignette. Presets give quick looks for documents, vivid colours, warm tones or black and white.</p>
+  <h2>How to enhance a photo</h2>
+  <ol><li>Choose a photo.</li><li>Tap <b>Auto enhance</b>, or a preset such as <b>Document</b> for photographed papers.</li><li>Adjust the sliders if you like. Hold <b>See original</b> to compare.</li><li>Choose JPG, PNG or WEBP and save. The full-resolution photo is processed.</li></ol>
+  <h2>Tips</h2>
+  <p>The Document preset makes photographed papers whiter and the text darker, which is great for receipts and notes; for a proper scan with straightened pages use <a href="scan-to-pdf">Scan to PDF</a>. Increase Shadows to brighten faces in backlit photos. Small amounts of sharpness look natural; too much creates halos.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Can it fix very blurry photos?</summary><p>It sharpens slightly soft photos. Badly blurred or shaky photos can't be fully fixed.</p></details><details><summary>Is the full resolution kept?</summary><p>Yes, settings are applied to the original size (up to 4000 pixels).</p></details><details><summary>Does it work offline?</summary><p>Yes, once the page has loaded.</p></details><details><summary>Is my photo uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="remove-bg">Remove background</a> <a href="crop-image">Crop image</a> <a href="image-tools#compress">Compress image</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can it fix very blurry photos?", "acceptedAnswer": {"@type": "Answer", "text": "It sharpens slightly soft photos. Badly blurred or shaky photos can't be fully fixed."}}, {"@type": "Question", "name": "Is the full resolution kept?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, settings are applied to the original size (up to 4000 pixels)."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, once the page has loaded."}}, {"@type": "Question", "name": "Is my photo uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

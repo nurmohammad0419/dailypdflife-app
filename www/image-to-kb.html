@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Resize Image to KB – Reduce Photo to 20KB, 50KB, 100KB | DailyPdfLife</title>
+<meta name="description" content="Make a photo exactly the file size an online form needs: 20 KB, 50 KB, 100 KB, 200 KB or any size, with optional exact pixels. Free, private and fast.">
+<link rel="canonical" href="https://dailypdflife.com/image-to-kb">
+<meta property="og:title" content="Resize Image to KB – Reduce Photo to 20KB, 50KB, 100KB | DailyPdfLife">
+<meta property="og:description" content="Make a photo exactly the file size an online form needs: 20 KB, 50 KB, 100 KB, 200 KB or any size, with optional exact pixels. Free, private and fast.">
+<meta property="og:url" content="https://dailypdflife.com/image-to-kb">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+
+<style>
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .presets button{padding:8px 14px !important;border-radius:999px !important;font-size:13.5px}
+  .presets button.on{background:#111827;color:#fff;border-color:#111827}
+  .opts{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .opts input{width:120px}
+  .pri{background:#1c7ed6;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .cmp figure{margin:0;background:#f7f8fa;border-radius:14px;padding:10px;text-align:center}
+  .cmp img{max-width:100%;max-height:260px;border-radius:8px}
+  .cmp figcaption{font-size:13.5px;color:var(--ink-2);margin-top:6px}
+  .cmp b{color:var(--ink)}
+  .ok{color:#1f7a3a !important}
+  @media(max-width:700px){.cmp{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a photo</h3>
+  <input type="file" id="file" accept="image/*">
+  <h3>2. Target size</h3>
+  <div class="presets" id="presets">
+    <button data-kb="20">20 KB</button><button data-kb="50">50 KB</button><button data-kb="100" class="on">100 KB</button>
+    <button data-kb="200">200 KB</button><button data-kb="300">300 KB</button><button data-kb="500">500 KB</button><button data-kb="1024">1 MB</button>
+  </div>
+  <div class="opts">
+    <label>Or type it (KB) <input type="number" id="kb" min="5" value="100"></label>
+    <label>Width (px, optional) <input type="number" id="w" min="10" placeholder="auto"></label>
+    <label>Height (px, optional) <input type="number" id="h" min="10" placeholder="auto"></label>
+    <label>Format <select id="fmt"><option value="image/jpeg">JPG</option><option value="image/webp">WEBP</option></select></label>
+  </div>
+  <p class="note">Many forms ask for a photo under a size, for example 50 KB, or exactly 300 × 300 pixels. Fill in the width and height only if the form asks for exact pixels.</p>
+  <button class="pri" id="go">⇲ Make it this size</button>
+  <p class="note" id="status"></p>
+  <div class="cmp" id="cmp" hidden>
+    <figure><img id="a"><figcaption id="ca"></figcaption></figure>
+    <figure><img id="b"><figcaption id="cb"></figcaption></figure>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const kb = n => n >= 1048576 ? (n / 1048576).toFixed(2) + " MB" : (n / 1024).toFixed(1) + " KB";
+$("presets").querySelectorAll("button").forEach(b => b.onclick = () => { $("kb").value = b.dataset.kb; $("presets").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); });
+$("kb").oninput = () => $("presets").querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.kb === $("kb").value));
+function load(f){ return new Promise((ok, bad) => { const im = new Image(); im.onload = () => ok(im); im.onerror = bad; im.src = URL.createObjectURL(f); }); }
+function draw(im, w, h){ const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.imageSmoothingQuality = "high";
+  /* fill the exact box like a passport photo: crop the centre instead of stretching */
+  const s = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * s, dh = im.naturalHeight * s;
+  g.drawImage(im, (w - dw) / 2, (h - dh) / 2, dw, dh); return c; }
+const blobOf = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a photo first"));
+  const target = Math.max(5, Number($("kb").value) || 100) * 1024, type = $("fmt").value;
+  let im; try{ im = await load(f); }catch(e){ return alert(TT("This image could not be opened. For iPhone HEIC photos, use HEIC to JPG first.")); }
+  $("status").textContent = TT("Working…");
+  const fw = Number($("w").value), fh = Number($("h").value), r = im.naturalHeight / im.naturalWidth;
+  let w = fw || (fh ? Math.round(fh / r) : im.naturalWidth), h = fh || (fw ? Math.round(fw * r) : im.naturalHeight);
+  const fixed = !!(fw || fh);
+  let best = null;
+  for(let round = 0; round < 12; round++){
+    const c = draw(im, w, h); let lo = 0.05, hi = 0.95, found = null;
+    for(let i = 0; i < 9; i++){ const q = (lo + hi) / 2, b = await blobOf(c, type, q); if(b.size <= target){ found = b; lo = q; } else hi = q; }
+    if(!found){ const b = await blobOf(c, type, 0.05); if(b.size <= target) found = b; }
+    if(found){ best = {blob: found, w, h}; break; }
+    if(fixed){ best = {blob: await blobOf(c, type, 0.05), w, h, over: true}; break; }
+    const small = await blobOf(c, type, 0.6), k = Math.max(0.5, Math.min(0.9, Math.sqrt(target / small.size)));
+    w = Math.max(16, Math.round(w * k)); h = Math.max(16, Math.round(h * k));
+  }
+  $("status").textContent = "";
+  if(!best) return alert(TT("Could not reach that size. Try a larger target."));
+  $("a").src = URL.createObjectURL(f); $("ca").innerHTML = "<b>" + TT("Before") + "</b> · " + kb(f.size) + " · " + im.naturalWidth + "×" + im.naturalHeight;
+  $("b").src = URL.createObjectURL(best.blob);
+  $("cb").innerHTML = "<b class='" + (best.over ? "" : "ok") + "'>" + TT("After") + "</b> · " + kb(best.blob.size) + " · " + best.w + "×" + best.h + (best.over ? " · " + TT("smallest possible at this pixel size") : "");
+  $("cmp").hidden = false;
+  const ext = type === "image/webp" ? "webp" : "jpg";
+  DPLResult.file(best.blob, f.name.replace(/\.[^.]+$/, "") + "-" + Math.round(best.blob.size / 1024) + "kb." + ext);
+};
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About Resize image to KB</h2>
+  <p>Job portals, visa and Iqama services, university admissions and exam forms often say “photo must be under 50 KB” or “signature under 20 KB”. This tool finds the best quality that fits the size you choose, and makes the picture smaller only if it has to. If the form also asks for exact pixels, such as 300 × 300, type them in and the photo is cropped neatly to fit.</p>
+  <h2>How to reduce a photo to a size in KB</h2>
+  <ol><li>Choose your photo.</li><li>Tap a target size such as <b>50 KB</b>, or type your own.</li><li>Fill in width and height only if the form asks for exact pixels.</li><li>Tap <b>Make it this size</b> and compare before and after.</li><li>Save the photo and upload it.</li></ol>
+  <h2>Tips</h2>
+  <p>For passport-style photos, make the photo first in the <a href="passport-photo.html">Passport photo maker</a> and then reduce it here. For a signature under 20 KB, create it in the <a href="signature-maker.html">Signature maker</a> and save as JPG. iPhone HEIC photos must be converted with <a href="heic-to-jpg.html">HEIC to JPG</a> first.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Will the photo look blurry?</summary><p>The tool keeps the highest quality that fits. Very small targets on large photos may soften details.</p></details><details><summary>How do I make a 300×300 photo under 50 KB?</summary><p>Type 300 in width and height and choose 50 KB.</p></details><details><summary>Which format do forms accept?</summary><p>Most want JPG, which is the default.</p></details><details><summary>Is my photo uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="passport-photo.html">Passport photo</a> <a href="image-tools.html#compress">Compress image</a> <a href="signature-maker.html">Signature maker</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Will the photo look blurry?", "acceptedAnswer": {"@type": "Answer", "text": "The tool keeps the highest quality that fits. Very small targets on large photos may soften details."}}, {"@type": "Question", "name": "How do I make a 300×300 photo under 50 KB?", "acceptedAnswer": {"@type": "Answer", "text": "Type 300 in width and height and choose 50 KB."}}, {"@type": "Question", "name": "Which format do forms accept?", "acceptedAnswer": {"@type": "Answer", "text": "Most want JPG, which is the default."}}, {"@type": "Question", "name": "Is my photo uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!-- libs: jszip -->
+<style>
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .pri{background:#5f3dc4;color:#fff;border:0;padding:13px 22px !important;font-size:15px;margin-top:14px}
+  .list{margin:12px 0 0;padding:0;list-style:none;max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  .list li{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f2f3f6;font-size:14px}
+  .list li:last-child{border-bottom:0}
+  .list li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .list li small{color:var(--ink-3)}
+  .list li button{padding:5px 10px !important;font-size:12.5px}
+  .row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:14px}
+  @media(max-width:800px){.two{grid-template-columns:1fr}}
+</style>
+<div class="two">
+  <div class="box">
+    <h3>Make a ZIP</h3>
+    <p>Put many files into one ZIP, so you can send them as a single attachment.</p>
+    <input type="file" id="add" multiple>
+    <ul class="list" id="zl" hidden data-notr></ul>
+    <div class="row">Name <input id="zname" value="files" style="width:160px">.zip</div>
+    <button class="pri" id="make">🗜 Create ZIP</button>
+    <p class="note" id="s1"></p>
+  </div>
+  <div class="box">
+    <h3>Open a ZIP</h3>
+    <p>See what's inside a ZIP and save the files you need. Works on phones too.</p>
+    <input type="file" id="zip" accept=".zip,application/zip,application/x-zip-compressed">
+    <ul class="list" id="ul" hidden data-notr></ul>
+    <button class="pri" id="all" hidden>⬇ Save all files</button>
+    <p class="note" id="s2"></p>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+let picked = [];
+function drawPicked(){
+  const ul = $("zl"); ul.innerHTML = ""; ul.hidden = !picked.length;
+  picked.forEach((f, i) => { const li = document.createElement("li"); li.innerHTML = "<span></span><small></small><button>✕</button>";
+    li.querySelector("span").textContent = f.name; li.querySelector("small").textContent = kb(f.size);
+    li.querySelector("button").onclick = () => { picked.splice(i, 1); drawPicked(); }; ul.appendChild(li); });
+}
+$("add").onchange = e => { picked = picked.concat([...e.target.files]); e.target.value = ""; drawPicked(); };
+$("make").onclick = async () => {
+  if(!picked.length) return alert(TT("Choose some files first."));
+  const z = new JSZip(), seen = {};
+  picked.forEach(f => { let n = f.name; if(seen[n]){ n = n.replace(/(\.[^.]*)?$/, "-" + (++seen[f.name]) + "$1"); } else seen[n] = 1; z.file(n, f); });
+  const blob = await z.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 6}}, m => $("s1").textContent = Math.round(m.percent) + "%");
+  $("s1").textContent = picked.length + " " + TT("files") + " · " + kb(blob.size);
+  DPLResult.file(blob, ($("zname").value.trim() || "files") + ".zip", "application/zip");
+};
+let entries = [];
+$("zip").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return; const ul = $("ul"); ul.innerHTML = ""; $("s2").textContent = TT("Opening…");
+  let z; try{ z = await JSZip.loadAsync(f); }catch(err){ $("s2").textContent = ""; return alert(TT("This ZIP could not be opened. It may be damaged or password-protected.")); }
+  entries = Object.values(z.files).filter(x => !x.dir && !/(^|\/)(__MACOSX|\.DS_Store)/.test(x.name));
+  entries.forEach(en => { const li = document.createElement("li"); li.innerHTML = "<span></span><small></small><button>⬇</button>";
+    li.querySelector("span").textContent = en.name; li.querySelector("small").textContent = en._data && en._data.uncompressedSize ? kb(en._data.uncompressedSize) : "";
+    li.querySelector("button").onclick = async () => DPLResult.save(await en.async("blob"), en.name.split("/").pop());
+    ul.appendChild(li); });
+  ul.hidden = !entries.length; $("all").hidden = !entries.length; $("s2").textContent = entries.length + " " + TT("files inside");
+};
+$("all").onclick = async () => {
+  const list = []; for(const en of entries) list.push({blob: await en.async("blob"), name: en.name.split("/").pop()});
+  DPLResult.files(list, list.length + " " + TT("files"));
+};
+</script>

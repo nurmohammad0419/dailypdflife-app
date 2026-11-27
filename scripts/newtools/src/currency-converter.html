@@ -1,0 +1,71 @@
+<style>
+  .conv{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end}
+  .conv label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650;color:var(--ink)}
+  .conv input{font-size:22px !important;font-weight:700;padding:12px 14px !important}
+  .conv select{font-size:15px !important;padding:11px !important}
+  .swap{width:48px;height:48px;border-radius:50% !important;padding:0 !important;font-size:20px;margin-bottom:4px}
+  .result{margin-top:18px;padding:20px;border-radius:18px;background:linear-gradient(135deg,#1c7ed6,#1864ab);color:#fff}
+  .result b{display:block;font-size:34px;letter-spacing:-.5px}
+  .result span{opacity:.85;font-size:14px}
+  .tbl{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:10px}
+  .tbl div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+  .tbl b{color:var(--ink)}
+  .src{font-size:12.5px;color:var(--ink-3);margin-top:12px}
+  .manual{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:14px}
+  @media(max-width:700px){.conv{grid-template-columns:1fr}.swap{justify-self:center}}
+</style>
+<div class="box">
+  <div class="conv">
+    <label>Amount <input type="number" id="amt" value="1000" min="0"></label>
+    <span></span><span></span>
+    <label>From <select id="from"></select></label>
+    <button class="swap" id="swap" title="Swap">⇄</button>
+    <label>To <select id="to"></select></label>
+  </div>
+  <div class="result"><span id="line1">—</span><b id="out">—</b><span id="line2"></span></div>
+  <div class="manual" id="manual" hidden>Couldn't load today's rates. Type the rate yourself: 1 <span id="mf"></span> = <input type="number" id="mrate" step="any" style="width:130px"> <span id="mt"></span></div>
+  <p class="src" id="src"></p>
+</div>
+<div class="box">
+  <h3 id="tblTitle">1 SAR in other currencies</h3>
+  <div class="tbl" id="tbl"></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const CUR = {SAR: "Saudi riyal", BDT: "Bangladeshi taka", AED: "UAE dirham", USD: "US dollar", EUR: "Euro", GBP: "British pound", INR: "Indian rupee", PKR: "Pakistani rupee",
+  QAR: "Qatari riyal", KWD: "Kuwaiti dinar", OMR: "Omani rial", BHD: "Bahraini dinar", MYR: "Malaysian ringgit", SGD: "Singapore dollar", EGP: "Egyptian pound", PHP: "Philippine peso",
+  NPR: "Nepalese rupee", LKR: "Sri Lankan rupee", IDR: "Indonesian rupiah", TRY: "Turkish lira", JPY: "Japanese yen", CNY: "Chinese yuan", CAD: "Canadian dollar", AUD: "Australian dollar", JOD: "Jordanian dinar"};
+let rates = null, stamp = "";
+["from", "to"].forEach(id => Object.entries(CUR).forEach(([c, n]) => { const o = document.createElement("option"); o.value = c; o.textContent = c + " · " + TT(n); $(id).appendChild(o); }));
+$("from").value = "SAR"; $("to").value = "BDT";
+try{ const s = JSON.parse(localStorage.getItem("dpl_fx") || "null"); if(s){ $("from").value = s.f || "SAR"; $("to").value = s.t || "BDT"; } }catch(e){}
+const fmt = (n, c) => n.toLocaleString("en-US", {maximumFractionDigits: n >= 100 ? 2 : n >= 1 ? 4 : 6});
+function rate(f, t){ if(!rates) return Number($("mrate").value) || 0; return rates[t] / rates[f]; }
+function calc(){
+  const f = $("from").value, t = $("to").value, a = Number($("amt").value) || 0, r = rate(f, t);
+  $("mf").textContent = f; $("mt").textContent = t;
+  $("line1").textContent = fmt(a, f) + " " + f + " =";
+  $("out").textContent = r ? fmt(a * r, t) + " " + t : "—";
+  $("line2").textContent = r ? "1 " + f + " = " + fmt(r, t) + " " + t + " · 1 " + t + " = " + fmt(1 / r, f) + " " + f : "";
+  $("tblTitle").textContent = "1 " + f + " " + TT("in other currencies");
+  $("tbl").innerHTML = rates ? Object.keys(CUR).filter(c => c !== f).map(c => `<div><span>${c}</span><b>${fmt(rate(f, c), c)}</b></div>`).join("") : "";
+  try{ localStorage.setItem("dpl_fx", JSON.stringify({f, t})); }catch(e){}
+}
+async function load(){
+  let cached = null; try{ cached = JSON.parse(localStorage.getItem("dpl_fx_rates") || "null"); }catch(e){}
+  const fresh = cached && Date.now() - cached.at < 6 * 3600e3;
+  if(fresh){ rates = cached.rates; stamp = cached.stamp; }
+  else try{
+    const r = await fetch("https://open.er-api.com/v6/latest/USD"), j = await r.json();
+    if(j.result !== "success") throw 0; rates = j.rates; stamp = j.time_last_update_utc;
+    try{ localStorage.setItem("dpl_fx_rates", JSON.stringify({at: Date.now(), rates, stamp})); }catch(e){}
+  }catch(e){ if(cached){ rates = cached.rates; stamp = cached.stamp + " (" + TT("saved copy") + ")"; } }
+  $("manual").hidden = !!rates;
+  $("src").innerHTML = rates ? TT("Mid-market rates updated") + ": " + stamp.replace(/ \+0000$/, " UTC") + ". <a href='https://www.exchangerate-api.com' target='_blank' rel='noopener'>Rates By Exchange Rate API</a>. " + TT("Banks and exchange shops add their own margin, so the amount you receive will be a little lower.") : "";
+  calc();
+}
+["amt", "from", "to", "mrate"].forEach(id => $(id).addEventListener("input", calc));
+$("swap").onclick = () => { const f = $("from").value; $("from").value = $("to").value; $("to").value = f; calc(); };
+load();
+</script>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PowerPoint to PDF – Convert PPTX to PDF Free Online | DailyPdfLife</title>
+<meta name="description" content="Convert PowerPoint .pptx slides to a PDF in your browser, no Office needed. Keeps text, pictures, shapes, tables and backgrounds. Free and private.">
+<link rel="canonical" href="https://dailypdflife.com/ppt-to-pdf">
+<meta property="og:title" content="PowerPoint to PDF – Convert PPTX to PDF Free Online | DailyPdfLife">
+<meta property="og:description" content="Convert PowerPoint .pptx slides to a PDF in your browser, no Office needed. Keeps text, pictures, shapes, tables and backgrounds. Free and private.">
+<meta property="og:url" content="https://dailypdflife.com/ppt-to-pdf">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  .opts{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:6px}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .pri{background:#c43e1c;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  .slides{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .slides figure{margin:0}
+  .slides img{width:100%;border-radius:8px;border:1px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,.08);display:block}
+  .slides figcaption{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+  .warn{font-size:13px;color:#8a5a00;background:#fff8e6;border-radius:10px;padding:10px 12px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PowerPoint file (.pptx)</h3>
+  <input type="file" id="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
+  <h3>2. Options</h3>
+  <div class="opts">
+    <label>Quality <select id="q"><option value="1280">Normal (smaller file)</option><option value="1920" selected>High</option><option value="2560">Very high</option></select></label>
+    <label style="flex-direction:row;align-items:center;gap:8px;padding-bottom:10px"><input type="checkbox" id="nums"> Add slide numbers</label>
+  </div>
+  <button class="pri" id="go">▶ Convert to PDF</button>
+  <p class="note" id="status"></p>
+  <div class="warn" id="warn" hidden></div>
+  <div class="slides" id="slides"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const EMU = 12700; /* EMU per point */
+const NS = {a: "http://schemas.openxmlformats.org/drawingml/2006/main", p: "http://schemas.openxmlformats.org/presentationml/2006/main",
+            r: "http://schemas.openxmlformats.org/officeDocument/2006/relationships"};
+const xml = s => new DOMParser().parseFromString(s, "application/xml");
+const kids = (el, ns, name) => el ? [...el.children].filter(c => c.localName === name && (!ns || c.namespaceURI === NS[ns])) : [];
+const kid = (el, ns, name) => kids(el, ns, name)[0] || null;
+const path = (el, ...names) => { for(const n of names){ if(!el) return null; const [ns, nm] = n.split(":"); el = kid(el, ns, nm); } return el; };
+const all = (el, ns, name) => el ? [...el.getElementsByTagNameNS(NS[ns], name)] : [];
+function resolve(base, target){ if(target.startsWith("/")) return target.slice(1); const parts = base.split("/"); parts.pop();
+  target.split("/").forEach(p => { if(p === "..") parts.pop(); else if(p !== ".") parts.push(p); }); return parts.join("/"); }
+async function rels(zip, file){
+  const parts = file.split("/"), name = parts.pop(), rf = parts.join("/") + "/_rels/" + name + ".rels", out = {};
+  const f = zip.file(rf); if(!f) return out;
+  [...xml(await f.async("string")).getElementsByTagName("Relationship")].forEach(r => out[r.getAttribute("Id")] = {target: resolve(file, r.getAttribute("Target")), type: r.getAttribute("Type"), ext: r.getAttribute("TargetMode") === "External"});
+  return out;
+}
+
+let theme = {};
+function color(el, fallback){
+  if(!el) return fallback;
+  const c = kid(el, "a", "srgbClr") || kid(el, "a", "schemeClr") || kid(el, "a", "sysClr") || kid(el, "a", "prstClr");
+  if(!c) return fallback;
+  let hex = c.localName === "srgbClr" ? c.getAttribute("val") : c.localName === "sysClr" ? (c.getAttribute("lastClr") || "000000")
+          : c.localName === "prstClr" ? ({black: "000000", white: "FFFFFF", red: "FF0000", blue: "0000FF", green: "00FF00"}[c.getAttribute("val")] || "000000")
+          : theme[{bg1: "lt1", tx1: "dk1", bg2: "lt2", tx2: "dk2"}[c.getAttribute("val")] || c.getAttribute("val")] || "000000";
+  let [r, g, b] = [0, 2, 4].map(i => parseInt(hex.substr(i, 2), 16)), a = 1;
+  [...c.children].forEach(m => { const v = Number(m.getAttribute("val")) / 100000;
+    if(m.localName === "lumMod"){ r *= v; g *= v; b *= v; }
+    if(m.localName === "lumOff"){ r += 255 * v; g += 255 * v; b += 255 * v; }
+    if(m.localName === "tint"){ r = 255 - (255 - r) * v; g = 255 - (255 - g) * v; b = 255 - (255 - b) * v; }
+    if(m.localName === "shade"){ r *= v; g *= v; b *= v; }
+    if(m.localName === "alpha") a = v; });
+  const cl = x => Math.max(0, Math.min(255, Math.round(x)));
+  return `rgba(${cl(r)},${cl(g)},${cl(b)},${a})`;
+}
+/* find the matching placeholder shape on the layout or master */
+function phOf(sp){ const ph = path(sp, "p:nvSpPr", "p:nvPr", "p:ph") || path(sp, "p:nvPicPr", "p:nvPr", "p:ph"); return ph ? {type: ph.getAttribute("type") || "body", idx: ph.getAttribute("idx")} : null; }
+function findPh(tree, ph){
+  if(!tree || !ph) return null; const sps = all(tree, "p", "sp");
+  return sps.find(s => { const p = phOf(s); return p && ph.idx != null && p.idx === ph.idx; })
+      || sps.find(s => { const p = phOf(s); return p && p.type === ph.type; })
+      || (["ctrTitle", "subTitle"].includes(ph.type) ? sps.find(s => { const p = phOf(s); return p && p.type === (ph.type === "ctrTitle" ? "title" : "body"); }) : null);
+}
+function xfrmOf(sp){ const x = path(sp, "p:spPr", "a:xfrm") || path(sp, "p:grpSpPr", "a:xfrm") || path(sp, "p:xfrm");
+  if(!x) return null; const off = kid(x, "a", "off"), ext = kid(x, "a", "ext"); if(!off || !ext) return null;
+  return {x: +off.getAttribute("x"), y: +off.getAttribute("y"), w: +ext.getAttribute("cx"), h: +ext.getAttribute("cy"), rot: +(x.getAttribute("rot") || 0) / 60000}; }
+
+async function convert(file){
+  const zip = await JSZip.loadAsync(file), warn = new Set();
+  const pres = xml(await zip.file("ppt/presentation.xml").async("string")), prels = await rels(zip, "ppt/presentation.xml");
+  const sz = all(pres, "p", "sldSz")[0], SW = +sz.getAttribute("cx"), SH = +sz.getAttribute("cy");
+  const ids = all(pres, "p", "sldId").map(s => prels[s.getAttributeNS(NS.r, "id")].target);
+  const thf = Object.values(prels).find(r => /theme/.test(r.type));
+  theme = {};
+  if(thf){ const th = xml(await zip.file(thf.target).async("string")), cs = all(th, "a", "clrScheme")[0];
+    if(cs) [...cs.children].forEach(c => { const v = c.firstElementChild; theme[c.localName] = v.localName === "sysClr" ? (v.getAttribute("lastClr") || (v.getAttribute("val") === "window" ? "FFFFFF" : "000000")) : v.getAttribute("val"); }); }
+  const W = Number($("q").value), k = W / SW, H = Math.round(SH * k);
+  const imgCache = {};
+  async function image(target){
+    if(imgCache[target]) return imgCache[target];
+    const f = zip.file(target); if(!f) return null;
+    if(/\.(emf|wmf|tiff?)$/i.test(target)){ warn.add(TT("Some pictures use EMF/WMF/TIFF formats that browsers can't show; they were left out.")); return null; }
+    const url = URL.createObjectURL(new Blob([await f.async("uint8array")], {type: /\.svg$/i.test(target) ? "image/svg+xml" : ""}));
+    return imgCache[target] = await new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = url; });
+  }
+  const pdf = await PDFLib.PDFDocument.create(); $("slides").innerHTML = "";
+  for(let s = 0; s < ids.length; s++){
+    $("status").textContent = TT("Slide") + " " + (s + 1) + " / " + ids.length;
+    const sf = ids[s], slide = xml(await zip.file(sf).async("string")), srels = await rels(zip, sf);
+    const lf = Object.values(srels).find(r => /slideLayout/.test(r.type)), layout = lf ? xml(await zip.file(lf.target).async("string")) : null;
+    const lrels = lf ? await rels(zip, lf.target) : {}, mf = Object.values(lrels).find(r => /slideMaster/.test(r.type));
+    const master = mf ? xml(await zip.file(mf.target).async("string")) : null, mrels = mf ? await rels(zip, mf.target) : {};
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+    /* background: slide, then layout, then master */
+    for(const [doc, rl] of [[slide, srels], [layout, lrels], [master, mrels]]){
+      const bg = doc && path(doc.documentElement, "p:cSld", "p:bg"); if(!bg) continue;
+      const pr = kid(bg, "p", "bgPr");
+      if(pr && kid(pr, "a", "solidFill")){ g.fillStyle = color(kid(pr, "a", "solidFill"), "#fff"); g.fillRect(0, 0, W, H); }
+      else if(pr && kid(pr, "a", "gradFill")){ const gs = all(pr, "a", "gs"); const gr = g.createLinearGradient(0, 0, 0, H);
+        gs.forEach(x => gr.addColorStop(+x.getAttribute("pos") / 100000, color(x, "#fff"))); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+      else if(pr && kid(pr, "a", "blipFill")){ const b = all(pr, "a", "blip")[0], im = b && await image(rl[b.getAttributeNS(NS.r, "embed")]?.target || ""); if(im) g.drawImage(im, 0, 0, W, H); }
+      else if(kid(bg, "p", "bgRef")){ g.fillStyle = color(kid(bg, "p", "bgRef"), "#fff"); g.fillRect(0, 0, W, H); }
+      break;
+    }
+    const ctx = {g, k, layout, master, image, rels: null, warn};
+    if(master) await drawTree(path(master.documentElement, "p:cSld", "p:spTree"), {...ctx, rels: mrels, skipPh: true}, null);
+    if(layout) await drawTree(path(layout.documentElement, "p:cSld", "p:spTree"), {...ctx, rels: lrels, skipPh: true}, null);
+    await drawTree(path(slide.documentElement, "p:cSld", "p:spTree"), {...ctx, rels: srels}, null);
+    if($("nums").checked){ g.font = `${Math.round(H * 0.025)}px Arial`; g.fillStyle = "rgba(0,0,0,.45)"; g.textAlign = "right"; g.fillText(String(s + 1), W - H * 0.03, H - H * 0.03); }
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.9));
+    const jpg = await pdf.embedJpg(await blob.arrayBuffer()), page = pdf.addPage([SW / EMU, SH / EMU]);
+    page.drawImage(jpg, {x: 0, y: 0, width: SW / EMU, height: SH / EMU});
+    const fig = document.createElement("figure"); fig.innerHTML = "<img><figcaption></figcaption>";
+    fig.querySelector("img").src = URL.createObjectURL(blob); fig.querySelector("figcaption").textContent = TT("Slide") + " " + (s + 1);
+    $("slides").appendChild(fig);
+  }
+  return {bytes: await pdf.save(), warn: [...warn]};
+}
+
+/* draw a shape tree; map = child-coordinate transform for groups */
+async function drawTree(tree, ctx, map){
+  if(!tree) return;
+  for(const el of tree.children){
+    const n = el.localName;
+    if(n === "sp" || n === "cxnSp") await drawShape(el, ctx, map);
+    else if(n === "pic") await drawPic(el, ctx, map);
+    else if(n === "grpSp"){
+      const x = path(el, "p:grpSpPr", "a:xfrm"); if(!x){ await drawTree(el, ctx, map); continue; }
+      const off = kid(x, "a", "off"), ext = kid(x, "a", "ext"), co = kid(x, "a", "chOff"), ce = kid(x, "a", "chExt");
+      const box = tx({x: +off.getAttribute("x"), y: +off.getAttribute("y"), w: +ext.getAttribute("cx"), h: +ext.getAttribute("cy")}, map);
+      const cx0 = +co.getAttribute("x"), cy0 = +co.getAttribute("y"), cw = +ce.getAttribute("cx") || 1, ch = +ce.getAttribute("cy") || 1;
+      await drawTree(el, ctx, {x: box.x, y: box.y, sx: box.w / cw, sy: box.h / ch, ox: cx0, oy: cy0});
+    }
+    else if(n === "graphicFrame") await drawTable(el, ctx, map);
+  }
+}
+function tx(b, map){ if(!map) return b; return {x: map.x + (b.x - map.ox) * map.sx, y: map.y + (b.y - map.oy) * map.sy, w: b.w * map.sx, h: b.h * map.sy, rot: b.rot, sx: map.sx}; }
+
+async function drawPic(el, ctx, map){
+  if(ctx.skipPh && phOf(el)) return;
+  const b = all(el, "a", "blip")[0]; let box = xfrmOf(el); if(!b || !box) return;
+  box = tx(box, map);
+  const t = ctx.rels[b.getAttributeNS(NS.r, "embed")]; if(!t) return;
+  const im = await ctx.image(t.target); if(!im) return;
+  const {g, k} = ctx; g.save(); rotate(g, box, k);
+  const sr = path(el, "p:blipFill", "a:srcRect");
+  if(sr){ const l = +(sr.getAttribute("l") || 0) / 1e5, r = +(sr.getAttribute("r") || 0) / 1e5, t2 = +(sr.getAttribute("t") || 0) / 1e5, bt = +(sr.getAttribute("b") || 0) / 1e5;
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    g.drawImage(im, iw * l, ih * t2, iw * (1 - l - r), ih * (1 - t2 - bt), box.x * k, box.y * k, box.w * k, box.h * k); }
+  else g.drawImage(im, box.x * k, box.y * k, box.w * k, box.h * k);
+  g.restore();
+}
+function rotate(g, box, k){ if(!box.rot) return; const cx = (box.x + box.w / 2) * k, cy = (box.y + box.h / 2) * k; g.translate(cx, cy); g.rotate(box.rot * Math.PI / 180); g.translate(-cx, -cy); }
+
+function geom(g, kind, x, y, w, h){
+  g.beginPath();
+  if(kind === "ellipse") g.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+  else if(kind === "roundRect"){ const r = Math.min(w, h) * 0.1667; g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); }
+  else if(kind === "line" || kind === "straightConnector1"){ g.moveTo(x, y); g.lineTo(x + w, y + h); }
+  else if(kind === "triangle"){ g.moveTo(x + w / 2, y); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.closePath(); }
+  else g.rect(x, y, w, h);
+}
+async function drawShape(el, ctx, map){
+  const ph = phOf(el);
+  if(ctx.skipPh && ph) return;
+  const lay = ph ? findPh(ctx.layout, ph) : null, mas = ph ? findPh(ctx.master, ph) : null;
+  let box = xfrmOf(el) || (lay && xfrmOf(lay)) || (mas && xfrmOf(mas)); if(!box) return;
+  box = tx(box, map);
+  const {g, k} = ctx, sp = path(el, "p:spPr"), x = box.x * k, y = box.y * k, w = box.w * k, h = box.h * k;
+  const kind = (path(sp, "a:prstGeom") || {getAttribute: () => "rect"}).getAttribute("prst");
+  g.save(); rotate(g, box, k);
+  const style = kid(el, "p", "style");
+  const fill = kid(sp, "a", "solidFill") ? color(kid(sp, "a", "solidFill")) : kid(sp, "a", "noFill") ? null
+             : kid(sp, "a", "gradFill") ? color(all(kid(sp, "a", "gradFill"), "a", "gs")[0]) : (style && !ph && el.localName === "sp" ? color(path(style, "a:fillRef")) : null);
+  if(fill && kind !== "line"){ geom(g, kind, x, y, w, h); g.fillStyle = fill; g.fill(); }
+  const ln = kid(sp, "a", "ln");
+  const lc = ln && kid(ln, "a", "solidFill") ? color(kid(ln, "a", "solidFill")) : (ln && kid(ln, "a", "noFill")) ? null : (style && !ph ? color(path(style, "a:lnRef")) : null);
+  if(lc && (ln || el.localName === "cxnSp" || kind === "line")){ geom(g, kind, x, y, w, h); g.strokeStyle = lc; g.lineWidth = Math.max(1, (+(ln && ln.getAttribute("w")) || 12700) * k); g.stroke(); }
+  const body = kid(el, "p", "txBody"); if(body) drawText(body, ctx, {x, y, w, h}, ph, lay, mas, style);
+  g.restore();
+}
+function masterStyle(master, ph){
+  const ts = master && path(master.documentElement, "p:txStyles"); if(!ts) return null;
+  return kid(ts, "p", ph && /title/i.test(ph.type) ? "titleStyle" : ph && ph.type !== "body" && ph.type !== "obj" && ph.type !== "subTitle" ? "otherStyle" : ph ? "bodyStyle" : "otherStyle");
+}
+function lvlProp(lst, lvl, name){ if(!lst) return null; const l = kid(lst, "a", "lvl" + (lvl + 1) + "pPr"); return l ? (name ? kid(l, "a", name) : l) : null; }
+function drawText(body, ctx, r, ph, lay, mas, style){
+  const {g, k} = ctx;
+  const bp = kid(body, "a", "bodyPr"), lbp = lay && path(lay, "p:txBody", "a:bodyPr"), mbp = mas && path(mas, "p:txBody", "a:bodyPr");
+  const bpa = n => (bp && bp.getAttribute(n)) || (lbp && lbp.getAttribute(n)) || (mbp && mbp.getAttribute(n));
+  const ins = {l: +(bpa("lIns") ?? 91440), r: +(bpa("rIns") ?? 91440), t: +(bpa("tIns") ?? 45720), b: +(bpa("bIns") ?? 45720)};
+  const anchor = bpa("anchor") || "t", fit = bp && kid(bp, "a", "normAutofit"), scale = fit ? +(fit.getAttribute("fontScale") || 100000) / 100000 : 1;
+  const lnRed = fit ? +(fit.getAttribute("lnSpcReduction") || 0) / 100000 : 0;
+  const ms = masterStyle(ctx.master, ph), llst = lay && path(lay, "p:txBody", "a:lstStyle"), mlst = mas && path(mas, "p:txBody", "a:lstStyle"), olst = kid(body, "a", "lstStyle");
+  const fontColor = style ? color(path(style, "a:fontRef"), null) : null;
+  const X = r.x + ins.l * k, Y = r.y + ins.t * k, MW = Math.max(10, r.w - (ins.l + ins.r) * k), MH = r.h - (ins.t + ins.b) * k;
+  const lines = [];
+  for(const p of kids(body, "a", "p")){
+    const pPr = kid(p, "a", "pPr"), lvl = +(pPr && pPr.getAttribute("lvl") || 0);
+    const pick = (attr) => { for(const src of [pPr, lvlProp(olst, lvl), lvlProp(llst, lvl), lvlProp(mlst, lvl), lvlProp(ms, lvl)]) if(src && src.getAttribute(attr) != null) return src.getAttribute(attr); return null; };
+    const def = (attr) => { for(const src of [pPr && kid(pPr, "a", "defRPr"), lvlProp(olst, lvl, "defRPr"), lvlProp(llst, lvl, "defRPr"), lvlProp(mlst, lvl, "defRPr"), lvlProp(ms, lvl, "defRPr")]) if(src && src.getAttribute(attr) != null) return src.getAttribute(attr); return null; };
+    const defColor = () => { for(const src of [lvlProp(olst, lvl, "defRPr"), lvlProp(llst, lvl, "defRPr"), lvlProp(mlst, lvl, "defRPr")]) if(src && kid(src, "a", "solidFill")) return color(kid(src, "a", "solidFill"));
+      if(fontColor) return fontColor; const mm = lvlProp(ms, lvl, "defRPr"); if(mm && kid(mm, "a", "solidFill")) return color(kid(mm, "a", "solidFill")); return color({children: []}, null) || ("rgb(" + [0,2,4].map(i => parseInt((theme.dk1 || "000000").substr(i,2),16)).join(",") + ")"); };
+    const algn = pick("algn") || "l", marL = +(pick("marL") || 0) * k, indent = +(pick("indent") || 0) * k;
+    const buNone = (pPr && kid(pPr, "a", "buNone")) || ![pPr, lvlProp(olst, lvl), lvlProp(llst, lvl), lvlProp(mlst, lvl), lvlProp(ms, lvl)].some(s => s && kid(s, "a", "buChar"));
+    const buEl = [pPr, lvlProp(olst, lvl), lvlProp(llst, lvl), lvlProp(mlst, lvl), lvlProp(ms, lvl)].map(s => s && kid(s, "a", "buChar")).find(Boolean);
+    const runs = [];
+    for(const rn of p.children){
+      if(rn.localName === "br"){ runs.push({br: true}); continue; }
+      if(rn.localName !== "r" && rn.localName !== "fld") continue;
+      const rp = kid(rn, "a", "rPr"), t = (kid(rn, "a", "t") || {}).textContent || "";
+      const size = (+(rp && rp.getAttribute("sz")) || +def("sz") || 1800) / 100 * scale;
+      const bold = (rp && rp.getAttribute("b")) ?? def("b"), ital = (rp && rp.getAttribute("i")) ?? def("i");
+      const col = rp && kid(rp, "a", "solidFill") ? color(kid(rp, "a", "solidFill")) : defColor();
+      const cap = rp && rp.getAttribute("cap") === "all";
+      runs.push({t: cap ? t.toUpperCase() : t, size, bold: bold === "1" || bold === "true", ital: ital === "1" || ital === "true", col, u: rp && rp.getAttribute("u") && rp.getAttribute("u") !== "none"});
+    }
+    const endSz = (+(kid(p, "a", "endParaRPr") && kid(p, "a", "endParaRPr").getAttribute("sz")) || +def("sz") || 1800) / 100 * scale;
+    const hasText = runs.some(r => r.t && r.t.trim());
+    if(hasText && !buNone && buEl) runs.unshift({t: (buEl.getAttribute("char") || "•") + " ", size: runs.find(r => r.t)?.size || endSz, col: runs.find(r => r.col)?.col || defColor()});
+    /* wrap words into lines */
+    const avail = MW - marL - Math.max(0, indent);
+    let line = {segs: [], w: 0, h: 0, algn, marL: marL + (indent > 0 ? indent : 0)};
+    const push = () => { if(!line.h) line.h = endSz * EMU * k * 1.2; lines.push(line); line = {segs: [], w: 0, h: 0, algn, marL}; };
+    for(const r of runs){
+      if(r.br){ push(); continue; }
+      const px = r.size * EMU * k; g.font = `${r.ital ? "italic " : ""}${r.bold ? "700 " : ""}${px}px Calibri, Carlito, "Segoe UI", Arial, "Noto Sans Bengali", sans-serif`;
+      for(const word of r.t.split(/(\s+)/)){
+        if(!word) continue; const ww = g.measureText(word).width;
+        if(line.w + ww > avail && line.segs.length && word.trim()) push();
+        if(!line.segs.length && !word.trim()) continue;
+        line.segs.push({t: word, font: g.font, col: r.col, w: ww, u: r.u}); line.w += ww; line.h = Math.max(line.h, px * 1.2 * (1 - lnRed));
+      }
+    }
+    push();
+  }
+  const total = lines.reduce((s, l) => s + l.h, 0);
+  let cy = anchor === "ctr" ? Y + (MH - total) / 2 : anchor === "b" ? Y + MH - total : Y;
+  for(const l of lines){
+    let cx = X + l.marL; const free = MW - l.marL - l.w;
+    if(l.algn === "ctr") cx += free / 2; else if(l.algn === "r") cx += free;
+    for(const s of l.segs){ g.font = s.font; g.fillStyle = s.col; g.textBaseline = "alphabetic"; g.fillText(s.t, cx, cy + l.h * 0.8);
+      if(s.u){ g.fillRect(cx, cy + l.h * 0.86, s.w, Math.max(1, l.h * 0.04)); } cx += s.w; }
+    cy += l.h;
+  }
+}
+async function drawTable(el, ctx, map){
+  const tbl = all(el, "a", "tbl")[0];
+  if(!tbl){ if(all(el, "c", "chart").length || el.innerHTML.includes("chart")) ctx.warn.add(TT("Charts and SmartArt are not drawn; take a screenshot of them in PowerPoint if you need them.")); return; }
+  let box = xfrmOf(el); if(!box) return; box = tx(box, map);
+  const {g, k} = ctx, cols = all(tbl, "a", "gridCol").map(c => +c.getAttribute("w") * k);
+  let y = box.y * k;
+  for(const tr of kids(tbl, "a", "tr")){
+    const h = +tr.getAttribute("h") * k; let x = box.x * k, ci = 0, maxH = h;
+    for(const tc of kids(tr, "a", "tc")){
+      const span = +(tc.getAttribute("gridSpan") || 1), w = cols.slice(ci, ci + span).reduce((a, b) => a + b, 0); ci += span;
+      if(tc.getAttribute("hMerge") || tc.getAttribute("vMerge")){ x += w; continue; }
+      const pr = kid(tc, "a", "tcPr"); const fill = pr && kid(pr, "a", "solidFill") ? color(kid(pr, "a", "solidFill")) : null;
+      if(fill){ g.fillStyle = fill; g.fillRect(x, y, w, h); }
+      g.strokeStyle = "rgba(0,0,0,.25)"; g.lineWidth = 1; g.strokeRect(x, y, w, h);
+      const body = kid(tc, "a", "txBody"); if(body) drawText(body, {...ctx}, {x, y, w, h}, null, null, null, null);
+      x += w;
+    }
+    y += maxH;
+  }
+}
+
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PowerPoint file first."));
+  if(/\.ppt$/i.test(f.name)) return alert(TT("This is the old .ppt format. Open it in PowerPoint or Google Slides and save it as .pptx first."));
+  $("warn").hidden = true;
+  try{
+    const r = await convert(f); $("status").textContent = "";
+    if(r.warn.length){ $("warn").innerHTML = "⚠ " + r.warn.join("<br>⚠ "); $("warn").hidden = false; }
+    DPLResult.file(r.bytes, f.name.replace(/\.pptx$/i, "") + ".pdf");
+  }catch(err){ $("status").textContent = ""; console.error(err); alert(TT("This presentation could not be converted:") + " " + err.message); }
+};
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About PowerPoint to PDF</h2>
+  <p>A PDF is the safest way to send a presentation: it opens on any phone or computer, looks the same everywhere and can't be changed by accident. This tool reads your .pptx file and draws each slide, with its text, pictures, coloured shapes, tables and background, into a PDF page with the same size as your slides. You don't need PowerPoint installed.</p>
+  <h2>How to convert PowerPoint to PDF</h2>
+  <ol><li>Choose your .pptx file.</li><li>Choose the quality and whether to add slide numbers.</li><li>Tap <b>Convert to PDF</b>. A preview of every slide appears.</li><li>Save the PDF.</li></ol>
+  <h2>What is supported</h2>
+  <p>Text boxes, titles, bullet points, pictures, simple shapes, tables and slide backgrounds are drawn. Charts, SmartArt, videos, animations and some special effects are not, and the tool tells you when it skips something. Slides are saved as high-resolution pictures, so the text in the PDF can't be selected. For perfect results with complex designs, use “Save as PDF” in PowerPoint or Google Slides. Old .ppt files must first be saved as .pptx.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Do I need Microsoft Office?</summary><p>No, the conversion runs in your browser.</p></details><details><summary>Are animations kept?</summary><p>No, a PDF shows each slide as a still page.</p></details><details><summary>Can I open .ppt files?</summary><p>Save them as .pptx in PowerPoint or Google Slides first.</p></details><details><summary>Is my presentation uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="word-to-pdf">Word to PDF</a> <a href="excel-to-pdf">Excel to PDF</a> <a href="split-and-compress#compress">Compress PDF</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need Microsoft Office?", "acceptedAnswer": {"@type": "Answer", "text": "No, the conversion runs in your browser."}}, {"@type": "Question", "name": "Are animations kept?", "acceptedAnswer": {"@type": "Answer", "text": "No, a PDF shows each slide as a still page."}}, {"@type": "Question", "name": "Can I open .ppt files?", "acceptedAnswer": {"@type": "Answer", "text": "Save them as .pptx in PowerPoint or Google Slides first."}}, {"@type": "Question", "name": "Is my presentation uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

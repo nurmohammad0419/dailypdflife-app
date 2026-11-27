@@ -23,6 +23,8 @@ LOCAL = {
     "https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js": "vendor/mammoth.browser.min.js",
     "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js": "vendor/heic2any.min.js",
     "https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.1/dist/": "vendor/qpdf/",
+    "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": "vendor/jszip.min.js",
+    "https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js": "vendor/adhan.umd.min.js",
 }
 ADS = re.compile(r'\s*<script async src="https://pagead2\.googlesyndication\.com[^>]*>\s*</script>', re.S)
 SKIP = {"ads.txt", "ads.js", "robots.txt", "sitemap.xml"}

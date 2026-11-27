@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Signature Maker – Create Transparent PNG Signature Free | DailyPdfLife</title>
+<meta name="description" content="Draw or type your signature, or clean up a photo of it, and download a transparent PNG to use on PDFs, Word documents and forms. Free and private.">
+<link rel="canonical" href="https://dailypdflife.com/signature-maker">
+<meta property="og:title" content="Signature Maker – Create Transparent PNG Signature Free | DailyPdfLife">
+<meta property="og:description" content="Draw or type your signature, or clean up a photo of it, and download a transparent PNG to use on PDFs, Word documents and forms. Free and private.">
+<meta property="og:url" content="https://dailypdflife.com/signature-maker">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script:wght@600&family=Allura&family=Sacramento&family=Mr+Dafoe&display=swap");
+  .tabs{display:inline-grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#f1f3f7;border-radius:999px;padding:4px;margin-bottom:14px}
+  .tabs button{border:0 !important;background:transparent;padding:8px 18px !important;border-radius:999px !important}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  #pad{width:100%;height:240px;border:2px dashed #dfe3ea;border-radius:16px;background:#fff;touch-action:none;display:block}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:14px}
+  .ink{display:flex;gap:8px}
+  .ink button{width:32px;height:32px;padding:0 !important;border-radius:50% !important;border:3px solid #fff !important;box-shadow:0 0 0 1px #dfe3ea}
+  .ink button.on{box-shadow:0 0 0 2px #111827}
+  .fonts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:10px}
+  .fonts button{font-size:30px !important;padding:12px !important;font-weight:400 !important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .fonts button.on{border-color:#e5322d !important;background:#fff6f5}
+  .out{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  #prev{max-width:100%;max-height:140px;background:repeating-conic-gradient(#f3f4f6 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:12px;padding:8px}
+  .pri{background:#e5322d;color:#fff;border:0;padding:12px 22px !important}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="tabs" id="tabs"><button data-t="draw" class="on">✍ Draw</button><button data-t="type">Aa Type</button><button data-t="photo">📷 From photo</button></div>
+  <div id="t-draw">
+    <canvas id="pad"></canvas>
+    <div class="row"><span>Pen</span><select id="thick"><option value="2">Thin</option><option value="3.2" selected>Medium</option><option value="5">Bold</option></select><span style="flex:1"></span><button id="undo">↶ Undo</button><button id="clear">Clear</button></div>
+  </div>
+  <div id="t-type" hidden>
+    <input type="text" id="name" placeholder="Type your full name" style="width:100%;font-size:17px" dir="auto">
+    <div class="fonts" id="fonts"></div>
+  </div>
+  <div id="t-photo" hidden>
+    <input type="file" id="photo" accept="image/*">
+    <p class="note">Sign on plain white paper with a dark pen, take a clear photo, and choose it here. The paper is removed and only the ink is kept.</p>
+    <div class="row">Clean-up strength <input type="range" id="thr" min="120" max="230" value="185" style="flex:1;max-width:260px"></div>
+  </div>
+  <div class="row"><span>Ink colour</span><div class="ink" id="ink"></div></div>
+</div>
+<div class="box">
+  <h3>Your signature</h3>
+  <div class="out">
+    <img id="prev" alt="" hidden>
+    <p class="note" id="empty">Draw, type or upload your signature above.</p>
+  </div>
+  <div class="acts" style="margin-top:14px">
+    <button class="pri" id="png">⬇ Download PNG (transparent)</button>
+    <button id="jpg">⬇ JPG (white background)</button>
+    <a href="sign-pdf" id="use" style="align-self:center;font-weight:650;color:#e5322d;text-decoration:none">→ Use it to sign a PDF</a>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let mode = "draw", ink = "#111827", font = "Great Vibes", photoImg = null, url = null;
+const pad = $("pad"), g = pad.getContext("2d"); let strokes = [], cur = null;
+function size(){ const r = pad.getBoundingClientRect(), d = Math.max(2, window.devicePixelRatio || 1); pad.width = r.width * d; pad.height = r.height * d; g.setTransform(d,0,0,d,0,0); redraw(); }
+function redraw(){
+  g.clearRect(0, 0, pad.width, pad.height); g.lineCap = g.lineJoin = "round"; g.strokeStyle = ink;
+  strokes.forEach(s => { for(let i = 1; i < s.p.length; i++){ const a = s.p[i-1], b = s.p[i];
+    g.lineWidth = Math.max(s.w * 0.45, s.w - Math.hypot(b.x - a.x, b.y - a.y) * 0.06);
+    g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); } });
+}
+const P = e => { const r = pad.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; };
+pad.addEventListener("pointerdown", e => { cur = {w: Number($("thick").value), p: [P(e)]}; strokes.push(cur); pad.setPointerCapture(e.pointerId); });
+pad.addEventListener("pointermove", e => { if(!cur) return; const p = P(e), l = cur.p[cur.p.length - 1];
+  if(Math.hypot(p.x - l.x, p.y - l.y) > 1) cur.p.push(p); redraw(); });
+pad.addEventListener("pointerup", () => { cur = null; make(); });
+$("undo").onclick = () => { strokes.pop(); redraw(); make(); };
+$("clear").onclick = () => { strokes = []; redraw(); make(); };
+size(); addEventListener("resize", size);
+["#111827", "#1a3fb0", "#0b5e2e", "#7a1f1f"].forEach(c => { const b = document.createElement("button"); b.style.background = c; if(c === ink) b.className = "on";
+  b.onclick = () => { ink = c; [...$("ink").children].forEach(x => x.classList.toggle("on", x === b)); redraw(); make(); }; $("ink").appendChild(b); });
+["Great Vibes", "Dancing Script", "Allura", "Sacramento", "Mr Dafoe"].forEach(f => { const b = document.createElement("button"); b.style.fontFamily = "'" + f + "', cursive"; b.textContent = "Signature";
+  if(f === font) b.className = "on"; b.onclick = () => { font = f; [...$("fonts").children].forEach(x => x.classList.toggle("on", x === b)); make(); }; $("fonts").appendChild(b); });
+$("name").oninput = () => { [...$("fonts").children].forEach(b => b.textContent = $("name").value || "Signature"); make(); };
+$("photo").onchange = e => { const f = e.target.files[0]; if(!f) return; const im = new Image(); im.onload = () => { photoImg = im; make(); }; im.src = URL.createObjectURL(f); };
+$("thr").oninput = () => make();
+$("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { mode = b.dataset.t; $("tabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  ["draw", "type", "photo"].forEach(t => $("t-" + t).hidden = t !== mode); if(mode === "draw") size(); make(); });
+const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+function trim(src){
+  const d = src.getContext("2d").getImageData(0, 0, src.width, src.height).data; let x0 = src.width, y0 = src.height, x1 = -1, y1 = -1;
+  for(let y = 0; y < src.height; y++) for(let x = 0; x < src.width; x++) if(d[(y * src.width + x) * 4 + 3] > 16){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+  if(x1 < 0) return null; const p = 12, c = document.createElement("canvas"); c.width = x1 - x0 + p * 2; c.height = y1 - y0 + p * 2;
+  c.getContext("2d").drawImage(src, x0 - p, y0 - p, c.width, c.height, 0, 0, c.width, c.height); return c;
+}
+let outCanvas = null;
+function make(){
+  let src = null;
+  if(mode === "draw" && strokes.length) src = pad;
+  if(mode === "type" && $("name").value.trim()){ const t = $("name").value.trim(), fs = 160, ff = "'" + font + "', cursive";
+    src = document.createElement("canvas"); const c2 = src.getContext("2d"); c2.font = fs + "px " + ff; src.width = c2.measureText(t).width + 60; src.height = fs * 1.7;
+    c2.font = fs + "px " + ff; c2.fillStyle = ink; c2.textBaseline = "middle"; c2.fillText(t, 30, src.height / 2); }
+  if(mode === "photo" && photoImg){ const k = Math.min(1, 1600 / photoImg.naturalWidth); src = document.createElement("canvas"); src.width = photoImg.naturalWidth * k; src.height = photoImg.naturalHeight * k;
+    const c2 = src.getContext("2d"); c2.drawImage(photoImg, 0, 0, src.width, src.height); const d = c2.getImageData(0, 0, src.width, src.height), n = hex(ink), T2 = Number($("thr").value);
+    for(let i = 0; i < d.data.length; i += 4){ const l = 0.299 * d.data[i] + 0.587 * d.data[i+1] + 0.114 * d.data[i+2];
+      const a = l >= T2 ? 0 : l <= T2 - 80 ? 255 : (T2 - l) / 80 * 255; d.data[i] = n[0]; d.data[i+1] = n[1]; d.data[i+2] = n[2]; d.data[i+3] = a; }
+    c2.putImageData(d, 0, 0); }
+  outCanvas = src ? trim(src) : null;
+  $("prev").hidden = !outCanvas; $("empty").hidden = !!outCanvas;
+  if(outCanvas){ url = outCanvas.toDataURL("image/png"); $("prev").src = url; try{ localStorage.setItem("dpl_sig", url); }catch(e){} }
+}
+document.fonts && document.fonts.ready.then(() => mode === "type" && make());
+$("png").onclick = () => { if(!outCanvas) return alert(TT("Make your signature first.")); outCanvas.toBlob(b => DPLResult.file(b, "signature.png"), "image/png"); };
+$("jpg").onclick = () => { if(!outCanvas) return alert(TT("Make your signature first."));
+  const c = document.createElement("canvas"); c.width = outCanvas.width; c.height = outCanvas.height; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(outCanvas, 0, 0);
+  c.toBlob(b => DPLResult.file(b, "signature.jpg"), "image/jpeg", 0.95); };
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About the Signature maker</h2>
+  <p>A clean digital signature is handy for signing PDFs, adding to Word letters and invoices, and uploading to job or exam forms. Draw your signature with your finger or mouse, type your name in one of five handwriting styles, or photograph your real signature on paper and let the tool remove the background. Choose the ink colour and download a transparent PNG or a JPG on white.</p>
+  <h2>How to make your signature</h2>
+  <ol><li>Choose <b>Draw</b>, <b>Type</b> or <b>From photo</b>.</li><li>Draw slowly, or type your name and pick a style, or upload your photo and adjust the clean-up strength.</li><li>Pick black, blue, green or dark red ink.</li><li>Download the PNG (transparent) or JPG.</li></ol>
+  <h2>Using your signature</h2>
+  <p>The PNG has no background, so it sits naturally on any document. Open a PDF in <a href="sign-pdf">Sign PDF</a> and your new signature is already loaded. In Word, insert it as a picture and set wrapping to “In front of text”. If a form needs a signature under 20 KB, use <a href="image-to-kb">Resize image to KB</a>. Keep your signature file private.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>What is a transparent PNG?</summary><p>An image without a background, so only the ink shows on top of your document.</p></details><details><summary>Is a typed signature valid?</summary><p>For many everyday documents yes, but a drawn or photographed signature looks more personal.</p></details><details><summary>Can I use it on my phone?</summary><p>Yes, draw with your finger.</p></details><details><summary>Is my signature uploaded?</summary><p>No, it stays on your device.</p></details>
+  <p class="links">Related tools: <a href="sign-pdf">Sign PDF</a> <a href="image-to-kb">Resize image to KB</a> <a href="pdf-editor">PDF editor</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is a transparent PNG?", "acceptedAnswer": {"@type": "Answer", "text": "An image without a background, so only the ink shows on top of your document."}}, {"@type": "Question", "name": "Is a typed signature valid?", "acceptedAnswer": {"@type": "Answer", "text": "For many everyday documents yes, but a drawn or photographed signature looks more personal."}}, {"@type": "Question", "name": "Can I use it on my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, draw with your finger."}}, {"@type": "Question", "name": "Is my signature uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No, it stays on your device."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

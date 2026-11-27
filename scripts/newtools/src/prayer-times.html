@@ -1,0 +1,110 @@
+<!-- libs: adhan -->
+<style>
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+  .grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650;color:var(--ink)}
+  .loc{background:#f1f3f7;border:0 !important}
+  .next{border-radius:22px;padding:22px;background:linear-gradient(135deg,#087f5b,#0b7285);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  .next small{opacity:.85;font-size:14px} .next b{display:block;font-size:30px;letter-spacing:-.5px}
+  .next .cd{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+  .times{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+  .t{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:#fff}
+  .t small{display:block;font-size:13px;color:var(--ink-3);font-weight:600}
+  .t b{display:block;font-size:24px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .t.on{border-color:#0ca678;background:#effaf5}
+  .t.sun b{color:#e67700}
+  .week{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+  .week th,.week td{padding:8px 6px;text-align:center;border-bottom:1px solid #f2f3f6}
+  .week th{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
+  .week td:first-child{text-align:left;font-weight:600}
+  .week tr.today td{background:#effaf5}
+  .wrapT{overflow-x:auto}
+</style>
+<div class="box">
+  <div class="grid">
+    <label>City <select id="city"></select></label>
+    <label>Date <input type="date" id="date"></label>
+    <label>Method <select id="method">
+      <option value="UmmAlQura">Umm al-Qura (Makkah)</option><option value="Dubai">Dubai</option><option value="Qatar">Qatar</option><option value="Kuwait">Kuwait</option>
+      <option value="Karachi">Karachi (Bangladesh, Pakistan, India)</option><option value="MuslimWorldLeague">Muslim World League</option><option value="Egyptian">Egyptian</option>
+      <option value="MoonsightingCommittee">Moonsighting Committee (UK)</option><option value="NorthAmerica">ISNA (North America)</option><option value="Singapore">Singapore / Malaysia</option><option value="Turkey">Turkey</option></select></label>
+    <label>Asr <select id="madhab"><option value="shafi">Shafi, Maliki, Hanbali</option><option value="hanafi">Hanafi</option></select></label>
+  </div>
+  <p style="margin:12px 0 0"><button class="loc" id="geo">📍 Use my location</button> <span class="note" id="where"></span></p>
+</div>
+<div class="box">
+  <div class="next"><div><small id="nl">Next prayer</small><b id="nn">—</b></div><div class="cd" id="cd">—</div></div>
+  <div class="times" id="times"></div>
+  <p class="note" id="ram"></p>
+</div>
+<div class="box">
+  <h3>Next 7 days</h3>
+  <div class="wrapT"><table class="week" id="week"></table></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const CITIES = [
+ ["Riyadh", 24.7136, 46.6753, "Asia/Riyadh", "UmmAlQura"], ["Jeddah", 21.4858, 39.1925, "Asia/Riyadh", "UmmAlQura"], ["Makkah", 21.3891, 39.8579, "Asia/Riyadh", "UmmAlQura"],
+ ["Madinah", 24.5247, 39.5692, "Asia/Riyadh", "UmmAlQura"], ["Dammam", 26.4207, 50.0888, "Asia/Riyadh", "UmmAlQura"], ["Khobar", 26.2172, 50.1971, "Asia/Riyadh", "UmmAlQura"],
+ ["Taif", 21.2703, 40.4158, "Asia/Riyadh", "UmmAlQura"], ["Abha", 18.2465, 42.5117, "Asia/Riyadh", "UmmAlQura"], ["Tabuk", 28.3835, 36.5662, "Asia/Riyadh", "UmmAlQura"],
+ ["Buraidah", 26.3260, 43.9750, "Asia/Riyadh", "UmmAlQura"], ["Jubail", 27.0046, 49.6460, "Asia/Riyadh", "UmmAlQura"], ["Hail", 27.5114, 41.7208, "Asia/Riyadh", "UmmAlQura"],
+ ["Dubai", 25.2048, 55.2708, "Asia/Dubai", "Dubai"], ["Abu Dhabi", 24.4539, 54.3773, "Asia/Dubai", "Dubai"], ["Sharjah", 25.3463, 55.4209, "Asia/Dubai", "Dubai"],
+ ["Al Ain", 24.2075, 55.7447, "Asia/Dubai", "Dubai"], ["Doha", 25.2854, 51.5310, "Asia/Qatar", "Qatar"], ["Kuwait City", 29.3759, 47.9774, "Asia/Kuwait", "Kuwait"],
+ ["Muscat", 23.5880, 58.3829, "Asia/Muscat", "MuslimWorldLeague"], ["Manama", 26.2285, 50.5860, "Asia/Bahrain", "MuslimWorldLeague"],
+ ["Dhaka", 23.8103, 90.4125, "Asia/Dhaka", "Karachi"], ["Chattogram", 22.3569, 91.7832, "Asia/Dhaka", "Karachi"], ["Sylhet", 24.8949, 91.8687, "Asia/Dhaka", "Karachi"],
+ ["Khulna", 22.8456, 89.5403, "Asia/Dhaka", "Karachi"], ["Rajshahi", 24.3745, 88.6042, "Asia/Dhaka", "Karachi"], ["Cumilla", 23.4607, 91.1809, "Asia/Dhaka", "Karachi"],
+ ["Noakhali", 22.8696, 91.0995, "Asia/Dhaka", "Karachi"], ["Feni", 23.0159, 91.3976, "Asia/Dhaka", "Karachi"], ["Barishal", 22.7010, 90.3535, "Asia/Dhaka", "Karachi"],
+ ["Rangpur", 25.7439, 89.2752, "Asia/Dhaka", "Karachi"], ["Mymensingh", 24.7471, 90.4203, "Asia/Dhaka", "Karachi"],
+ ["Karachi", 24.8607, 67.0011, "Asia/Karachi", "Karachi"], ["Lahore", 31.5204, 74.3587, "Asia/Karachi", "Karachi"], ["Delhi", 28.6139, 77.2090, "Asia/Kolkata", "Karachi"],
+ ["Kolkata", 22.5726, 88.3639, "Asia/Kolkata", "Karachi"], ["Kuala Lumpur", 3.1390, 101.6869, "Asia/Kuala_Lumpur", "Singapore"], ["Cairo", 30.0444, 31.2357, "Africa/Cairo", "Egyptian"],
+ ["Istanbul", 41.0082, 28.9784, "Europe/Istanbul", "Turkey"], ["London", 51.5074, -0.1278, "Europe/London", "MoonsightingCommittee"], ["New York", 40.7128, -74.0060, "America/New_York", "NorthAmerica"]];
+const NAMES = [["fajr", "Fajr"], ["sunrise", "Sunrise"], ["dhuhr", "Dhuhr"], ["asr", "Asr"], ["maghrib", "Maghrib"], ["isha", "Isha"]];
+let place = null;
+CITIES.forEach((c, i) => { const o = document.createElement("option"); o.value = i; o.textContent = TT(c[0]); $("city").appendChild(o); });
+const geoOpt = document.createElement("option"); geoOpt.value = "geo"; geoOpt.textContent = TT("My location"); geoOpt.hidden = true; $("city").appendChild(geoOpt);
+try{ const s = JSON.parse(localStorage.getItem("dpl_pt") || "null"); if(s){ if(s.city != null && CITIES[s.city]) $("city").value = s.city; if(s.m) $("method").value = s.m; if(s.h) $("madhab").value = s.h; } }catch(e){}
+function setCity(){ const c = CITIES[$("city").value]; if(c){ place = {name: c[0], lat: c[1], lng: c[2], tz: c[3]}; } }
+const tm = (d, tz) => d.toLocaleTimeString(window.DPL_LANG === "bn" ? "bn-BD" : "en-US", {hour: "numeric", minute: "2-digit", timeZone: tz});
+function times(day){
+  const p = adhan.CalculationMethod[$("method").value](); p.madhab = $("madhab").value === "hanafi" ? adhan.Madhab.Hanafi : adhan.Madhab.Shafi;
+  if(Math.abs(place.lat) > 48) p.highLatitudeRule = adhan.HighLatitudeRule.recommended(new adhan.Coordinates(place.lat, place.lng));
+  return new adhan.PrayerTimes(new adhan.Coordinates(place.lat, place.lng), day, p);
+}
+function dayFromInput(){ const [y, m, d] = $("date").value.split("-").map(Number); return new Date(y, m - 1, d, 12); }
+function render(){
+  if(!place) return; const day = dayFromInput(), pt = times(day), now = new Date();
+  let next = NAMES.filter(n => n[0] !== "sunrise").find(n => pt[n[0]] > now);
+  let nextAt = next ? pt[next[0]] : times(new Date(day.getTime() + 864e5)).fajr; if(!next) next = ["fajr", "Fajr"];
+  $("times").innerHTML = NAMES.map(n => `<div class="t ${n[0] === next[0] && nextAt === pt[n[0]] ? "on" : ""} ${n[0] === "sunrise" ? "sun" : ""}"><small>${TT(n[1])}</small><b>${tm(pt[n[0]], place.tz)}</b></div>`).join("");
+  $("nn").textContent = TT(next[1]) + " · " + tm(nextAt, place.tz);
+  window._next = nextAt; tick();
+  const p = adhan.CalculationMethod[$("method").value]();
+  $("ram").textContent = ($("method").value === "UmmAlQura" ? TT("Umm al-Qura sets Isha 90 minutes after Maghrib; in Ramadan many mosques in Saudi Arabia use 120 minutes. ") : "")
+    + TT("Times are calculated for") + " " + place.name + " (" + place.lat.toFixed(2) + ", " + place.lng.toFixed(2) + "). " + TT("Your local mosque may differ by a few minutes.");
+  let html = "<tr><th>" + TT("Date") + "</th>" + NAMES.map(n => "<th>" + TT(n[1]) + "</th>").join("") + "</tr>";
+  for(let i = 0; i < 7; i++){ const d = new Date(day.getTime() + i * 864e5), t = times(d);
+    html += `<tr class="${i === 0 ? "today" : ""}"><td>${d.toLocaleDateString(window.DPL_LANG === "bn" ? "bn-BD" : "en-GB", {weekday: "short", day: "numeric", month: "short"})}</td>` + NAMES.map(n => "<td>" + tm(t[n[0]], place.tz) + "</td>").join("") + "</tr>"; }
+  $("week").innerHTML = html;
+  try{ localStorage.setItem("dpl_pt", JSON.stringify({city: $("city").value === "geo" ? null : $("city").value, m: $("method").value, h: $("madhab").value})); }catch(e){}
+}
+function tick(){
+  if(!window._next) return; let s = Math.max(0, Math.round((window._next - new Date()) / 1000));
+  if(s === 0){ render(); return; }
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+  $("cd").textContent = (h ? h + ":" : "") + String(m).padStart(h ? 2 : 1, "0") + ":" + String(ss).padStart(2, "0");
+}
+setInterval(tick, 1000);
+$("city").onchange = () => { if($("city").value === "geo") return; setCity(); $("method").value = CITIES[$("city").value][4]; $("where").textContent = ""; render(); };
+["date", "method", "madhab"].forEach(id => $(id).addEventListener("input", render));
+$("geo").onclick = () => {
+  if(!navigator.geolocation) return alert(TT("Location is not available on this device."));
+  $("where").textContent = TT("Finding your location…");
+  navigator.geolocation.getCurrentPosition(p => {
+    place = {name: TT("your location"), lat: p.coords.latitude, lng: p.coords.longitude, tz: Intl.DateTimeFormat().resolvedOptions().timeZone};
+    geoOpt.hidden = false; $("city").value = "geo"; $("where").textContent = "✓ " + p.coords.latitude.toFixed(3) + ", " + p.coords.longitude.toFixed(3); render();
+  }, () => { $("where").textContent = TT("Location permission was not given. Pick your city instead."); }, {timeout: 12000});
+};
+const t0 = new Date(); $("date").value = t0.getFullYear() + "-" + String(t0.getMonth() + 1).padStart(2, "0") + "-" + String(t0.getDate()).padStart(2, "0");
+setCity(); if(!localStorage.getItem || !(() => { try{ return JSON.parse(localStorage.getItem("dpl_pt") || "null"); }catch(e){} })()) $("method").value = CITIES[$("city").value][4];
+render();
+</script>

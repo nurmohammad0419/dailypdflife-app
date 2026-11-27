@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>BMI Calculator – Body Mass Index with Asian Cut-offs | DailyPdfLife</title>
+<meta name="description" content="Calculate your BMI in kg/cm or lb/ft, see your category and the healthy weight range for your height, with the WHO Asian scale for South Asian and Gulf users.">
+<link rel="canonical" href="https://dailypdflife.com/bmi-calculator">
+<meta property="og:title" content="BMI Calculator – Body Mass Index with Asian Cut-offs | DailyPdfLife">
+<meta property="og:description" content="Calculate your BMI in kg/cm or lb/ft, see your category and the healthy weight range for your height, with the WHO Asian scale for South Asian and Gulf users.">
+<meta property="og:url" content="https://dailypdflife.com/bmi-calculator">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+
+<style>
+  .seg{display:inline-grid;grid-template-columns:1fr 1fr;gap:4px;background:#f1f3f7;border-radius:999px;padding:4px;margin-bottom:10px}
+  .seg button{border:0 !important;background:transparent;padding:8px 18px !important;border-radius:999px !important}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650;color:var(--ink)}
+  .two{display:flex;gap:6px}.two input{min-width:0;flex:1}
+  .big{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .num{font-size:56px;font-weight:800;letter-spacing:-2px;line-height:1}
+  .cat{font-size:20px;font-weight:700}
+  .bar{position:relative;height:14px;border-radius:7px;margin:26px 0 8px;background:linear-gradient(90deg,#4dabf7 0 17%,#40c057 17% 45%,#fab005 45% 65%,#fd7e14 65% 82%,#e03131 82%)}
+  .bar i{position:absolute;top:-8px;width:4px;height:30px;border-radius:2px;background:#111827;transform:translateX(-2px);transition:left .3s}
+  .ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3)}
+  .info{font-size:14.5px;color:var(--ink-2);margin-top:14px;line-height:1.6}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  .tbl td{padding:8px 6px;border-bottom:1px solid #f2f3f6}
+  .tbl tr.on td{background:#fff8e6;font-weight:700}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="seg" id="unit"><button data-u="m" class="on">cm / kg</button><button data-u="i">ft, in / lb</button></div>
+  <div class="grid">
+    <label id="hl">Height (cm) <span class="two" id="hbox"><input type="number" id="hcm" value="170" min="50" max="250"></span></label>
+    <label id="wl">Weight (kg) <input type="number" id="w" value="70" min="10" max="400"></label>
+    <label>Age <input type="number" id="age" value="30" min="2" max="120"></label>
+    <label>Scale <select id="scale"><option value="who">WHO (international)</option><option value="asia">WHO Asian (South Asia, Gulf, East Asia)</option></select></label>
+  </div>
+</div>
+<div class="box">
+  <div class="big"><div class="num" id="bmi">—</div><div><div class="cat" id="cat">—</div><div class="note" id="range"></div></div></div>
+  <div class="bar"><i id="pin" style="left:0"></i></div>
+  <div class="ticks"><span>15</span><span>18.5</span><span id="t2">25</span><span id="t3">30</span><span>35</span><span>40</span></div>
+  <p class="info" id="info"></p>
+  <table class="tbl" id="tbl"></table>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let unit = "m";
+function cuts(){ return $("scale").value === "asia" ? [18.5, 23, 27.5] : [18.5, 25, 30]; }
+function cats(){ const c = cuts(); return [[0, c[0], "Underweight", "#1c7ed6"], [c[0], c[1], "Healthy weight", "#2b8a3e"], [c[1], c[2], "Overweight", "#e67700"], [c[2], 35, "Obesity class I", "#d9480f"], [35, 40, "Obesity class II", "#c92a2a"], [40, 99, "Obesity class III", "#a51111"]]; }
+function heightM(){ if(unit === "m") return (Number($("hcm").value) || 0) / 100; return ((Number($("hft").value) || 0) * 12 + (Number($("hin").value) || 0)) * 0.0254; }
+function weightKg(){ const w = Number($("w").value) || 0; return unit === "m" ? w : w * 0.45359237; }
+function calc(){
+  const h = heightM(), w = weightKg(), c = cuts(); $("t2").textContent = c[1]; $("t3").textContent = c[2];
+  $("tbl").innerHTML = cats().map(k => `<tr data-a="${k[0]}"><td>${TT(k[2])}</td><td>${k[0] ? k[0] : "<"+c[0]} ${k[0] ? (k[1] < 99 ? "– " + k[1] : "+") : ""}</td></tr>`).join("");
+  if(!h || !w){ $("bmi").textContent = "—"; return; }
+  const b = w / (h * h), k = cats().find(x => b >= x[0] && b < x[1]);
+  $("bmi").textContent = b.toFixed(1); $("cat").textContent = TT(k[2]); $("cat").style.color = k[3];
+  $("pin").style.left = Math.max(0, Math.min(100, (b - 15) / 25 * 100)) + "%";
+  const lo = c[0] * h * h, hi = (c[1] - 0.1) * h * h, f = x => unit === "m" ? x.toFixed(1) + " kg" : (x / 0.45359237).toFixed(0) + " lb";
+  $("range").textContent = TT("Healthy weight for your height") + ": " + f(lo) + " – " + f(hi);
+  [...$("tbl").rows].forEach(r => r.classList.toggle("on", Number(r.dataset.a) === k[0]));
+  const age = Number($("age").value) || 30;
+  $("info").textContent = (age < 18 ? TT("For children and teenagers, BMI must be compared with age-and-sex growth charts, so this adult result is only a rough guide. ") : "")
+    + TT("BMI is a quick screening number. It doesn't tell muscle from fat, so athletes may score high and older adults low. Waist size, blood pressure and blood tests give a fuller picture; talk to a doctor about your own health.");
+}
+$("unit").querySelectorAll("button").forEach(b => b.onclick = () => { unit = b.dataset.u; $("unit").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  const hb = $("hbox");
+  if(unit === "m"){ $("hl").firstChild.textContent = TT("Height (cm)") + " "; hb.innerHTML = '<input type="number" id="hcm" value="170">'; $("wl").firstChild.textContent = TT("Weight (kg)") + " "; $("w").value = 70; }
+  else { $("hl").firstChild.textContent = TT("Height (ft, in)") + " "; hb.innerHTML = '<input type="number" id="hft" value="5" placeholder="ft"><input type="number" id="hin" value="7" placeholder="in">'; $("wl").firstChild.textContent = TT("Weight (lb)") + " "; $("w").value = 154; }
+  hb.querySelectorAll("input").forEach(i => i.oninput = calc); calc(); });
+["hcm", "w", "age", "scale"].forEach(id => $(id).addEventListener("input", calc));
+calc();
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About the BMI calculator</h2>
+  <p>Body mass index (BMI) compares your weight with your height. It is a quick way to see whether your weight is in a healthy range. Enter your height and weight in metric or imperial units to see your BMI, your category and the healthy weight range for your height.</p>
+  <h2>How BMI is worked out</h2>
+  <p>BMI = weight in kg ÷ (height in metres)². For example, 70 kg and 1.70 m gives 70 ÷ 2.89 = 24.2. The international WHO categories are: under 18.5 underweight, 18.5 to 24.9 healthy, 25 to 29.9 overweight and 30 or more obesity. The WHO also suggests lower cut-offs for Asian populations, because health risks such as diabetes start at lower BMI: 23 for overweight and 27.5 for obesity. Choose “WHO Asian” if that applies to you.</p>
+  <h2>Limits of BMI</h2>
+  <p>BMI doesn't tell muscle from fat, so very muscular people can score high, and older adults can score low while carrying extra fat. Waist size matters too: a large waist increases health risk at any BMI. For children and teenagers, BMI must be compared with growth charts by age and sex. Use the result as a starting point and talk to a doctor about your own health.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>What is a healthy BMI?</summary><p>18.5 to 24.9 on the international scale, or 18.5 to 22.9 on the Asian scale.</p></details><details><summary>Why is there an Asian scale?</summary><p>People of South and East Asian origin tend to develop weight-related illness at lower BMI.</p></details><details><summary>Does it work for children?</summary><p>Not directly; children need age-based growth charts.</p></details><details><summary>Is my data saved?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="age-calculator.html">Age calculator</a> <a href="unit-converter.html">Unit converter</a> <a href="percentage-calculator.html">Percentage</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is a healthy BMI?", "acceptedAnswer": {"@type": "Answer", "text": "18.5 to 24.9 on the international scale, or 18.5 to 22.9 on the Asian scale."}}, {"@type": "Question", "name": "Why is there an Asian scale?", "acceptedAnswer": {"@type": "Answer", "text": "People of South and East Asian origin tend to develop weight-related illness at lower BMI."}}, {"@type": "Question", "name": "Does it work for children?", "acceptedAnswer": {"@type": "Answer", "text": "Not directly; children need age-based growth charts."}}, {"@type": "Question", "name": "Is my data saved?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

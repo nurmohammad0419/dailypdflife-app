@@ -1,0 +1,80 @@
+<style>
+  .seg{display:inline-grid;grid-template-columns:1fr 1fr;gap:4px;background:#f1f3f7;border-radius:999px;padding:4px;margin-bottom:12px}
+  .seg button{border:0 !important;background:transparent;padding:8px 18px !important;border-radius:999px !important}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+  .grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650;color:var(--ink)}
+  .chk{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:4px}
+  .card{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:#fff}
+  .card small{display:block;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .card b{display:block;font-size:20px;margin-top:4px;color:var(--ink)}
+  .card.main{grid-column:1/-1;background:linear-gradient(135deg,#1c7ed6,#1864ab);border:0}
+  .card.main small{color:rgba(255,255,255,.8)} .card.main b{color:#fff;font-size:28px}
+  .today{font-size:13px;padding:4px 10px !important;border-radius:999px !important}
+</style>
+<div class="box">
+  <div class="seg" id="mode"><button data-m="diff" class="on">Days between dates</button><button data-m="add">Add or subtract days</button></div>
+  <div id="m-diff">
+    <div class="grid">
+      <label>Start date <input type="date" id="a"></label>
+      <label>End date <input type="date" id="b"></label>
+      <label>Weekend (for working days) <select id="wk"><option value="5,6">Friday + Saturday (Saudi Arabia, Gulf)</option><option value="6,0">Saturday + Sunday (UAE, most countries)</option><option value="5">Friday only (Bangladesh, some offices)</option><option value="5,6x">Friday + Saturday (Bangladesh govt.)</option><option value="0">Sunday only</option><option value="">No weekend</option></select></label>
+    </div>
+    <div class="chk"><label><input type="checkbox" id="incl"> Count the end date too</label></div>
+  </div>
+  <div id="m-add" hidden>
+    <div class="grid">
+      <label>Start date <input type="date" id="s"></label>
+      <label>Add / subtract <select id="op"><option value="1">Add (+)</option><option value="-1">Subtract (−)</option></select></label>
+      <label>Years <input type="number" id="ay" value="0" min="0"></label>
+      <label>Months <input type="number" id="am" value="0" min="0"></label>
+      <label>Weeks <input type="number" id="aw" value="0" min="0"></label>
+      <label>Days <input type="number" id="ad" value="90" min="0"></label>
+    </div>
+    <div class="chk"><label><input type="checkbox" id="workOnly"> Count working days only (skip Friday + Saturday)</label></div>
+  </div>
+</div>
+<div class="box"><div class="cards" id="out"></div></div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let mode = "diff";
+const iso = d => d.toISOString().slice(0, 10);
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const long = d => d.toLocaleDateString(window.DPL_LANG === "bn" ? "bn-BD" : "en-GB", {weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC"});
+const card = (l, v, main) => `<div class="card${main ? " main" : ""}"><small>${TT(l)}</small><b>${v}</b></div>`;
+function ymd(a, b){ let y = b.getUTCFullYear() - a.getUTCFullYear(), m = b.getUTCMonth() - a.getUTCMonth(), d = b.getUTCDate() - a.getUTCDate();
+  if(d < 0){ m--; d += new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), 0)).getUTCDate(); } if(m < 0){ y--; m += 12; } return [y, m, d]; }
+function calc(){
+  if(mode === "diff"){
+    if(!$("a").value || !$("b").value) return; let a = parse($("a").value), b = parse($("b").value), neg = b < a; if(neg) [a, b] = [b, a];
+    let days = Math.round((b - a) / 864e5) + ($("incl").checked ? 1 : 0);
+    const wk = $("wk").value.replace("x", "").split(",").filter(Boolean).map(Number);
+    let work = 0; const end = new Date(b); if($("incl").checked) end.setUTCDate(end.getUTCDate() + 1);
+    for(let d = new Date(a); d < end; d.setUTCDate(d.getUTCDate() + 1)) if(!wk.includes(d.getUTCDay())) work++;
+    const [y, m, d] = ymd(a, b);
+    $("out").innerHTML = card("Total days", days.toLocaleString() + " " + TT("days"), true)
+      + card("Years, months, days", `${y} ${TT("y")} ${m} ${TT("m")} ${d} ${TT("d")}`)
+      + card("Weeks", Math.floor(days / 7) + " " + TT("weeks") + (days % 7 ? " " + days % 7 + " " + TT("days") : ""))
+      + card("Working days", work.toLocaleString()) + card("Weekend days", (days - work).toLocaleString())
+      + card("Hours", (days * 24).toLocaleString()) + card("Months (approx.)", (days / 30.4375).toFixed(1));
+  } else {
+    if(!$("s").value) return; const sg = Number($("op").value); let d = parse($("s").value);
+    const Y = Number($("ay").value) || 0, M = Number($("am").value) || 0, W = Number($("aw").value) || 0, D = Number($("ad").value) || 0;
+    if(Y || M){ const day = d.getUTCDate(); d.setUTCDate(1); d.setUTCFullYear(d.getUTCFullYear() + sg * Y); d.setUTCMonth(d.getUTCMonth() + sg * M);
+      d.setUTCDate(Math.min(day, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate())); }
+    let n = W * 7 + D;
+    if($("workOnly").checked){ while(n > 0){ d.setUTCDate(d.getUTCDate() + sg); if(![5, 6].includes(d.getUTCDay())) n--; } }
+    else d.setUTCDate(d.getUTCDate() + sg * n);
+    $("out").innerHTML = card("Result date", long(d), true) + card("Date (DD/MM/YYYY)", iso(d).split("-").reverse().join("/"))
+      + card("Days from start", Math.round(Math.abs(d - parse($("s").value)) / 864e5).toLocaleString());
+  }
+}
+$("mode").querySelectorAll("button").forEach(b => b.onclick = () => { mode = b.dataset.m; $("mode").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("m-diff").hidden = mode !== "diff"; $("m-add").hidden = mode !== "add"; calc(); });
+document.querySelectorAll("input,select").forEach(i => i.addEventListener("input", calc));
+const t = new Date(), today = iso(new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())));
+$("a").value = today; $("s").value = today; const e = new Date(Date.UTC(t.getFullYear(), 11, 31)); $("b").value = iso(e);
+calc();
+</script>

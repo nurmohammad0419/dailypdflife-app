@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Meme Maker Online Free – Add Top &amp; Bottom Text | DailyPdfLife</title>
+<meta name="description" content="Make a meme from your own photo in seconds: classic bold top and bottom text, or a modern white caption bar. Bangla and Arabic text work too. No watermark.">
+<link rel="canonical" href="https://dailypdflife.com/meme-maker">
+<meta property="og:title" content="Meme Maker Online Free – Add Top &amp; Bottom Text | DailyPdfLife">
+<meta property="og:description" content="Make a meme from your own photo in seconds: classic bold top and bottom text, or a modern white caption bar. Bangla and Arabic text work too. No watermark.">
+<meta property="og:url" content="https://dailypdflife.com/meme-maker">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Anton&display=swap");
+  .lay{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}
+  .side{position:sticky;top:80px}
+  .styles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .styles button{padding:10px 6px !important;font-size:13px}
+  .styles button.on{background:#111827;color:#fff;border-color:#111827}
+  .side textarea{width:100%;min-height:58px;font-size:16px;resize:vertical}
+  .side label{display:block;font-size:13px;font-weight:650;color:var(--ink);margin:10px 0 5px}
+  .row{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:8px}
+  .row input[type=range]{flex:1}
+  .pri{width:100%;background:#f59f00;color:#111;border:0;padding:12px !important;margin-top:14px;font-size:15px}
+  .stage{background:#eef0f4;border-radius:14px;padding:14px;display:flex;justify-content:center}
+  #cv{max-width:100%;max-height:74vh;box-shadow:0 3px 14px rgba(20,25,40,.18)}
+  .blank{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:14px}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.side{position:static}}
+</style>
+</head>
+<body>
+<div class="box">
+  <input type="file" id="file" accept="image/*">
+  <div class="blank">or start with a plain background <input type="color" id="bg" value="#111827"> <button id="useBg">Use colour</button></div>
+</div>
+<div class="lay" id="lay" hidden>
+  <div class="box side">
+    <h3>Style</h3>
+    <div class="styles" id="styles"><button data-s="classic" class="on">Classic (text on photo)</button><button data-s="caption">Caption bar on top</button></div>
+    <label id="l1">Top text</label><textarea id="t1" dir="auto"></textarea>
+    <label id="l2">Bottom text</label><textarea id="t2" dir="auto"></textarea>
+    <div class="row">Size <input type="range" id="size" min="5" max="16" value="10" step="0.5"></div>
+    <div class="row">Colour <input type="color" id="col" value="#ffffff"><span style="flex:1"></span><label style="margin:0;font-weight:500"><input type="checkbox" id="caps" checked> CAPITALS</label></div>
+    <button class="pri" id="save">⬇ Save meme</button>
+  </div>
+  <div class="box"><div class="stage"><canvas id="cv"></canvas></div></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let img = null, style = "classic", name = "meme";
+const FONT = "Anton, Impact, 'Arial Black', 'Noto Sans Bengali', sans-serif";
+function wrap(g, text, maxW){
+  const out = []; text.split("\n").forEach(par => { let line = ""; par.split(" ").forEach(w => { const t = line ? line + " " + w : w;
+    if(g.measureText(t).width > maxW && line){ out.push(line); line = w; } else line = t; }); out.push(line); }); return out.filter((l, i, a) => l || a.length === 1);
+}
+function render(c, W){
+  const g = c.getContext("2d"), H0 = img ? Math.round(W * img.naturalHeight / img.naturalWidth) : Math.round(W * 0.8);
+  const up = v => $("caps").checked ? v.toUpperCase() : v, t1 = up($("t1").value.trim()), t2 = up($("t2").value.trim());
+  if(style === "caption"){
+    const fs = W * Number($("size").value) / 180, pad = fs * 0.9;
+    g.font = `600 ${fs}px Arial, "Segoe UI", "Noto Sans Bengali", sans-serif`; const lines = t1 ? wrap(g, t1, W - pad * 2) : [];
+    const barH = lines.length ? lines.length * fs * 1.3 + pad * 2 : 0;
+    c.width = W; c.height = H0 + barH; g.fillStyle = "#fff"; g.fillRect(0, 0, W, barH);
+    if(img) g.drawImage(img, 0, barH, W, H0); else { g.fillStyle = $("bg").value; g.fillRect(0, barH, W, H0); }
+    g.font = `600 ${fs}px Arial, "Segoe UI", "Noto Sans Bengali", sans-serif`; g.fillStyle = "#111"; g.textBaseline = "top";
+    lines.forEach((l, i) => g.fillText(l, pad, pad + i * fs * 1.3));
+    return;
+  }
+  c.width = W; c.height = H0;
+  if(img) g.drawImage(img, 0, 0, W, H0); else { g.fillStyle = $("bg").value; g.fillRect(0, 0, W, H0); }
+  const fs = W * Number($("size").value) / 100; g.font = `${fs}px ${FONT}`; g.textAlign = "center"; g.lineJoin = "round";
+  g.lineWidth = fs * 0.16; g.strokeStyle = "#000"; g.fillStyle = $("col").value;
+  const put = (lines, top) => lines.forEach((l, i) => { const y = top ? fs * 0.25 + fs * 1.05 * (i + 1) - fs * 0.15 : H0 - fs * 0.3 - fs * 1.05 * (lines.length - 1 - i);
+    g.strokeText(l, W / 2, y); g.fillText(l, W / 2, y); });
+  if(t1) put(wrap(g, t1, W * 0.94), true); if(t2) put(wrap(g, t2, W * 0.94), false);
+}
+function preview(){ render($("cv"), 900); }
+function start(){ $("lay").hidden = false; if(!$("t1").value) $("t1").value = TT("When the PDF finally"); if(!$("t2").value) $("t2").value = TT("fits under 1 MB"); preview(); }
+$("file").onchange = e => { const f = e.target.files[0]; if(!f) return; name = f.name.replace(/\.[^.]+$/, "");
+  const im = new Image(); im.onload = () => { img = im; start(); }; im.src = URL.createObjectURL(f); };
+$("useBg").onclick = () => { img = null; start(); };
+["t1", "t2", "size", "col", "caps", "bg"].forEach(id => $(id).addEventListener("input", preview));
+$("styles").querySelectorAll("button").forEach(b => b.onclick = () => { style = b.dataset.s; $("styles").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("l1").textContent = TT(style === "caption" ? "Caption" : "Top text"); $("l2").hidden = $("t2").hidden = style === "caption"; preview(); });
+document.fonts && document.fonts.load("40px Anton").then(preview).catch(() => {});
+$("save").onclick = () => { const c = document.createElement("canvas"); render(c, img ? Math.min(2000, img.naturalWidth) : 1200);
+  c.toBlob(b => DPLResult.file(b, name + "-meme.jpg"), "image/jpeg", 0.92); };
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About the Meme maker</h2>
+  <p>Turn any photo into a meme. Choose the classic look with big white letters and a black outline at the top and bottom, or the modern caption style with a white bar of text above the picture, as seen on social media. You can also start with a plain coloured background for text-only posts. There's no watermark and nothing is uploaded.</p>
+  <h2>How to make a meme</h2>
+  <ol><li>Choose a photo, or a plain background colour.</li><li>Pick <b>Classic</b> or <b>Caption bar on top</b>.</li><li>Type your text, and adjust the size and colour.</li><li>Tap <b>Save meme</b> and share it.</li></ol>
+  <h2>Make it land</h2>
+  <p>Short text works best: a few words at the top set up the joke and the bottom line delivers it. Use photos you took yourself or have permission to use, and keep jokes kind. For more text styles and several text boxes, try <a href="text-on-photo">Text on photo</a>; to combine pictures first, use <a href="photo-collage">Photo collage</a>.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Can I write in Bangla?</summary><p>Yes, Bangla and Arabic text appear correctly.</p></details><details><summary>Is there a watermark?</summary><p>No.</p></details><details><summary>What size is the saved meme?</summary><p>Up to 2000 pixels wide, sharp enough for any social network.</p></details><details><summary>Is my photo uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="text-on-photo">Text on photo</a> <a href="photo-collage">Photo collage</a> <a href="crop-image">Crop image</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I write in Bangla?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, Bangla and Arabic text appear correctly."}}, {"@type": "Question", "name": "Is there a watermark?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}, {"@type": "Question", "name": "What size is the saved meme?", "acceptedAnswer": {"@type": "Answer", "text": "Up to 2000 pixels wide, sharp enough for any social network."}}, {"@type": "Question", "name": "Is my photo uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

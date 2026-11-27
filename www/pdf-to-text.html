@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PDF to Text – Extract All Text from a PDF to TXT Free | DailyPdfLife</title>
+<meta name="description" content="Pull all the text out of a PDF into a plain .txt file or copy it in one tap. Keeps line breaks, marks page starts and can join broken lines.">
+<link rel="canonical" href="https://dailypdflife.com/pdf-to-text">
+<meta property="og:title" content="PDF to Text – Extract All Text from a PDF to TXT Free | DailyPdfLife">
+<meta property="og:description" content="Pull all the text out of a PDF into a plain .txt file or copy it in one tap. Keeps line breaks, marks page starts and can join broken lines.">
+<meta property="og:url" content="https://dailypdflife.com/pdf-to-text">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";</script>
+<style>
+  .opts{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:14px}
+  .pri{background:#495057;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  textarea#out{width:100%;min-height:420px;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace !important;white-space:pre-wrap}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  .acts .pri{margin:0}
+  .acts span{margin-left:auto;font-size:13px;color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <div class="opts">
+    <label><input type="checkbox" id="pb" checked> Mark where each page starts</label>
+    <label><input type="checkbox" id="join"> Join broken lines into paragraphs</label>
+  </div>
+  <button class="pri" id="go">📝 Extract text</button>
+  <p class="note" id="status"></p>
+</div>
+<div class="box" id="res" hidden>
+  <div class="acts"><button class="pri" id="dl">⬇ Save .txt</button><button id="copy">📋 Copy all</button><span id="count"></span></div>
+  <textarea id="out" dir="auto"></textarea>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let base = "document";
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PDF first"));
+  base = f.name.replace(/\.pdf$/i, "");
+  let pdf; try{ pdf = await pdfjsLib.getDocument({data: new Uint8Array(await f.arrayBuffer())}).promise; }
+  catch(e){ return alert(TT("This PDF could not be opened. If it has a password, unlock it first.")); }
+  const parts = [];
+  for(let p = 1; p <= pdf.numPages; p++){
+    $("status").textContent = TT("Page") + " " + p + " / " + pdf.numPages;
+    const tc = await (await pdf.getPage(p)).getTextContent(); let txt = "", lastY = null, lastX = null;
+    for(const it of tc.items){
+      const y = it.transform[5], x = it.transform[4];
+      if(lastY !== null && Math.abs(y - lastY) > 2) txt += "\n";
+      else if(lastX !== null && x - lastX > 8 && !/\s$/.test(txt) && it.str && !/^\s/.test(it.str)) txt += " ";
+      txt += it.str; lastY = y; lastX = x + (it.width || 0);
+      if(it.hasEOL){ txt += "\n"; lastY = null; }
+    }
+    txt = txt.replace(/\n{3,}/g, "\n\n").trim();
+    if($("join").checked) txt = txt.replace(/([^\n.!?:।])\n(?=[^\n])/g, "$1 ");
+    parts.push(($("pb").checked ? "——— " + TT("Page") + " " + p + " ———\n" : "") + txt);
+  }
+  const all = parts.join("\n\n"); $("status").textContent = "";
+  if(!all.replace(/———.*———/g, "").trim()){ alert(TT("No text was found. This looks like a scanned PDF; use the OCR tool to read it.")); return; }
+  $("out").value = all; $("res").hidden = false;
+  $("count").textContent = all.split(/\s+/).filter(Boolean).length.toLocaleString() + " " + TT("words") + " · " + pdf.numPages + " " + TT("pages");
+};
+$("dl").onclick = () => DPLResult.file(new Blob(["﻿" + $("out").value], {type: "text/plain;charset=utf-8"}), base + ".txt");
+$("copy").onclick = () => { navigator.clipboard.writeText($("out").value).then(() => { $("copy").textContent = "✓ " + TT("Copied"); setTimeout(() => $("copy").textContent = "📋 " + TT("Copy all"), 1500); }); };
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About PDF to text</h2>
+  <p>Sometimes you just need the words: to paste a paragraph into an email, to translate a document, to search it, or to feed it into another program. PDF to text pulls every word out of a PDF, page by page, into plain text you can copy or save as a .txt file. Bangla, Arabic and English text all work when the PDF contains real text.</p>
+  <h2>How to extract text from a PDF</h2>
+  <ol><li>Choose your PDF.</li><li>Keep <b>Mark where each page starts</b> on if you want page numbers in the text.</li><li>Turn on <b>Join broken lines</b> to turn short PDF lines back into flowing paragraphs.</li><li>Tap <b>Extract text</b>, then copy it or save the .txt file.</li></ol>
+  <h2>If you get no text</h2>
+  <p>A scanned PDF or a photo of a page contains a picture of the words, not the words themselves, so there is nothing to extract. Use <a href="ocr.html">OCR</a> instead, which reads the text from the picture. If copied Bangla text looks broken, read our guide on <a href="guide-bangla-pdf-text-copy-broken.html">why Bangla PDF text breaks</a>.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Does it keep formatting?</summary><p>No, it produces plain text. Use PDF to Word to keep paragraphs in a document.</p></details><details><summary>Can it read scanned PDFs?</summary><p>No, use OCR for those.</p></details><details><summary>Which encoding is the .txt file?</summary><p>UTF-8, which opens correctly in Notepad, Word and phones.</p></details><details><summary>Is my PDF uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="pdf-to-word.html">PDF to Word</a> <a href="ocr.html">OCR</a> <a href="compare-pdf.html">Compare PDF</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does it keep formatting?", "acceptedAnswer": {"@type": "Answer", "text": "No, it produces plain text. Use PDF to Word to keep paragraphs in a document."}}, {"@type": "Question", "name": "Can it read scanned PDFs?", "acceptedAnswer": {"@type": "Answer", "text": "No, use OCR for those."}}, {"@type": "Question", "name": "Which encoding is the .txt file?", "acceptedAnswer": {"@type": "Answer", "text": "UTF-8, which opens correctly in Notepad, Word and phones."}}, {"@type": "Question", "name": "Is my PDF uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<style>
+  .tabs{display:inline-grid;grid-template-columns:1fr 1fr;gap:4px;background:#f1f3f7;border-radius:999px;padding:4px;margin-bottom:12px}
+  .tabs button{border:0 !important;background:transparent;padding:8px 18px !important;border-radius:999px !important}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  textarea#src{width:100%;min-height:200px;font:13.5px/1.5 ui-monospace,Menlo,Consolas,monospace !important}
+  .opts{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .pri{background:#e8590c;color:#fff;border:0;padding:13px 26px !important;font-size:15px}
+  .sheet{background:#e9ecf3 !important;padding:22px !important}
+  #page{width:794px;max-width:100%;min-height:500px;margin:0 auto;background:#fff;box-shadow:0 4px 18px rgba(20,25,40,.16);padding:40px;overflow:hidden}
+  @media print{
+    body *{visibility:hidden !important}
+    #page,#page *{visibility:visible !important}
+    #page{position:absolute;left:0;top:0;width:100% !important;padding:0 !important;box-shadow:none !important;margin:0 !important}
+  }
+</style>
+<style id="pageRule">@page{size:A4;margin:15mm}</style>
+<div class="box">
+  <div class="tabs" id="tabs"><button data-t="file" class="on">Upload .html file</button><button data-t="paste">Paste HTML or text</button></div>
+  <div id="t-file"><input type="file" id="file" accept=".html,.htm,text/html"></div>
+  <div id="t-paste" hidden><textarea id="src" placeholder="<h1>Hello</h1><p>Paste HTML code, or plain text, here…</p>"></textarea></div>
+  <div class="opts">
+    <label>Page size <select id="size"><option>A4</option><option>Letter</option><option>Legal</option><option value="A4 landscape">A4 landscape</option></select></label>
+    <label>Margins <select id="mg"><option value="15mm">Normal</option><option value="8mm">Narrow</option><option value="25mm">Wide</option><option value="0">None</option></select></label>
+    <button class="pri" id="go">⬇ Save as PDF</button>
+  </div>
+  <p class="note">In the print window, choose <b>Save as PDF</b> and tick <b>Background graphics</b>. Scripts in the HTML are not run, for your safety. Pictures load only if they use full web addresses.</p>
+</div>
+<div class="box sheet"><div id="page"><p style="color:#9aa1ae;text-align:center;padding-top:180px">The preview appears here.</p></div></div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let mode = "file", root = null;
+$("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { mode = b.dataset.t; $("tabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); $("t-file").hidden = mode !== "file"; $("t-paste").hidden = mode !== "paste"; });
+function clean(html){
+  const d = new DOMParser().parseFromString(html, "text/html");
+  d.querySelectorAll("script,iframe,object,embed,link[rel=import],meta[http-equiv]").forEach(n => n.remove());
+  d.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => { if(/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) n.removeAttribute(a.name); }));
+  const styles = [...d.querySelectorAll("style")].map(s => s.outerHTML).join("");
+  return styles + d.body.innerHTML;
+}
+function render(html){
+  const isHtml = /<[a-z!][\s\S]*>/i.test(html);
+  if(!isHtml) html = "<pre style='white-space:pre-wrap;font:12pt/1.5 Arial,sans-serif'>" + html.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])) + "</pre>";
+  const page = $("page"); page.innerHTML = "";
+  root = page.attachShadow ? (page.shadowRoot || page.attachShadow({mode: "open"})) : page;
+  root.innerHTML = "<style>:host{all:initial;display:block;font:12pt/1.5 Arial,'Noto Sans Bengali',sans-serif;color:#111}img{max-width:100%}</style>" + clean(html);
+}
+$("file").onchange = e => { const f = e.target.files[0]; if(f) f.text().then(render); };
+$("src").oninput = () => render($("src").value);
+function rule(){ $("pageRule").textContent = "@page{size:" + $("size").value + ";margin:" + $("mg").value + "}"; }
+$("size").onchange = $("mg").onchange = rule;
+$("go").onclick = () => {
+  if(mode === "paste" && $("src").value.trim()) render($("src").value);
+  if(!root) return alert(TT("Add an HTML file or paste some content first."));
+  rule(); window.print();
+};
+</script>

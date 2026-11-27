@@ -5,9 +5,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 from g1 import G as A
 from g2 import G as B
 from g3 import G as C
+from g4 import G as D
 
 SITE = sys.argv[1]
-G = {**A, **B, **C}
+G = {**A, **B, **C, **D}
 BASE = "https://dailypdflife.com/"
 
 def strip(s):

@@ -1,0 +1,55 @@
+<!-- libs: pdfjs -->
+<style>
+  .opts{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:14px}
+  .pri{background:#495057;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  textarea#out{width:100%;min-height:420px;font:14px/1.6 ui-monospace,Menlo,Consolas,monospace !important;white-space:pre-wrap}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  .acts .pri{margin:0}
+  .acts span{margin-left:auto;font-size:13px;color:var(--ink-3)}
+</style>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <div class="opts">
+    <label><input type="checkbox" id="pb" checked> Mark where each page starts</label>
+    <label><input type="checkbox" id="join"> Join broken lines into paragraphs</label>
+  </div>
+  <button class="pri" id="go">📝 Extract text</button>
+  <p class="note" id="status"></p>
+</div>
+<div class="box" id="res" hidden>
+  <div class="acts"><button class="pri" id="dl">⬇ Save .txt</button><button id="copy">📋 Copy all</button><span id="count"></span></div>
+  <textarea id="out" dir="auto"></textarea>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let base = "document";
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PDF first"));
+  base = f.name.replace(/\.pdf$/i, "");
+  let pdf; try{ pdf = await pdfjsLib.getDocument({data: new Uint8Array(await f.arrayBuffer())}).promise; }
+  catch(e){ return alert(TT("This PDF could not be opened. If it has a password, unlock it first.")); }
+  const parts = [];
+  for(let p = 1; p <= pdf.numPages; p++){
+    $("status").textContent = TT("Page") + " " + p + " / " + pdf.numPages;
+    const tc = await (await pdf.getPage(p)).getTextContent(); let txt = "", lastY = null, lastX = null;
+    for(const it of tc.items){
+      const y = it.transform[5], x = it.transform[4];
+      if(lastY !== null && Math.abs(y - lastY) > 2) txt += "\n";
+      else if(lastX !== null && x - lastX > 8 && !/\s$/.test(txt) && it.str && !/^\s/.test(it.str)) txt += " ";
+      txt += it.str; lastY = y; lastX = x + (it.width || 0);
+      if(it.hasEOL){ txt += "\n"; lastY = null; }
+    }
+    txt = txt.replace(/\n{3,}/g, "\n\n").trim();
+    if($("join").checked) txt = txt.replace(/([^\n.!?:।])\n(?=[^\n])/g, "$1 ");
+    parts.push(($("pb").checked ? "——— " + TT("Page") + " " + p + " ———\n" : "") + txt);
+  }
+  const all = parts.join("\n\n"); $("status").textContent = "";
+  if(!all.replace(/———.*———/g, "").trim()){ alert(TT("No text was found. This looks like a scanned PDF; use the OCR tool to read it.")); return; }
+  $("out").value = all; $("res").hidden = false;
+  $("count").textContent = all.split(/\s+/).filter(Boolean).length.toLocaleString() + " " + TT("words") + " · " + pdf.numPages + " " + TT("pages");
+};
+$("dl").onclick = () => DPLResult.file(new Blob(["﻿" + $("out").value], {type: "text/plain;charset=utf-8"}), base + ".txt");
+$("copy").onclick = () => { navigator.clipboard.writeText($("out").value).then(() => { $("copy").textContent = "✓ " + TT("Copied"); setTimeout(() => $("copy").textContent = "📋 " + TT("Copy all"), 1500); }); };
+</script>

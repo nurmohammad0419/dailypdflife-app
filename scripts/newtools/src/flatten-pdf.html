@@ -1,0 +1,57 @@
+<!-- libs: pdfjs pdflib -->
+<style>
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 4px}
+  .mode{display:block;border:2px solid var(--line);border-radius:16px;padding:16px 18px;cursor:pointer;background:#fff}
+  .mode b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+  .mode span{font-size:13.5px;color:var(--ink-2);line-height:1.45;display:block}
+  .mode input{float:right;margin:2px 0 0 8px}
+  .mode:has(input:checked){border-color:#5f3dc4;background:#f7f4ff}
+  .pri{background:#5f3dc4;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  .opt{margin-top:12px;font-size:14px}
+  @media(max-width:700px){.modes{grid-template-columns:1fr}}
+</style>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <h3>2. How to flatten</h3>
+  <div class="modes">
+    <label class="mode"><input type="radio" name="m" value="forms" checked><b>Lock form fields</b><span>Filled-in boxes, ticks and dropdowns become normal page content. Text stays sharp and searchable.</span></label>
+    <label class="mode"><input type="radio" name="m" value="image"><b>Flatten everything</b><span>Every page is turned into a single picture: comments, stamps, highlights and forms included. Nothing can be edited after this.</span></label>
+  </div>
+  <div class="opt" id="qBox" hidden>Quality <select id="dpi"><option value="1.5">Normal (smaller file)</option><option value="2.2" selected>High</option><option value="3">Very high (print)</option></select></div>
+  <button class="pri" id="go">▤ Flatten PDF</button>
+  <p class="note" id="status"></p>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+document.querySelectorAll("input[name=m]").forEach(r => r.onchange = () => $("qBox").hidden = r.value !== "image" || !r.checked);
+async function flattenImages(bytes, scale, msg){
+  const pdf = await pdfjsLib.getDocument({data: bytes.slice()}).promise, out = await PDFLib.PDFDocument.create();
+  for(let i = 1; i <= pdf.numPages; i++){
+    msg(TT("Page") + " " + i + " / " + pdf.numPages);
+    const page = await pdf.getPage(i), v1 = page.getViewport({scale: 1}), vp = page.getViewport({scale});
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await page.render({canvasContext: g, viewport: vp}).promise;
+    const jpg = await out.embedJpg(await (await new Promise(r => c.toBlob(r, "image/jpeg", 0.9))).arrayBuffer());
+    const p = out.addPage([v1.width, v1.height]); p.drawImage(jpg, {x: 0, y: 0, width: v1.width, height: v1.height});
+  }
+  return out.save();
+}
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PDF first"));
+  const bytes = new Uint8Array(await f.arrayBuffer()), name = f.name.replace(/\.pdf$/i, "");
+  const mode = document.querySelector("input[name=m]:checked").value, msg = s => $("status").textContent = s;
+  msg(TT("Working…"));
+  try{
+    let out;
+    if(mode === "forms"){
+      const doc = await PDFLib.PDFDocument.load(bytes, {ignoreEncryption: true}), form = doc.getForm();
+      if(!form.getFields().length){ msg(""); if(confirm(TT("This PDF has no form fields. Flatten everything into pictures instead?"))) out = await flattenImages(bytes, 2.2, msg); else return; }
+      else { form.flatten(); out = await doc.save(); }
+    } else out = await flattenImages(bytes, Number($("dpi").value), msg);
+    msg(""); DPLResult.file(out, name + "-flat.pdf");
+  }catch(err){ msg(""); alert(TT("Could not flatten this PDF:") + " " + err.message + "\n" + TT("Try “Flatten everything” instead.")); }
+};
+</script>

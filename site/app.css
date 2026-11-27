@@ -246,6 +246,9 @@ small,.tip,.note{color:var(--ink-3);font-size:12.8px}
 .gcard b{display:block;font-size:16px;margin-bottom:6px}
 .gcard span{display:block;font-size:14px;color:var(--ink-2);line-height:1.5}
 
+[hidden]{display:none !important}
+@media print{.seo,.guide{display:none !important}}
+
 /* =====================================================================
    2026 refresh: calmer, cleaner, more modern.
    Loaded last so it refines everything above without touching page code.

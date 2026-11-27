@@ -1,0 +1,107 @@
+<!-- libs: pdfjs -->
+<style>
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .two label{display:block;font-weight:650;color:var(--ink);margin-bottom:8px}
+  .pri{background:#1c7ed6;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:14px}
+  .sum{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+  .sum span{padding:7px 14px;border-radius:999px;font-weight:650;font-size:14px}
+  .sum .a{background:#e6f7ed;color:#1f7a3a}.sum .d{background:#fdecea;color:#b4231f}.sum .s{background:#f1f3f7;color:#4b5563}
+  .diff{font-size:14.5px;line-height:1.7;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .ln{display:grid;grid-template-columns:54px minmax(0,1fr);border-bottom:1px solid #f2f3f6}
+  .ln:last-child{border-bottom:0}
+  .ln .n{color:#a0a7b4;font-size:12px;text-align:right;padding:4px 10px 4px 0;user-select:none}
+  .ln .t{padding:4px 12px;white-space:pre-wrap;word-break:break-word}
+  .ln.add{background:#f0faf3}.ln.del{background:#fdf1f0}.ln.chg{background:#fffbea}
+  .ln.pgh{background:#f7f8fa;font-weight:700;color:#4b5563;font-size:12.5px;letter-spacing:.5px}
+  ins{background:#bfe9cc;text-decoration:none;border-radius:3px;padding:0 1px}
+  del{background:#f7c5c1;border-radius:3px;padding:0 1px}
+  .opts{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+  .same{padding:40px;text-align:center;color:#1f7a3a;font-weight:700;font-size:17px}
+  @media(max-width:700px){.two{grid-template-columns:1fr}}
+</style>
+<div class="box">
+  <div class="two">
+    <div><label>Original (old) PDF</label><input type="file" id="fa" accept="application/pdf"></div>
+    <div><label>New (changed) PDF</label><input type="file" id="fb" accept="application/pdf"></div>
+  </div>
+  <div class="opts">
+    <label><input type="checkbox" id="onlyChanges" checked> Show only the changed lines</label>
+    <label><input type="checkbox" id="ignoreSpace" checked> Ignore extra spaces</label>
+    <label><input type="checkbox" id="ignoreCase"> Ignore capital letters</label>
+  </div>
+  <button class="pri" id="go">⇆ Compare PDFs</button>
+  <p class="note" id="status"></p>
+</div>
+<div class="box" id="res" hidden>
+  <div class="sum" id="sum"></div>
+  <div class="diff" id="diff" data-notr></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+async function lines(file){
+  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(await file.arrayBuffer())}).promise, out = [];
+  for(let p = 1; p <= pdf.numPages; p++){
+    const tc = await (await pdf.getPage(p)).getTextContent(); let cur = "", lastY = null;
+    out.push({page: p, head: true});
+    tc.items.forEach(it => {
+      const y = Math.round(it.transform[5]);
+      if(lastY !== null && Math.abs(y - lastY) > 3){ if(cur.trim()) out.push({page: p, t: cur.trim()}); cur = ""; }
+      cur += it.str + (it.hasEOL ? "" : ""); lastY = y;
+      if(it.hasEOL){ if(cur.trim()) out.push({page: p, t: cur.trim()}); cur = ""; lastY = null; }
+    });
+    if(cur.trim()) out.push({page: p, t: cur.trim()});
+  }
+  return out;
+}
+function norm(s){ if($("ignoreSpace").checked) s = s.replace(/\s+/g, " ").trim(); if($("ignoreCase").checked) s = s.toLowerCase(); return s; }
+/* longest common subsequence on lines */
+function lcs(a, b, key){
+  const n = a.length, m = b.length;
+  if(n * m > 25e6) throw new Error(TT("These documents are too long to compare in one go. Split them into smaller parts first."));
+  const dp = new Uint32Array((n + 1) * (m + 1));
+  for(let i = n - 1; i >= 0; i--) for(let j = m - 1; j >= 0; j--)
+    dp[i*(m+1)+j] = key(a[i]) === key(b[j]) ? dp[(i+1)*(m+1)+j+1] + 1 : Math.max(dp[(i+1)*(m+1)+j], dp[i*(m+1)+j+1]);
+  const ops = []; let i = 0, j = 0;
+  while(i < n && j < m){
+    if(key(a[i]) === key(b[j])){ ops.push(["=", a[i], b[j]]); i++; j++; }
+    else if(dp[(i+1)*(m+1)+j] >= dp[i*(m+1)+j+1]) ops.push(["-", a[i++]]);
+    else ops.push(["+", b[j++]]);
+  }
+  while(i < n) ops.push(["-", a[i++]]); while(j < m) ops.push(["+", b[j++]]);
+  return ops;
+}
+function esc(s){ return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function wordDiff(x, y){
+  const a = x.split(/(\s+)/), b = y.split(/(\s+)/);
+  return lcs(a, b, s => norm(s)).map(o => o[0] === "=" ? esc(o[2]) : o[0] === "-" ? "<del>" + esc(o[1]) + "</del>" : "<ins>" + esc(o[1]) + "</ins>").join("");
+}
+$("go").onclick = async () => {
+  const A = $("fa").files[0], B = $("fb").files[0];
+  if(!A || !B) return alert(TT("Choose both PDF files first."));
+  $("status").textContent = TT("Reading both files…"); $("res").hidden = true;
+  try{
+    const la = (await lines(A)).filter(x => !x.head), lb = (await lines(B)).filter(x => !x.head);
+    if(!la.length && !lb.length) throw new Error(TT("No text was found. These look like scanned PDFs; run them through OCR first."));
+    const ops = lcs(la, lb, x => norm(x.t));
+    /* pair a removed line with the added line that follows it as a "changed" line */
+    const rows = []; let add = 0, del = 0, chg = 0, same = 0;
+    for(let k = 0; k < ops.length; k++){
+      const o = ops[k];
+      if(o[0] === "-" && ops[k+1] && ops[k+1][0] === "+"){ rows.push({c: "chg", p: ops[k+1][1].page, h: wordDiff(o[1].t, ops[k+1][1].t)}); chg++; k++; }
+      else if(o[0] === "-"){ rows.push({c: "del", p: o[1].page, h: "<del>" + esc(o[1].t) + "</del>"}); del++; }
+      else if(o[0] === "+"){ rows.push({c: "add", p: o[1].page, h: "<ins>" + esc(o[1].t) + "</ins>"}); add++; }
+      else { rows.push({c: "", p: o[2].page, h: esc(o[2].t)}); same++; }
+    }
+    $("sum").innerHTML = `<span class="d">− ${del} ${TT("removed")}</span><span class="a">+ ${add} ${TT("added")}</span><span class="s">✎ ${chg} ${TT("changed")}</span><span class="s">= ${same} ${TT("same")}</span>`;
+    const only = $("onlyChanges").checked; let html = "", lastP = 0, n = 0;
+    rows.forEach(r => {
+      n++; if(only && !r.c) return;
+      if(r.p !== lastP){ html += `<div class="ln pgh"><span class="n"></span><span class="t">${TT("PAGE")} ${r.p}</span></div>`; lastP = r.p; }
+      html += `<div class="ln ${r.c}"><span class="n">${n}</span><span class="t">${r.h}</span></div>`;
+    });
+    $("diff").innerHTML = (add + del + chg) ? html : `<div class="same">✓ ${TT("No differences found. The text of both PDFs is the same.")}</div>`;
+    $("res").hidden = false; $("status").textContent = ""; $("res").scrollIntoView({behavior: "smooth"});
+  }catch(err){ $("status").textContent = ""; alert(err.message); }
+};
+</script>

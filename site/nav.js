@@ -19,7 +19,11 @@
       ["Crop PDF", "crop-pdf.html", "⌗", "#e8590c", "Trim the margins or cut pages to a smaller area."],
       ["Remove pages", "remove-pages.html", "🗑", "#e03131", "Delete the pages you don't need from a PDF."],
       ["Extract pages", "remove-pages.html#extract", "📤", "#1971c2", "Save only the pages you choose as a new PDF."],
-      ["Stamp PDF", "stamp-pdf.html", "🔖", "#c92a2a", "Add a PAID or APPROVED stamp, or your company seal."]
+      ["Stamp PDF", "stamp-pdf.html", "🔖", "#c92a2a", "Add a PAID or APPROVED stamp, or your company seal."],
+      ["Sign PDF", "sign-pdf.html", "✍", "#1a3fb0", "Draw, type or upload your signature and place it on a PDF."],
+      ["Compare PDF", "compare-pdf.html", "⇆", "#1c7ed6", "See what changed between two versions of a PDF."],
+      ["Flatten PDF", "flatten-pdf.html", "▤", "#5f3dc4", "Lock form fields and comments so they can't be changed."],
+      ["Grayscale PDF", "grayscale-pdf.html", "◐", "#495057", "Turn a colour PDF into grayscale or black and white."]
     ]],
     ["Convert", [
       ["PDF to Word", "pdf-to-word.html", "W", "#2b579a", "Pull the text out of a PDF into a Word file."],
@@ -29,7 +33,12 @@
       ["HEIC to JPG", "heic-to-jpg.html", "📱", "#f59f00", "Convert iPhone photos to JPG or PNG."],
       ["Scan to PDF", "scan-to-pdf.html", "📄", "#2b8a3e", "Photograph paper pages and turn them into a clean PDF."],
       ["Excel to PDF", "excel-to-pdf.html", "X", "#1d6f42", "Turn an Excel or CSV sheet into a neat PDF."],
-      ["PDF to Excel", "pdf-to-excel.html", "📊", "#2f9e44", "Pull tables out of a PDF into an Excel sheet."]
+      ["PDF to Excel", "pdf-to-excel.html", "📊", "#2f9e44", "Pull tables out of a PDF into an Excel sheet."],
+      ["PDF to PNG", "pdf-to-png.html", "🖼", "#f08c00", "Turn PDF pages into sharp PNG or WEBP images."],
+      ["PowerPoint to PDF", "ppt-to-pdf.html", "P", "#c43e1c", "Turn a .pptx presentation into a PDF."],
+      ["PDF to text", "pdf-to-text.html", "📝", "#495057", "Pull all the text out of a PDF into a .txt file."],
+      ["HTML to PDF", "html-to-pdf.html", "‹›", "#e8590c", "Turn an HTML file or pasted content into a PDF."],
+      ["ZIP files", "zip-files.html", "🗜", "#5f3dc4", "Make a ZIP from many files, or open a ZIP."]
     ]],
     ["Image tools", [
       ["Remove background", "remove-bg.html", "🪄", "#7b3fe4", "Cut the background out of a photo with AI."],
@@ -41,7 +50,11 @@
       ["Photo collage", "photo-collage.html", "🧩", "#d6336c", "Put several photos together in one picture."],
       ["Image watermark", "image-watermark.html", "💧", "#0ca678", "Add your name or logo to photos."],
       ["Blur & hide", "blur-image.html", "🫥", "#5f3dc4", "Blur faces, numbers or private details in a photo."],
-      ["Text on photo", "text-on-photo.html", "🅰", "#e8590c", "Write captions, quotes or meme text on a picture."]
+      ["Text on photo", "text-on-photo.html", "🅰", "#e8590c", "Write captions, quotes or meme text on a picture."],
+      ["Resize image to KB", "image-to-kb.html", "KB", "#1c7ed6", "Make a photo exactly 20 KB, 50 KB, 100 KB or any size."],
+      ["Signature maker", "signature-maker.html", "✒", "#1a3fb0", "Draw or type a signature and save it as a transparent PNG."],
+      ["Photo enhancer", "photo-enhancer.html", "✨", "#7b3fe4", "Brighten, sharpen and fix the colours of a photo."],
+      ["Meme maker", "meme-maker.html", "😂", "#f59f00", "Make a meme with top and bottom text or a caption."]
     ]],
     ["Document makers", [
       ["CV maker", "cv-maker.html", "📄", "#7b3fe4", "Build a clean CV and download it as a PDF."],
@@ -51,7 +64,8 @@
     ["Smart tools", [
       ["OCR", "ocr.html", "🔍", "#e8590c", "Pull text out of a photo or a scanned PDF."],
       ["QR code", "qr-code.html", "🔳", "#212529", "Make QR codes for links, WhatsApp and WiFi."],
-      ["Hijri date converter", "hijri-converter.html", "☪", "#0ca678", "Convert between Hijri (Umm al-Qura) and Gregorian dates."]
+      ["Hijri date converter", "hijri-converter.html", "☪", "#0ca678", "Convert between Hijri (Umm al-Qura) and Gregorian dates."],
+      ["Prayer times", "prayer-times.html", "🕌", "#0b7285", "Today's salah times for your city, with a countdown."]
     ]],
     ["Calculators", [
       ["VAT calculator", "vat-calculator.html", "%", "#0b7285", "Add or remove VAT for Saudi Arabia, UAE and more."],
@@ -60,7 +74,11 @@
       ["Percentage", "percentage-calculator.html", "٪", "#7048e8", "Percent of, increase, decrease and discount in one place."],
       ["Age calculator", "age-calculator.html", "🎂", "#d6336c", "Exact age in years, months and days, also in Hijri."],
       ["Unit converter", "unit-converter.html", "⇆", "#1971c2", "Length, area, weight, pressure, flow, pipe sizes and more."],
-      ["Construction", "construction-calculator.html", "🏗", "#e67700", "Tiles, paint, concrete, blocks, pipes and water tanks."]
+      ["Construction", "construction-calculator.html", "🏗", "#e67700", "Tiles, paint, concrete, blocks, pipes and water tanks."],
+      ["End of service (gratuity)", "gratuity-calculator.html", "💼", "#087f5b", "Saudi and UAE end-of-service benefit for your years of work."],
+      ["Currency converter", "currency-converter.html", "💱", "#1c7ed6", "SAR, BDT, AED, USD and more at today's rates."],
+      ["BMI calculator", "bmi-calculator.html", "⚖", "#2b8a3e", "Body mass index and the healthy weight for your height."],
+      ["Date calculator", "date-calculator.html", "📅", "#e8590c", "Days between two dates, or add days to a date."]
     ]]
   ];
 

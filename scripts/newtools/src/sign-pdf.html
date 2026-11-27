@@ -1,0 +1,229 @@
+<!-- libs: pdfjs pdflib -->
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script:wght@600&family=Allura&display=swap");
+  .lay{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+  .side{position:sticky;top:80px}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#f1f3f7;border-radius:999px;padding:4px;margin-bottom:12px}
+  .tabs button{border:0 !important;background:transparent;padding:8px 6px !important;font-size:13.5px;border-radius:999px !important}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  #pad{width:100%;height:150px;border:1.5px dashed #dfe3ea;border-radius:14px;background:#fff;touch-action:none;display:block}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row input[type=text]{flex:1;min-width:0}
+  .ink{display:flex;gap:8px}
+  .ink button{width:30px;height:30px;padding:0 !important;border-radius:50% !important;border:3px solid #fff !important;box-shadow:0 0 0 1px #dfe3ea}
+  .ink button.on{box-shadow:0 0 0 2px #111827}
+  .fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .fonts button{font-size:22px !important;padding:6px !important;font-weight:400 !important}
+  .fonts button.on{border-color:#e5322d !important;background:#fff6f5}
+  #sigPrev{display:block;max-width:100%;max-height:90px;margin:12px auto 0;background:repeating-conic-gradient(#f3f4f6 0 25%,#fff 0 50%) 0 0/14px 14px;border-radius:10px}
+  .pri{background:#e5322d;color:#fff;border:0;width:100%;margin-top:12px;padding:13px !important;font-size:15px}
+  .sec{width:100%;margin-top:8px}
+  .hint{font-size:13px;color:var(--ink-3);margin:8px 0 0}
+  .pages{display:flex;flex-direction:column;gap:18px;align-items:center;background:#eef0f4;border-radius:16px;padding:18px}
+  .pg{position:relative;box-shadow:0 4px 18px rgba(20,25,40,.14);background:#fff;cursor:crosshair}
+  .pg canvas{display:block;width:100%;height:auto}
+  .pg .no{position:absolute;top:-22px;left:0;font-size:12px;color:var(--ink-3)}
+  .ov{position:absolute;border:1.5px dashed #e5322d;cursor:move;touch-action:none}
+  .ov img{width:100%;height:100%;display:block;pointer-events:none}
+  .ov .tx{width:100%;height:100%;display:flex;align-items:center;white-space:nowrap;pointer-events:none;color:#111;font-family:Helvetica,Arial,sans-serif}
+  .ov .x{position:absolute;top:-13px;right:-13px;width:26px;height:26px;border-radius:50%;background:#111827;color:#fff;font-size:13px;line-height:26px;text-align:center;cursor:pointer;padding:0 !important;border:0 !important}
+  .ov .rs{position:absolute;right:-8px;bottom:-8px;width:18px;height:18px;border-radius:50%;background:#e5322d;border:3px solid #fff;cursor:nwse-resize}
+  .empty{color:var(--ink-3);text-align:center;padding:60px 10px}
+  @media(max-width:900px){.lay{grid-template-columns:1fr}.side{position:static}}
+</style>
+<div class="box">
+  <input type="file" id="file" accept="application/pdf">
+</div>
+<div class="lay">
+  <div class="box side">
+    <h3>1. Make your signature</h3>
+    <div class="tabs" id="tabs"><button data-t="draw" class="on">Draw</button><button data-t="type">Type</button><button data-t="upload">Upload</button></div>
+    <div id="t-draw">
+      <canvas id="pad"></canvas>
+      <div class="row"><div class="ink" id="ink"></div><span style="flex:1"></span><button id="clear">Clear</button></div>
+    </div>
+    <div id="t-type" hidden>
+      <div class="row"><input type="text" id="name" placeholder="Your name" dir="auto"></div>
+      <div class="fonts" id="fonts"></div>
+    </div>
+    <div id="t-upload" hidden>
+      <input type="file" id="sigFile" accept="image/*">
+      <p class="hint">A photo of your signature on white paper. The white background is removed for you.</p>
+    </div>
+    <img id="sigPrev" alt="" hidden>
+    <h3>2. Place it</h3>
+    <p class="hint" style="margin-top:0">Tap on a page to put your signature there. Drag to move, use the red dot to resize.</p>
+    <button class="sec" id="addDate">📅 Add today's date</button>
+    <button class="sec" id="addText">🔤 Add text (name, initials)</button>
+    <button class="pri" id="save">✓ Sign &amp; save PDF</button>
+    <p class="hint" id="status"></p>
+  </div>
+  <div class="box"><div class="pages" id="pages"><p class="empty">Choose a PDF above to see its pages here.</p></div></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+let pdfBytes = null, fileName = "document", sigURL = null, mode = "draw", inkColor = "#1a3fb0", font = "Great Vibes";
+const pages = [];   /* {el, w, h (PDF points), scale} */
+
+/* ---------- signature: draw ---------- */
+const pad = $("pad"), pg = pad.getContext("2d");
+function sizePad(){ const r = pad.getBoundingClientRect(), d = window.devicePixelRatio || 1; pad.width = r.width * d; pad.height = r.height * d; pg.setTransform(d,0,0,d,0,0); pg.lineCap = pg.lineJoin = "round"; }
+sizePad(); window.addEventListener("resize", () => { if(mode === "draw"){ const keep = pad.toDataURL(); sizePad(); const im = new Image(); im.onload = () => pg.drawImage(im,0,0,pad.getBoundingClientRect().width,pad.getBoundingClientRect().height); im.src = keep; } });
+let drawing = false, last = null, inked = false;
+pad.addEventListener("pointerdown", e => { drawing = true; last = pt(e); pad.setPointerCapture(e.pointerId); });
+pad.addEventListener("pointermove", e => {
+  if(!drawing) return; const p = pt(e);
+  const v = Math.hypot(p.x - last.x, p.y - last.y);
+  pg.strokeStyle = inkColor; pg.lineWidth = Math.max(1.6, 3.4 - v * 0.08);
+  pg.beginPath(); pg.moveTo(last.x, last.y); pg.quadraticCurveTo(last.x, last.y, (last.x + p.x) / 2, (last.y + p.y) / 2); pg.lineTo(p.x, p.y); pg.stroke();
+  last = p; inked = true;
+});
+pad.addEventListener("pointerup", () => { drawing = false; if(inked) makeSig(); });
+function pt(e){ const r = pad.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; }
+$("clear").onclick = () => { pg.clearRect(0,0,pad.width,pad.height); inked = false; sigURL = null; $("sigPrev").hidden = true; };
+["#111827","#1a3fb0","#0b5e2e"].forEach((c, i) => {
+  const b = document.createElement("button"); b.style.background = c; if(c === inkColor) b.className = "on";
+  b.onclick = () => { inkColor = c; [...$("ink").children].forEach(x => x.classList.toggle("on", x === b)); recolor(); };
+  $("ink").appendChild(b);
+});
+function recolor(){
+  if(mode === "type") makeSig();
+  else if(mode === "draw" && inked){ const d = pg.getImageData(0,0,pad.width,pad.height), n = hex(inkColor);
+    for(let i = 0; i < d.data.length; i += 4) if(d.data[i+3]){ d.data[i] = n[0]; d.data[i+1] = n[1]; d.data[i+2] = n[2]; }
+    pg.putImageData(d,0,0); makeSig(); }
+}
+function hex(h){ const n = parseInt(h.slice(1),16); return [n>>16,(n>>8)&255,n&255]; }
+
+/* ---------- signature: type ---------- */
+["Great Vibes","Dancing Script","Allura","cursive"].forEach(f => {
+  const b = document.createElement("button"); b.textContent = "Signature"; b.style.fontFamily = "'" + f + "', cursive"; if(f === font) b.className = "on";
+  b.onclick = () => { font = f; [...$("fonts").children].forEach(x => x.classList.toggle("on", x === b)); makeSig(); };
+  $("fonts").appendChild(b);
+});
+$("name").oninput = () => { [...$("fonts").children].forEach(b => b.textContent = $("name").value || "Signature"); makeSig(); };
+
+/* ---------- signature: upload (white removed) ---------- */
+$("sigFile").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const im = new Image(); im.onload = () => {
+    const k = Math.min(1, 900 / im.naturalWidth), c = document.createElement("canvas");
+    c.width = im.naturalWidth * k; c.height = im.naturalHeight * k; const g = c.getContext("2d"); g.drawImage(im,0,0,c.width,c.height);
+    const d = g.getImageData(0,0,c.width,c.height), n = hex(inkColor);
+    for(let i = 0; i < d.data.length; i += 4){
+      const l = 0.299*d.data[i] + 0.587*d.data[i+1] + 0.114*d.data[i+2];
+      const a = l > 185 ? 0 : l < 110 ? 255 : Math.round((185 - l) / 75 * 255);
+      d.data[i] = n[0]; d.data[i+1] = n[1]; d.data[i+2] = n[2]; d.data[i+3] = a;
+    }
+    g.putImageData(d,0,0); finish(c);
+  };
+  im.src = URL.createObjectURL(f);
+};
+
+/* trim empty edges and keep as PNG */
+function finish(src){
+  const g = src.getContext("2d"), d = g.getImageData(0,0,src.width,src.height).data;
+  let x0 = src.width, y0 = src.height, x1 = -1, y1 = -1;
+  for(let y = 0; y < src.height; y++) for(let x = 0; x < src.width; x++) if(d[(y*src.width + x)*4 + 3] > 20){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  if(x1 < 0){ sigURL = null; $("sigPrev").hidden = true; return; }
+  const p = 6, c = document.createElement("canvas"); c.width = x1 - x0 + p*2; c.height = y1 - y0 + p*2;
+  c.getContext("2d").drawImage(src, x0 - p, y0 - p, c.width, c.height, 0, 0, c.width, c.height);
+  sigURL = c.toDataURL("image/png"); $("sigPrev").src = sigURL; $("sigPrev").hidden = false;
+  try{ localStorage.setItem("dpl_sig", sigURL); }catch(e){}
+}
+function makeSig(){
+  if(mode === "draw"){ if(inked) finish(pad); return; }
+  if(mode === "type"){
+    const txt = $("name").value.trim(); if(!txt){ sigURL = null; $("sigPrev").hidden = true; return; }
+    const c = document.createElement("canvas"), g = c.getContext("2d"), fs = 110, ff = (font === "cursive" ? "" : "'" + font + "', ") + "cursive";
+    g.font = fs + "px " + ff; c.width = Math.ceil(g.measureText(txt).width) + 40; c.height = fs * 1.6;
+    g.font = fs + "px " + ff; g.fillStyle = inkColor; g.textBaseline = "middle"; g.fillText(txt, 20, c.height / 2); finish(c);
+  }
+}
+document.fonts && document.fonts.load("40px 'Great Vibes'").catch(()=>{});
+$("tabs").querySelectorAll("button").forEach(b => b.onclick = () => {
+  mode = b.dataset.t; $("tabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  ["draw","type","upload"].forEach(t => $("t-" + t).hidden = t !== mode);
+  if(mode === "draw"){ sizePad(); inked = false; } sigURL = null; $("sigPrev").hidden = true;
+});
+/* a signature saved by the Signature maker can be reused */
+try{ const s = localStorage.getItem("dpl_sig"); if(s){ sigURL = s; $("sigPrev").src = s; $("sigPrev").hidden = false; } }catch(e){}
+
+/* ---------- PDF pages ---------- */
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  fileName = f.name.replace(/\.pdf$/i, ""); pdfBytes = new Uint8Array(await f.arrayBuffer());
+  const box = $("pages"); box.innerHTML = ""; pages.length = 0; $("status").textContent = TT("Loading…");
+  let pdf; try{ pdf = await pdfjsLib.getDocument({data: pdfBytes.slice()}).promise; }
+  catch(err){ $("status").textContent = ""; alert(TT("This PDF could not be opened. If it has a password, unlock it first.")); return; }
+  const W = Math.min(760, box.clientWidth - 36);
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i), v1 = page.getViewport({scale: 1}), scale = W / v1.width, vp = page.getViewport({scale: scale * (window.devicePixelRatio > 1 ? 1.6 : 1)});
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    await page.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+    const el = document.createElement("div"); el.className = "pg"; el.style.width = W + "px";
+    const no = document.createElement("span"); no.className = "no"; no.textContent = TT("Page") + " " + i;
+    el.append(c, no); box.appendChild(el);
+    const P = {el, w: v1.width, h: v1.height, scale, items: []}; pages.push(P);
+    el.addEventListener("click", ev => { if(ev.target !== c) return; const r = el.getBoundingClientRect(); place(P, ev.clientX - r.left, ev.clientY - r.top); });
+  }
+  $("status").textContent = TT("Tap a page to place your signature.");
+};
+function place(P, x, y, kind, text){
+  kind = kind || "sig";
+  if(kind === "sig" && !sigURL){ alert(TT("Make your signature first (draw, type or upload).")); return; }
+  const o = document.createElement("div"); o.className = "ov";
+  let w, h;
+  if(kind === "sig"){ const im = new Image(); im.src = sigURL; o.appendChild(im); w = 170; h = 170 * ((im.naturalHeight || 60) / (im.naturalWidth || 200)) || 60;
+    im.onload = () => { h = w * im.naturalHeight / im.naturalWidth; o.style.height = h + "px"; }; }
+  else { const t = document.createElement("div"); t.className = "tx"; t.textContent = text; o.appendChild(t); h = 22; t.style.fontSize = (h * 0.8) + "px"; w = Math.max(40, text.length * h * 0.55); }
+  Object.assign(o.style, {left: Math.max(0, x - w/2) + "px", top: Math.max(0, y - h/2) + "px", width: w + "px", height: h + "px"});
+  const xb = document.createElement("button"); xb.className = "x"; xb.textContent = "✕";
+  const rs = document.createElement("span"); rs.className = "rs"; o.append(xb, rs); P.el.appendChild(o);
+  const item = {o, kind, text}; P.items.push(item);
+  xb.onclick = ev => { ev.stopPropagation(); o.remove(); P.items.splice(P.items.indexOf(item), 1); };
+  let drag = null;
+  o.addEventListener("pointerdown", ev => {
+    if(ev.target === xb) return; ev.preventDefault(); o.setPointerCapture(ev.pointerId);
+    drag = {mode: ev.target === rs ? "rs" : "mv", sx: ev.clientX, sy: ev.clientY, l: o.offsetLeft, t: o.offsetTop, w: o.offsetWidth, h: o.offsetHeight};
+  });
+  o.addEventListener("pointermove", ev => {
+    if(!drag) return; const dx = ev.clientX - drag.sx, dy = ev.clientY - drag.sy;
+    if(drag.mode === "mv"){ o.style.left = Math.min(P.el.clientWidth - drag.w, Math.max(0, drag.l + dx)) + "px"; o.style.top = Math.min(P.el.clientHeight - drag.h, Math.max(0, drag.t + dy)) + "px"; }
+    else { const nw = Math.max(30, drag.w + dx), r = drag.h / drag.w; o.style.width = nw + "px"; o.style.height = nw * r + "px";
+      if(kind !== "sig") o.querySelector(".tx").style.fontSize = (nw * r * 0.8) + "px"; }
+  });
+  o.addEventListener("pointerup", () => drag = null);
+}
+function firstVisible(){ for(const P of pages){ const r = P.el.getBoundingClientRect(); if(r.bottom > 120) return P; } return pages[0]; }
+$("addDate").onclick = () => { if(!pages.length) return alert(TT("Choose a PDF first"));
+  const d = new Date(), s = String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
+  const P = firstVisible(); place(P, P.el.clientWidth / 2, 120, "text", s); };
+$("addText").onclick = () => { if(!pages.length) return alert(TT("Choose a PDF first"));
+  const s = prompt(TT("Text to add (for example your name or initials):")); if(!s) return;
+  const P = firstVisible(); place(P, P.el.clientWidth / 2, 160, "text", s); };
+
+$("save").onclick = async () => {
+  if(!pdfBytes) return alert(TT("Choose a PDF first"));
+  if(!pages.some(P => P.items.length)) return alert(TT("Tap a page to place your signature first."));
+  $("status").textContent = TT("Saving…");
+  try{
+    const doc = await PDFLib.PDFDocument.load(pdfBytes, {ignoreEncryption: true}), font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const cache = {};
+    for(let i = 0; i < pages.length; i++){
+      const P = pages[i], page = doc.getPage(i), {width: pw, height: ph} = page.getSize(), k = pw / P.el.clientWidth;
+      for(const it of P.items){
+        const o = it.o, x = o.offsetLeft * k, w = o.offsetWidth * k, h = o.offsetHeight * k, y = ph - o.offsetTop * k - h;
+        if(it.kind === "sig"){ const src = o.querySelector("img").src; const img = cache[src] || (cache[src] = await doc.embedPng(src)); page.drawImage(img, {x, y, width: w, height: h}); }
+        else { /* text is drawn as a sharp picture so Bangla and Arabic work too */
+          const c = document.createElement("canvas"), S = 5; c.width = o.offsetWidth * S; c.height = o.offsetHeight * S;
+          const g = c.getContext("2d"); g.font = (o.offsetHeight * 0.8 * S) + "px Helvetica, Arial, sans-serif"; g.fillStyle = "#111";
+          g.textBaseline = "middle"; g.fillText(it.text, 0, c.height / 2);
+          page.drawImage(await doc.embedPng(c.toDataURL("image/png")), {x, y, width: w, height: h}); }
+      }
+    }
+    const out = await doc.save(); $("status").textContent = "";
+    DPLResult.file(out, fileName + "-signed.pdf");
+  }catch(err){ $("status").textContent = ""; alert(TT("Could not save the PDF:") + " " + err.message); }
+};
+</script>

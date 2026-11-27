@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Grayscale PDF – Convert Colour PDF to Black &amp; White Free | DailyPdfLife</title>
+<meta name="description" content="Turn a colour PDF into grayscale or crisp black and white to save printer ink and meet upload rules. Free, private and works on phones.">
+<link rel="canonical" href="https://dailypdflife.com/grayscale-pdf">
+<meta property="og:title" content="Grayscale PDF – Convert Colour PDF to Black &amp; White Free | DailyPdfLife">
+<meta property="og:description" content="Turn a colour PDF into grayscale or crisp black and white to save printer ink and meet upload rules. Free, private and works on phones.">
+<meta property="og:url" content="https://dailypdflife.com/grayscale-pdf">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  .opts{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:6px}
+  .opts label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+  .pri{background:#495057;color:#fff;border:0;padding:13px 26px !important;font-size:15px;margin-top:16px}
+  .prev{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .prev img{width:150px;border:1px solid var(--line);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h3>1. Choose a PDF</h3>
+  <input type="file" id="file" accept="application/pdf">
+  <h3>2. Options</h3>
+  <div class="opts">
+    <label>Look <select id="look"><option value="gray">Grayscale</option><option value="bw">Black &amp; white (crisp text)</option></select></label>
+    <label>Quality <select id="q"><option value="1.6">Normal (smaller file)</option><option value="2.2" selected>High</option><option value="3">Print</option></select></label>
+  </div>
+  <button class="pri" id="go">◐ Make it grayscale</button>
+  <p class="note" id="status"></p>
+  <div class="prev" id="prev"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+$("go").onclick = async () => {
+  const f = $("file").files[0]; if(!f) return alert(TT("Choose a PDF first"));
+  const scale = Number($("q").value), bw = $("look").value === "bw"; $("prev").innerHTML = "";
+  let pdf; try{ pdf = await pdfjsLib.getDocument({data: new Uint8Array(await f.arrayBuffer())}).promise; }
+  catch(e){ return alert(TT("This PDF could not be opened. If it has a password, unlock it first.")); }
+  const out = await PDFLib.PDFDocument.create();
+  for(let i = 1; i <= pdf.numPages; i++){
+    $("status").textContent = TT("Page") + " " + i + " / " + pdf.numPages;
+    const page = await pdf.getPage(i), v1 = page.getViewport({scale: 1}), vp = page.getViewport({scale});
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await page.render({canvasContext: g, viewport: vp}).promise;
+    const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+    for(let k = 0; k < a.length; k += 4){
+      let l = 0.299 * a[k] + 0.587 * a[k+1] + 0.114 * a[k+2];
+      if(bw) l = l > 165 ? 255 : l < 95 ? 0 : (l - 95) / 70 * 255;
+      a[k] = a[k+1] = a[k+2] = l;
+    }
+    g.putImageData(d, 0, 0);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", bw ? 0.85 : 0.88));
+    const img = await out.embedJpg(await blob.arrayBuffer()), p = out.addPage([v1.width, v1.height]);
+    p.drawImage(img, {x: 0, y: 0, width: v1.width, height: v1.height});
+    if(i <= 4){ const im = document.createElement("img"); im.src = URL.createObjectURL(blob); $("prev").appendChild(im); }
+  }
+  $("status").textContent = "";
+  DPLResult.file(await out.save(), f.name.replace(/\.pdf$/i, "") + "-grayscale.pdf");
+};
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About Grayscale PDF</h2>
+  <p>Printing colour pages on a colour printer uses expensive ink, and some offices and portals ask for black-and-white copies. Grayscale PDF turns every page into shades of grey, or into crisp black and white that makes scanned text easier to read. It also often makes scanned documents smaller.</p>
+  <h2>How to make a PDF grayscale</h2>
+  <ol><li>Choose your PDF.</li><li>Pick <b>Grayscale</b> for photos and charts, or <b>Black &amp; white</b> for text documents.</li><li>Choose the quality: Normal for email, Print for paper.</li><li>Tap <b>Make it grayscale</b> and save.</li></ol>
+  <h2>Good to know</h2>
+  <p>Pages are redrawn as images, so text in the new file can't be selected or searched. If you need that, keep the colour original for searching and use the grayscale copy for printing. To reduce the size further, run the result through <a href="split-and-compress#compress">Compress PDF</a>.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Will this save printer ink?</summary><p>Yes, printers use only black ink for grayscale pages when set to print in black and white.</p></details><details><summary>Which option is best for scanned letters?</summary><p>Black &amp; white usually gives the cleanest, most readable result.</p></details><details><summary>Is the text still selectable?</summary><p>No, pages become images.</p></details><details><summary>Is my file uploaded?</summary><p>No.</p></details>
+  <p class="links">Related tools: <a href="split-and-compress#compress">Compress PDF</a> <a href="scan-to-pdf">Scan to PDF</a> <a href="pdf-to-png">PDF to PNG</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Will this save printer ink?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, printers use only black ink for grayscale pages when set to print in black and white."}}, {"@type": "Question", "name": "Which option is best for scanned letters?", "acceptedAnswer": {"@type": "Answer", "text": "Black & white usually gives the cleanest, most readable result."}}, {"@type": "Question", "name": "Is the text still selectable?", "acceptedAnswer": {"@type": "Answer", "text": "No, pages become images."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>
