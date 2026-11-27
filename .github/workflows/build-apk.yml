@@ -28,6 +28,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle   # keep downloaded Gradle libraries between builds, so a busy Maven server can't break the build
 
       - name: Install
         run: npm ci --no-audit --no-fund
