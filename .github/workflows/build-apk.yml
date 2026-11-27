@@ -39,19 +39,44 @@ jobs:
       - name: Copy web files into the Android project
         run: npx cap sync android
 
-      - name: Build APK
+      - name: Unlock the Google Play upload key
+        # android/upload.keystore.enc is encrypted; it can only be opened with the RELEASE_SECRET repository secret.
+        # Without the secret the app is still built, signed with the test key, for direct installs.
+        env:
+          RELEASE_SECRET: ${{ secrets.RELEASE_SECRET }}
+        run: |
+          if [ -n "$RELEASE_SECRET" ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 300000 -in android/upload.keystore.enc -out "$RUNNER_TEMP/upload.keystore" -pass env:RELEASE_SECRET
+            {
+              echo "RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/upload.keystore"
+              echo "RELEASE_STORE_PASSWORD=$RELEASE_SECRET"
+              echo "RELEASE_KEY_PASSWORD=$RELEASE_SECRET"
+              echo "RELEASE_KEY_ALIAS=upload"
+              echo "PLAY_BUILD=1"
+            } >> "$GITHUB_ENV"
+            echo "Signing with the Google Play upload key"
+          else
+            echo "RELEASE_SECRET is not set: signing with the test key"
+          fi
+
+      - name: Build APK (and the Play Store bundle when the upload key is available)
         id: gradle
         working-directory: android
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace -PversionCode=${{ github.run_number }} 2>&1 | tee ../build.log
+          TASKS="assembleRelease"
+          if [ -n "$PLAY_BUILD" ]; then TASKS="assembleRelease bundleRelease"; fi
+          ./gradlew $TASKS --no-daemon --stacktrace -PversionCode=${{ github.run_number }} 2>&1 | tee ../build.log
 
       - name: Collect APK
         if: success()
         run: |
           mkdir -p dist
           cp android/app/build/outputs/apk/release/app-release.apk dist/DailyPdfLife.apk
+          if [ -f android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab dist/DailyPdfLife-play.aab
+          fi
           ls -la dist
 
       - name: Publish the APK as the "latest" release
@@ -60,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest dist/DailyPdfLife.apk \
+          gh release create latest dist/DailyPdfLife.apk $(ls dist/DailyPdfLife-play.aab 2>/dev/null) \
             --title "DailyPdfLife app (build ${{ github.run_number }})" \
             --notes "Download DailyPdfLife.apk on your Android phone and open it to install."
 
@@ -70,6 +95,7 @@ jobs:
           mkdir -p /tmp/out
           cp build.log /tmp/out/ 2>/dev/null || echo "no log" > /tmp/out/build.log
           cp dist/DailyPdfLife.apk /tmp/out/ 2>/dev/null || true
+          cp dist/DailyPdfLife-play.aab /tmp/out/ 2>/dev/null || true
           echo "run=${{ github.run_number }} status=${{ job.status }} sha=${{ github.sha }}" > /tmp/out/STATUS.txt
           cd /tmp/out
           git init -q -b build-output
