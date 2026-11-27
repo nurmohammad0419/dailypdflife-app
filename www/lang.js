@@ -2,6 +2,7 @@
    The pages are written in English; Bangla is applied on the fly when chosen. */
 (function () {
   var BN = {
+"Police, ambulance and fire for your country and city. Tap to call.": "আপনার দেশ ও শহরের পুলিশ, অ্যাম্বুলেন্স আর ফায়ার সার্ভিস। চাপলেই কল।",
 "Fajr": "ফজর",
 "Sunrise": "সূর্যোদয়",
 "Dhuhr": "জোহর",
@@ -1365,7 +1366,7 @@
 };
 
   /* short words translated only when they are the whole text of an element, so they never change longer sentences */
-  var BNX = {"Bold": "বোল্ড", "Minimal": "সাধারণ", "Front": "সামনে", "Back": "পেছন", "Design": "ডিজাইন", "Shape": "আকার", "Year": "সাল", "Month": "মাস", "Paper": "কাগজ", "Language": "ভাষা", "Country": "দেশ", "Police": "পুলিশ", "Ambulance": "অ্যাম্বুলেন্স", "Hospital": "হাসপাতাল", "Event": "ইভেন্ট", "Student": "ছাত্র/ছাত্রী", "Employee": "কর্মী", "Visitor": "ভিজিটর", "Weekend": "সাপ্তাহিক ছুটি", "Pharmacy": "ফার্মেসি", "Embassy": "দূতাবাস", "Coastguard": "কোস্টগার্ড", "Draw": "আঁকুন", "Type": "টাইপ", "Upload": "আপলোড", "Clear": "মুছুন", "City": "শহর", "Date": "তারিখ", "Method": "পদ্ধতি", "From": "থেকে", "To": "তে", "Amount": "পরিমাণ", "Currency": "মুদ্রা", "Size": "সাইজ", "Style": "ধরন", "Caption": "ক্যাপশন", "Before": "আগে", "After": "পরে", "Colour": "রং", "Pen": "কলম", "Thin": "চিকন", "Medium": "মাঝারি", "Bold": "মোটা", "Age": "বয়স", "Scale": "মাপকাঠি", "Look": "ধরন", "Quality": "মান", "Format": "ফরম্যাট", "Pages": "পাতা", "Margins": "মার্জিন", "Resolution": "রেজোলিউশন", "Adjust": "ঠিক করুন", "Contrast": "কনট্রাস্ট", "Years": "বছর", "Months": "মাস", "Weeks": "সপ্তাহ", "Days": "দিন", "Hours": "ঘণ্টা", "Free": "ফ্রি", "tools": "টুল", "files uploaded": "ফাইল আপলোড", "no account": "অ্যাকাউন্ট লাগে না", "removed": "বাদ", "added": "যোগ", "changed": "বদলানো", "same": "একই", "words": "শব্দ", "pages": "পাতা", "days": "দিন", "weeks": "সপ্তাহ", "years": "বছর", "months": "মাস"};
+  var BNX = {"Emergency": "জরুরি", "Bold": "বোল্ড", "Minimal": "সাধারণ", "Front": "সামনে", "Back": "পেছন", "Design": "ডিজাইন", "Shape": "আকার", "Year": "সাল", "Month": "মাস", "Paper": "কাগজ", "Language": "ভাষা", "Country": "দেশ", "Police": "পুলিশ", "Ambulance": "অ্যাম্বুলেন্স", "Hospital": "হাসপাতাল", "Event": "ইভেন্ট", "Student": "ছাত্র/ছাত্রী", "Employee": "কর্মী", "Visitor": "ভিজিটর", "Weekend": "সাপ্তাহিক ছুটি", "Pharmacy": "ফার্মেসি", "Embassy": "দূতাবাস", "Coastguard": "কোস্টগার্ড", "Draw": "আঁকুন", "Type": "টাইপ", "Upload": "আপলোড", "Clear": "মুছুন", "City": "শহর", "Date": "তারিখ", "Method": "পদ্ধতি", "From": "থেকে", "To": "তে", "Amount": "পরিমাণ", "Currency": "মুদ্রা", "Size": "সাইজ", "Style": "ধরন", "Caption": "ক্যাপশন", "Before": "আগে", "After": "পরে", "Colour": "রং", "Pen": "কলম", "Thin": "চিকন", "Medium": "মাঝারি", "Bold": "মোটা", "Age": "বয়স", "Scale": "মাপকাঠি", "Look": "ধরন", "Quality": "মান", "Format": "ফরম্যাট", "Pages": "পাতা", "Margins": "মার্জিন", "Resolution": "রেজোলিউশন", "Adjust": "ঠিক করুন", "Contrast": "কনট্রাস্ট", "Years": "বছর", "Months": "মাস", "Weeks": "সপ্তাহ", "Days": "দিন", "Hours": "ঘণ্টা", "Free": "ফ্রি", "tools": "টুল", "files uploaded": "ফাইল আপলোড", "no account": "অ্যাকাউন্ট লাগে না", "removed": "বাদ", "added": "যোগ", "changed": "বদলানো", "same": "একই", "words": "শব্দ", "pages": "পাতা", "days": "দিন", "weeks": "সপ্তাহ", "years": "বছর", "months": "মাস"};
 
   var saved = null;
   try { saved = localStorage.getItem("dpl_lang"); } catch (e) {}

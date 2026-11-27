@@ -126,6 +126,7 @@
     (current ? '<span class="sep"></span><span class="where">' +
       current.g + " · " + current.t[0] + "</span>" : "") +
     '<span class="sp"></span>' +
+    '<a class="sos' + (file === "emergency-numbers.html" ? " on" : "") + '" href="emergency-numbers.html" title="Emergency numbers">🆘 <span>Emergency</span></a>' +
     '<span class="ptlang">' +
       '<button data-l="en"' + (curLang === "en" ? ' class="on"' : "") + ">EN</button>" +
       '<button data-l="bn"' + (curLang === "bn" ? ' class="on"' : "") + ">বাংলা</button>" +
@@ -134,6 +135,8 @@
   var rail = el("nav", "rail");
   var html = '<a class="home' + (isHome ? " on" : "") + '" href="index.html">' +
              '<span class="ic" style="--c:#1b2030">⌂</span>All tools</a>' +
+             '<a class="' + (file === "emergency-numbers.html" ? "on" : "") + '" href="emergency-numbers.html" style="color:#c92a2a;font-weight:650">' +
+             '<span class="ic" style="--c:#e03131">🆘</span>Emergency numbers</a>' +
              '<a class="' + (file.indexOf("guide") === 0 ? "on" : "") + '" href="guides.html">' +
              '<span class="ic" style="--c:#495057">📘</span>Guides</a>';
   GROUPS.forEach(function (g) {
@@ -161,6 +164,11 @@
     "padding:7px 11px;font-size:16px;line-height:1;font-weight:650;cursor:pointer;font-family:inherit;",
     "align-items:center;gap:7px}",
     ".appbar .menu span{font-size:13.5px}",
+    ".appbar .sos{display:inline-flex;align-items:center;gap:6px;margin-right:10px;padding:7px 14px;border-radius:999px;background:#e03131;color:#fff !important;",
+    "text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 4px 12px rgba(224,49,49,.3);white-space:nowrap}",
+    ".appbar .sos:hover,.appbar .sos.on{background:#c92a2a}",
+    "@media(max-width:420px){.appbar .sos{padding:7px 10px;margin-right:6px}.appbar .sos span{display:none}}",
+    "@media(max-width:380px){.ptlang button{padding:6px 8px}.appbar .sos{margin-right:4px}.appbar .brand img{max-width:120px}}",
     "@media(max-width:520px){.appbar .menu span{display:none}}"
   ].join("");
   document.head.appendChild(style);
