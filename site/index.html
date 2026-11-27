@@ -23,52 +23,67 @@
 <script src="lang.js"></script>
 <script src="result.js"></script>
 <style>
-  .hero{background:linear-gradient(120deg,#1b2030 0%,#2a1f2b 60%,#3a2026 100%);color:#fff;
-        border-radius:20px;padding:30px 30px 26px;margin-bottom:22px;position:relative;overflow:hidden}
-  .hero:after{content:"";position:absolute;right:-90px;top:-120px;width:420px;height:420px;
-        background:radial-gradient(closest-side,rgba(229,50,45,.45),transparent 70%)}
-  .hero h1{margin:0 0 8px;font-size:30px;letter-spacing:-.8px;font-weight:760;position:relative}
-  .hero h1 em{font-style:normal;color:#ff7a62}
-  .hero p{margin:0 0 20px;color:#b9c0cf;font-size:15.5px;max-width:560px;position:relative}
-  .sbox{position:relative;max-width:520px}
-  .sbox input{width:100%;padding:13px 16px 13px 44px !important;border:0 !important;border-radius:12px !important;
-        font-size:15px !important;background:rgba(255,255,255,.96) !important}
-  .sbox span{position:absolute;left:15px;top:11px;font-size:16px;opacity:.5}
-  .stats{display:flex;gap:22px;margin-top:18px;position:relative;flex-wrap:wrap}
-  .stats div{font-size:13px;color:#aab2c2}
-  .stats b{display:block;font-size:19px;color:#fff;font-weight:700}
+  .hero{position:relative;text-align:center;padding:64px 24px 54px;margin:-8px 0 26px;border-radius:28px;overflow:hidden;
+        background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .hero:before{content:"";position:absolute;inset:0;pointer-events:none;
+        background:radial-gradient(520px 260px at 15% 0%,rgba(229,50,45,.10),transparent 70%),
+                   radial-gradient(520px 280px at 90% 10%,rgba(123,63,228,.09),transparent 70%),
+                   radial-gradient(600px 240px at 50% 120%,rgba(28,126,214,.08),transparent 70%)}
+  .hero>*{position:relative}
+  .hero .kick{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#374151;
+        background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;margin-bottom:22px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .hero .kick i{font-style:normal;background:#e8f7ee;color:#17935a;border-radius:999px;padding:2px 9px;font-weight:700;font-size:12px}
+  .hero h1{margin:0 auto 14px;font-size:52px;line-height:1.06;letter-spacing:-1.8px;font-weight:800;color:#111827;max-width:900px;text-wrap:balance}
+  .hero h1 em{font-style:normal;background:linear-gradient(90deg,#e5322d,#c2255c 55%,#7b3fe4);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{margin:0 auto 30px;color:#4b5563;font-size:17.5px;max-width:600px;line-height:1.55}
+  .sbox{position:relative;max-width:600px;margin:0 auto}
+  .sbox input{width:100%;height:60px;padding:0 20px 0 54px !important;border:1px solid #e3e6ec !important;border-radius:999px !important;
+        font-size:16.5px !important;background:#fff !important;box-shadow:0 10px 30px rgba(16,24,40,.08) !important}
+  .sbox input:focus{border-color:#f0a19c !important;box-shadow:0 0 0 5px rgba(229,50,45,.10),0 10px 30px rgba(16,24,40,.08) !important}
+  .sbox span{position:absolute;left:21px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.45}
+  .pop{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px;font-size:13.5px;color:var(--ink-3);align-items:center}
+  .pop a{color:#374151;text-decoration:none;font-weight:600;background:#f4f5f8;border-radius:999px;padding:7px 14px;transition:background .15s,color .15s}
+  .pop a:hover{background:#fff1f0;color:var(--brand-ink)}
+  .stats{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
+  .stats div{display:flex;align-items:center;gap:6px;font-size:13.5px;color:#4b5563;font-weight:500}
+  .stats div:before{content:"✓";width:20px;height:20px;border-radius:50%;background:#e8f7ee;color:#17935a;font-size:11.5px;font-weight:800;
+        display:flex;align-items:center;justify-content:center}
+  .stats div+div{margin-left:12px}
+  .stats b{font-weight:700;color:#111827}
 
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .chips button{padding:8px 15px;border-radius:30px;font-size:13.5px;font-weight:650;
-        border:1px solid var(--line);background:#fff;color:var(--ink-2)}
-  .chips button.on{background:#1b2030;border-color:#1b2030;color:#fff}
-
-  .tsec h2{font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);
-        margin:26px 0 10px;font-weight:700;display:flex;align-items:center;gap:8px}
-  .tsec h2 span{background:#e9edf5;color:var(--ink-3);border-radius:20px;padding:1px 8px;font-size:11.5px}
-  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
-  .tcard{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);
-        border-radius:var(--r-lg);padding:15px;text-decoration:none;color:inherit;
-        transition:border-color .15s,box-shadow .15s,transform .15s}
-  .tcard:hover{border-color:var(--c);box-shadow:0 10px 26px rgba(20,25,40,.1);transform:translateY(-2px)}
-  .tcard .ic{width:40px;height:40px;border-radius:11px;background:var(--c);color:#fff;flex:none;
-        display:flex;align-items:center;justify-content:center;font-size:19px}
-  .tcard .tx{min-width:0}
-  .tcard b{display:block;font-size:14.5px;font-weight:680;margin-bottom:2px}
-  .tcard i{font-style:normal;font-size:13px;color:var(--ink-3);line-height:1.45;display:block}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;padding:5px;background:#eef0f4;border-radius:999px;width:max-content;max-width:100%}
+  .chips button{padding:8px 16px !important;border-radius:999px !important;font-size:13.5px;font-weight:600;border:0 !important;background:transparent;color:#4b5563}
+  .chips button:hover{background:rgba(255,255,255,.6);filter:none}
+  .chips button.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .tsec h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#9aa1ae;margin:34px 0 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .tsec h2 span{background:#eef0f4;color:#8a93a3;border-radius:20px;padding:1px 8px;font-size:11px}
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .tcard{position:relative;display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+        border-radius:18px;padding:18px;text-decoration:none;color:inherit;box-shadow:0 1px 2px rgba(16,24,40,.03);
+        transition:box-shadow .18s,transform .18s,border-color .18s}
+  .tcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-hi);border-color:transparent}
+  .tcard:after{content:"→";position:absolute;right:16px;top:16px;color:var(--c);font-weight:700;opacity:0;transform:translateX(-4px);transition:.18s}
+  .tcard:hover:after{opacity:1;transform:none}
+  .tcard .ic{width:44px;height:44px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px;
+        color:var(--c);background:#f1f3f6;background:color-mix(in srgb,var(--c) 11%,#fff)}
+  .tcard .tx{min-width:0;padding-right:10px}
+  .tcard b{display:block;font-size:15px;font-weight:650;margin-bottom:3px;color:#111827}
+  .tcard i{font-style:normal;font-size:13.5px;color:#6b7280;line-height:1.45;display:block}
   .none{display:none;color:var(--ink-3);padding:30px 4px}
   .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px;
         display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-  @media(max-width:620px){.hero{padding:22px 18px}.hero h1{font-size:23px}}
+  @media(max-width:620px){.hero{padding:40px 16px 34px;border-radius:22px}.hero h1{font-size:33px;letter-spacing:-1px}.hero p{font-size:15.5px}.sbox input{height:54px}.stats div+div{margin-left:4px}.chips{width:auto;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-2px;margin-right:-2px}.chips::-webkit-scrollbar{display:none}.chips button{flex:none}.hero .kick{font-size:11.5px;padding:5px 12px 5px 6px;white-space:nowrap}.tcard{padding:15px}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
      crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="hero">
+  <div class="kick"><i>Free</i>No sign-up · Works on phone &amp; computer</div>
   <h1>Every <em>PDF &amp; document</em> task, in one place</h1>
   <p>48 free tools that run inside your browser. Nothing is uploaded, nothing is stored, no sign-up needed.</p>
   <div class="sbox"><span>🔍</span><input id="q" placeholder="Search tools… e.g. merge, CV, passport"></div>
+  <div class="pop">Popular: <a href="merge-and-jpg#merge">Merge PDF</a><a href="split-and-compress#compress">Compress PDF</a><a href="pdf-to-word">PDF to Word</a><a href="pdf-editor">Edit PDF</a><a href="remove-bg">Remove background</a><a href="passport-photo">Passport photo</a></div>
   <div class="stats">
     <div><b>48</b>tools</div>
     <div><b>0</b>files uploaded</div>

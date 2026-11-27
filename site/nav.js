@@ -112,30 +112,30 @@
 
   var rail = el("nav", "rail");
   var html = '<a class="home' + (isHome ? " on" : "") + '" href="index.html">' +
-             '<span class="ic" style="background:#1b2030">⌂</span>All tools</a>' +
+             '<span class="ic" style="--c:#1b2030">⌂</span>All tools</a>' +
              '<a class="' + (file.indexOf("guide") === 0 ? "on" : "") + '" href="guides.html">' +
-             '<span class="ic" style="background:#495057">📘</span>Guides</a>';
+             '<span class="ic" style="--c:#495057">📘</span>Guides</a>';
   GROUPS.forEach(function (g) {
     html += "<h6>" + g[0] + "</h6>";
     g[1].forEach(function (t) {
       var on = (current && current.t === t) ? "on" : "";
       html += '<a class="' + on + '" href="' + t[1] + '">' +
-              '<span class="ic" style="background:' + t[3] + '">' + t[2] + "</span>" + t[0] + "</a>";
+              '<span class="ic" style="--c:' + t[3] + '">' + t[2] + "</span>" + t[0] + "</a>";
     });
   });
   rail.innerHTML = html;
 
   var mask = el("div", "railmask");
   mask.style.cssText =
-    "position:fixed;inset:56px 0 0;background:rgba(18,21,28,.3);z-index:8400;display:none";
+    "position:fixed;inset:60px 0 0;background:rgba(18,21,28,.3);z-index:8400;display:none";
 
   var style = el("style");
   style.textContent = [
-    ".ptlang{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}",
-    ".ptlang button{border:0;background:#fff;color:#5a6274;padding:7px 12px;font-size:13px;font-weight:700;",
-    "cursor:pointer;font-family:inherit;border-radius:0}",
-    ".ptlang button+button{border-left:1px solid var(--line-2)}",
-    ".ptlang button.on{background:#1b2030;color:#fff}",
+    ".ptlang{display:inline-flex;border:0;border-radius:999px;overflow:hidden;background:#f1f3f7;padding:3px;gap:2px}",
+    ".ptlang button{border:0;background:transparent;color:#5a6274;padding:6px 13px;font-size:13px;font-weight:650;",
+    "cursor:pointer;font-family:inherit;border-radius:999px !important}",
+    
+    ".ptlang button.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(16,24,40,.12)}",
     ".appbar .menu{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;",
     "padding:7px 11px;font-size:16px;line-height:1;font-weight:650;cursor:pointer;font-family:inherit;",
     "align-items:center;gap:7px}",

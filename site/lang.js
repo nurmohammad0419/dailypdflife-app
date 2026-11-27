@@ -2,6 +2,8 @@
    The pages are written in English; Bangla is applied on the fly when chosen. */
 (function () {
   var BN = {
+"No sign-up · Works on phone & computer": "সাইন-আপ লাগবে না · ফোন ও কম্পিউটারে চলে",
+"Popular:": "জনপ্রিয়:",
 "Guides": "গাইড",
 "(page": "(পেজ",
 "+ Add experience": "+ অভিজ্ঞতা যোগ করুন",

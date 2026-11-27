@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap");
 /* DailyPdfLife — shared app shell + design system
    Loaded on every page. nav.js builds the rail, top bar and page header. */
 
@@ -244,3 +245,93 @@ small,.tip,.note{color:var(--ink-3);font-size:12.8px}
 .gcard:hover{border-color:#1c7ed6}
 .gcard b{display:block;font-size:16px;margin-bottom:6px}
 .gcard span{display:block;font-size:14px;color:var(--ink-2);line-height:1.5}
+
+/* =====================================================================
+   2026 refresh: calmer, cleaner, more modern.
+   Loaded last so it refines everything above without touching page code.
+   ===================================================================== */
+:root{
+  --bg:#f7f8fa;
+  --ink:#111827;
+  --ink-2:#4b5563;
+  --ink-3:#8a93a3;
+  --line:#eceef2;
+  --line-2:#f2f3f6;
+  --r-lg:20px;
+  --r-md:12px;
+  --r-sm:10px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.04);
+  --shadow-hi:0 2px 4px rgba(16,24,40,.04),0 16px 40px rgba(16,24,40,.10);
+}
+body{font-family:"Inter","Hind Siliguri",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif !important;
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+html[lang=bn] body,body.lang-bn{font-family:"Hind Siliguri","Inter",system-ui,sans-serif !important}
+
+/* top bar: airy glass */
+.appbar{background:rgba(255,255,255,.78);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);
+  border-bottom:1px solid rgba(17,24,39,.06);height:60px}
+:root{--top:60px}
+.appbar .where{font-weight:600;color:var(--ink-2)}
+.appbar .menu{border-radius:999px !important;background:#f1f3f7 !important;border:0 !important}
+
+/* side menu: quiet list, soft tinted icons */
+.rail{background:#fff;border-right:1px solid rgba(17,24,39,.06);padding:14px 12px 30px;scrollbar-width:thin}
+.rail h6{color:#a0a7b4;font-size:10.5px;letter-spacing:1.2px;margin:20px 10px 6px}
+.rail a{font-weight:500;color:#374151;padding:7px 10px;border-radius:10px;font-size:14px}
+.rail a:hover{background:#f5f6f8}
+.rail a .ic{width:28px;height:28px;border-radius:9px;font-size:14px;color:var(--c,#111827);
+  background:#f1f3f6;background:color-mix(in srgb,var(--c,#111827) 11%,#fff)}
+.rail a.on{background:#f3f4f6;color:#111827;font-weight:650;box-shadow:inset 3px 0 0 var(--brand)}
+.rail .home{background:transparent}
+
+/* page header */
+.shell{padding-top:calc(var(--top) + 28px)}
+.phead{margin:0 0 22px}
+.phead h1{font-size:30px;font-weight:750;letter-spacing:-.8px;line-height:1.15}
+.phead p{font-size:15.5px;color:var(--ink-2);margin-top:6px}
+.crumb{color:var(--brand);font-weight:650;font-size:12.5px;letter-spacing:.3px;margin-bottom:8px}
+
+/* cards */
+.box,.panel,.form{border:1px solid var(--line) !important;border-radius:var(--r-lg) !important;
+  box-shadow:var(--shadow) !important;padding:26px !important}
+.box h3,.panel h3,.form h3{color:#9aa1ae !important;letter-spacing:1.1px}
+
+/* controls */
+button{border-radius:12px !important}
+:where(button){padding:11px 18px;font-weight:600}
+input,select,textarea{border-color:#e3e6ec !important;border-radius:12px !important}
+:where(input,select,textarea){padding:11px 13px}
+input:focus,select:focus,textarea:focus{border-color:#f0a19c !important;box-shadow:0 0 0 4px rgba(229,50,45,.10) !important}
+
+/* file pickers become friendly drop areas */
+input[type=file]{border:0 !important;background:transparent !important;padding:2px 0 !important;color:var(--ink-3);font-size:13.5px;max-width:100%}
+.box>input[type=file]{display:block;width:100%;max-width:640px;padding:26px 20px !important;
+  border:2px dashed #dfe3ea !important;border-radius:16px !important;background:#fbfbfd !important;
+  font-size:14px;transition:border-color .15s,background .15s}
+.box>input[type=file]:hover{border-color:var(--brand) !important;background:#fff8f7 !important}
+input[type=file]::file-selector-button{font-family:inherit;font-weight:650;font-size:14px;border:0;
+  background:var(--brand);color:#fff;padding:11px 20px;border-radius:999px;margin-right:14px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(229,50,45,.25)}
+input[type=file]::-webkit-file-upload-button{font-family:inherit;font-weight:650;border:0;background:var(--brand);
+  color:#fff;padding:11px 20px;border-radius:999px;margin-right:14px}
+.drop{border:2px dashed #dfe3ea !important;border-radius:18px !important;background:#fbfbfd !important;padding:40px 20px !important;font-weight:550}
+
+/* help text under tools */
+.seo{color:#4b5563}
+.seo h2{font-size:20px;letter-spacing:-.3px}
+.seo details{padding:14px 0}
+.seo summary::after{content:"";width:9px;height:9px;border-right:2px solid #9aa1ae;border-bottom:2px solid #9aa1ae;
+  transform:rotate(45deg);margin-top:3px;flex:none;transition:transform .15s}
+.seo details[open] summary::after{content:"";transform:rotate(-135deg);margin-top:8px}
+.seo .links a{color:var(--brand-ink);text-decoration:none;font-weight:600;background:#fff4f3;padding:5px 11px;border-radius:999px;display:inline-block;margin:4px 6px 0 0}
+.gcard{border-radius:18px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.gcard:hover{border-color:var(--line);transform:translateY(-2px);box-shadow:var(--shadow-hi)}
+.legal{border-radius:22px}
+.sitefoot{border-top:1px solid var(--line);margin-top:56px}
+
+@media (max-width:620px){
+  .shell{padding-top:calc(var(--top) + 18px)}
+  .phead h1{font-size:24px}
+  .box,.panel,.form{padding:18px !important;border-radius:18px !important}
+  .box>input[type=file]{padding:18px 14px !important}
+}
