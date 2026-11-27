@@ -1,0 +1,211 @@
+<!-- libs: pdflib -->
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&family=Hind+Siliguri:wght@500;600;700&family=Cairo:wght@500;700&display=swap");
+  .calwrap{display:grid;grid-template-columns:minmax(320px,390px) minmax(0,1fr);gap:18px;align-items:start}
+  .form input,.form select,.form textarea{width:100%;margin:4px 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .form label.l{display:block;font-size:12.5px;font-weight:650;color:var(--ink);margin-top:6px}
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#f1f3f7;border-radius:14px;padding:4px}
+  .seg button{border:0 !important;background:transparent;padding:8px 4px !important;border-radius:10px !important;font-size:12.5px}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .colors{display:flex;gap:8px;flex-wrap:wrap}
+  .colors button{width:30px;height:30px;padding:0 !important;border-radius:50% !important;border:3px solid #fff !important;box-shadow:0 0 0 1px #d0d5dd}
+  .colors button.on{box-shadow:0 0 0 2px #111827}
+  .ev{display:grid;grid-template-columns:130px 1fr 34px;gap:6px;align-items:center;margin:4px 0}
+  .ev input{margin:0 !important}
+  .ev button{padding:6px !important}
+  .stage{background:#e9ecf3 !important;text-align:center}
+  #cv{max-width:100%;max-height:78vh;box-shadow:0 10px 30px rgba(20,25,40,.2);background:#fff}
+  .nav{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:12px;font-weight:650}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .pri{background:#e5322d;color:#fff;border:0;padding:12px 20px !important}
+  @media(max-width:1000px){.calwrap{grid-template-columns:1fr}}
+</style>
+<div class="calwrap">
+<div class="form">
+  <h3 style="margin-top:0 !important">1. What to make</h3>
+  <div class="seg" id="mode"><button data-m="month" class="on">One month</button><button data-m="year12">12 pages</button><button data-m="year1">Year on 1 page</button></div>
+  <div class="two"><div><label class="l">Year</label><input type="number" id="year"></div><div><label class="l">Month</label><select id="month"></select></div></div>
+  <h3>2. Design</h3>
+  <div class="seg" id="tpl"><button data-t="photo" class="on">Photo top</button><button data-t="minimal">Minimal</button><button data-t="bold">Bold</button></div>
+  <div class="two"><div><label class="l">Paper</label><select id="paper"><option value="A4p">A4 portrait</option><option value="A4l">A4 landscape</option><option value="Letterp">Letter portrait</option></select></div>
+  <div><label class="l">Language</label><select id="lang"><option value="en">English</option><option value="bn">বাংলা</option><option value="ar">العربية</option></select></div></div>
+  <label class="l">Colour</label><div class="colors" id="colors"></div>
+  <label class="l">Title on the calendar</label><input id="title" placeholder="e.g. Rahim family, or your company name">
+  <label class="l">Photo (one for all months)</label><input type="file" id="photo" accept="image/*">
+  <label class="l">Different photo for this month (optional)</label><input type="file" id="mphoto" accept="image/*">
+  <label class="l">Logo (optional)</label><input type="file" id="logo" accept="image/*">
+  <h3>3. Dates</h3>
+  <div class="two"><div><label class="l">Week starts on</label><select id="wstart"><option value="6">Saturday</option><option value="0">Sunday</option><option value="1">Monday</option></select></div>
+  <div><label class="l">Weekend</label><select id="wkend"><option value="5,6">Friday + Saturday</option><option value="5">Friday</option><option value="6,0">Saturday + Sunday</option><option value="0">Sunday</option></select></div></div>
+  <label class="l">Second date in each box</label><select id="second"><option value="hijri">Hijri (Umm al-Qura)</option><option value="bangla">Bangla (বঙ্গাব্দ)</option><option value="none">None</option></select>
+  <label class="l">Public holidays</label><select id="hol"><option value="sa">Saudi Arabia</option><option value="bd">Bangladesh</option><option value="ae">UAE</option><option value="none">None</option></select>
+  <p class="note">Eid dates follow the Umm al-Qura calendar and may move by a day after the moon is sighted.</p>
+  <label class="l">Your own dates (birthdays, events)</label>
+  <div id="events"></div>
+  <button id="addEv" style="font-size:13px">+ Add a date</button>
+</div>
+<div class="box stage">
+  <div class="nav"><button id="prev">◀</button><span id="pg"></span><button id="next">▶</button></div>
+  <canvas id="cv"></canvas>
+  <div class="acts"><button class="pri" id="pdf">⬇ Download PDF</button><button id="png">⬇ This page as PNG</button></div>
+  <p class="note">Print the PDF at 100% (“Actual size”) on A4 paper. For a wall calendar, a print shop can print the 12-page PDF on thick paper and bind it.</p>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const COLORS = ["#e5322d", "#1c4fa1", "#0b7285", "#2b8a3e", "#c2255c", "#6741d9", "#e67700", "#1f2430"];
+const S = {mode: "month", tpl: "photo", c: "#1c4fa1", view: 0};
+const IMG = {photo: null, logo: null, months: {}};
+const now = new Date(); $("year").value = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+for(let m = 0; m < 12; m++){ const o = document.createElement("option"); o.value = m; o.textContent = new Date(2026, m, 1).toLocaleString("en", {month: "long"}); $("month").appendChild(o); }
+$("month").value = now.getMonth() === 11 ? 0 : now.getMonth();
+function seg(id, key){ $(id).querySelectorAll("button").forEach(b => b.onclick = () => { S[key] = Object.values(b.dataset)[0]; $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); S.view = 0; draw(); }); }
+seg("mode", "mode"); seg("tpl", "tpl");
+COLORS.forEach(c => { const b = document.createElement("button"); b.style.background = c; b.dataset.c = c; if(c === S.c) b.className = "on"; b.onclick = () => { S.c = c; [...$("colors").children].forEach(x => x.classList.toggle("on", x === b)); draw(); }; $("colors").appendChild(b); });
+const LOC = () => ({en: "en-GB", bn: "bn-BD", ar: "ar-SA"}[$("lang").value]);
+const FONT = () => ({en: "Inter", bn: "'Hind Siliguri'", ar: "Cairo"}[$("lang").value]) + ", Inter, 'Hind Siliguri', Cairo, Arial, sans-serif";
+const num = n => n.toLocaleString(LOC(), {useGrouping: false});
+const monthName = (y, m) => new Date(y, m, 1).toLocaleString(LOC(), {month: "long"});
+const dayNames = () => { const st = +$("wstart").value; return [...Array(7)].map((_, i) => new Date(2023, 0, 1 + (st + i) % 7).toLocaleString(LOC(), {weekday: "short"})); };
+/* Bangla calendar, Bangladesh 2019 revision: 1 Boishakh = 14 April; first six months 31 days, Falgun 29 (30 in a leap year), others 30 */
+const BMON = ["বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ", "ভাদ্র", "আশ্বিন", "কার্তিক", "অগ্রহায়ণ", "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"];
+const BMON_EN = ["Boishakh", "Joishtho", "Asharh", "Shrabon", "Bhadro", "Ashwin", "Kartik", "Ogrohayon", "Poush", "Magh", "Falgun", "Choitro"];
+function bangla(d){
+  const y = d.getFullYear(), start = new Date(y, 3, 14), sy = d >= start ? y : y - 1, s = new Date(sy, 3, 14);
+  let n = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - s) / 864e5);
+  const leap = ((sy + 1) % 4 === 0 && (sy + 1) % 100 !== 0) || (sy + 1) % 400 === 0;
+  const len = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, leap ? 30 : 29, 30]; let m = 0; while(n >= len[m]){ n -= len[m]; m++; }
+  return {y: sy - 593, m, d: n + 1};
+}
+const HF = {};
+function hijri(d){ const k = LOC(); HF[k] = HF[k] || new Intl.DateTimeFormat(k + "-u-ca-islamic-umalqura", {day: "numeric", month: "short"});
+  HF.n = HF.n || new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", {day: "numeric", month: "numeric"});
+  const p = Object.fromEntries(HF.n.formatToParts(d).map(x => [x.type, x.value])); return {d: +p.day, m: +p.month, txt: HF[k].format(d)}; }
+function second(d){
+  const s = $("second").value; if(s === "none") return "";
+  if(s === "hijri"){ const h = hijri(d); return h.d === 1 ? h.txt : num(h.d); }
+  const b = bangla(d); const L = $("lang").value === "bn"; return b.d === 1 ? (L ? num(b.d) + " " + BMON[b.m] : b.d + " " + BMON_EN[b.m]) : (L ? num(b.d) : String(b.d));
+}
+const HL = {
+  sa: [[2, 22, "Founding Day", "يوم التأسيس"], [9, 23, "National Day", "اليوم الوطني"]],
+  bd: [[2, 21, "Language Martyrs' Day", "শহীদ দিবস"], [3, 26, "Independence Day", "স্বাধীনতা দিবস"], [4, 14, "Pohela Boishakh", "পহেলা বৈশাখ"], [5, 1, "May Day", "মে দিবস"], [12, 16, "Victory Day", "বিজয় দিবস"], [12, 25, "Christmas", "বড়দিন"]],
+  ae: [[1, 1, "New Year", "رأس السنة"], [12, 2, "National Day", "اليوم الوطني"], [12, 3, "National Day", "اليوم الوطني"]], none: []};
+function holidays(d){
+  const out = [], set = $("hol").value, L = $("lang").value;
+  (HL[set] || []).forEach(h => { if(d.getMonth() + 1 === h[0] && d.getDate() === h[1]) out.push(L === "en" ? h[2] : h[3]); });
+  if(set !== "none"){ const h = hijri(d);
+    if(h.m === 10 && h.d === 1) out.push({en: "Eid al-Fitr", bn: "ঈদুল ফিতর", ar: "عيد الفطر"}[L]);
+    if(h.m === 12 && h.d === 10) out.push({en: "Eid al-Adha", bn: "ঈদুল আযহা", ar: "عيد الأضحى"}[L]);
+    if(set === "sa" && h.m === 12 && h.d === 9) out.push({en: "Arafat Day", bn: "আরাফা দিবস", ar: "يوم عرفة"}[L]); }
+  return out;
+}
+function events(d){ const k = String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  return [...$("events").querySelectorAll(".ev")].filter(e => e.querySelector("input[type=date]").value.slice(5) === k && e.querySelector(".t").value.trim()).map(e => e.querySelector(".t").value.trim()); }
+$("addEv").onclick = () => addEv();
+function addEv(dv, tv){ const d = document.createElement("div"); d.className = "ev"; d.innerHTML = '<input type="date"><input class="t" placeholder="' + TT("e.g. Mother's birthday") + '"><button>✕</button>';
+  if(dv) d.querySelector("input[type=date]").value = dv; if(tv) d.querySelector(".t").value = tv;
+  d.querySelector("button").onclick = () => { d.remove(); draw(); }; $("events").appendChild(d); }
+function paper(){ const p = $("paper").value, s = 200 / 25.4; return p === "A4l" ? [297 * s, 210 * s] : p === "Letterp" ? [215.9 * s, 279.4 * s] : [210 * s, 297 * s]; }
+function cover(g, im, x, y, w, h){ const k = Math.max(w / im.width, h / im.height); g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.drawImage(im, x + (w - im.width * k) / 2, y + (h - im.height * k) / 2, im.width * k, im.height * k); g.restore(); }
+function tint(hex, k){ const n = parseInt(hex.slice(1), 16); const f = v => Math.round(v + (255 - v) * k); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+
+function grid(g, y0, m, x, y, w, h, opt){
+  const st = +$("wstart").value, wk = $("wkend").value.split(",").map(Number), F = FONT(), first = new Date(y0, m, 1), off = (first.getDay() - st + 7) % 7, days = new Date(y0, m + 1, 0).getDate();
+  const rows = Math.ceil((off + days) / 7), cw = w / 7, hh = opt.head, ch = (h - hh) / rows, rtl = $("lang").value === "ar";
+  g.textBaseline = "middle"; g.textAlign = "center";
+  dayNames().forEach((n, i) => { const col = rtl ? 6 - i : i, dow = (st + i) % 7;
+    g.fillStyle = wk.includes(dow) ? S.c : opt.dark ? "#fff" : "#6b7280"; g.font = `700 ${hh * 0.42}px ${F}`; g.fillText(n.toUpperCase(), x + col * cw + cw / 2, y + hh / 2); });
+  for(let d = 1; d <= days; d++){
+    const i = off + d - 1, col = rtl ? 6 - i % 7 : i % 7, row = Math.floor(i / 7), cx = x + col * cw, cy = y + hh + row * ch, date = new Date(y0, m, d), dow = date.getDay();
+    const hol = holidays(date), ev = events(date), weekend = wk.includes(dow), mini = opt.mini;
+    if(!mini){ g.strokeStyle = opt.dark ? "rgba(255,255,255,.12)" : "#e5e7eb"; g.lineWidth = 2; g.strokeRect(cx, cy, cw, ch);
+      if(hol.length || weekend){ g.fillStyle = hol.length ? tint(S.c, 0.82) : opt.dark ? "rgba(255,255,255,.05)" : "#f8f9fb"; g.fillRect(cx + 1, cy + 1, cw - 2, ch - 2); } }
+    g.fillStyle = hol.length || weekend ? S.c : opt.dark ? "#fff" : "#111827";
+    if(mini){ g.font = `${weekend || hol.length ? 700 : 500} ${ch * 0.5}px ${F}`; g.textAlign = "center"; g.fillText(num(d), cx + cw / 2, cy + ch / 2);
+      if(hol.length){ g.beginPath(); g.arc(cx + cw / 2, cy + ch * 0.88, ch * 0.06, 0, 7); g.fill(); } continue; }
+    g.textAlign = rtl ? "right" : "left"; const pad = cw * 0.08, tx = rtl ? cx + cw - pad : cx + pad;
+    g.font = `700 ${Math.min(ch * 0.34, cw * 0.32)}px ${F}`; g.fillText(num(d), tx, cy + ch * 0.26);
+    const s2 = second(date); if(s2){ g.textAlign = rtl ? "left" : "right"; g.fillStyle = opt.dark ? "rgba(255,255,255,.55)" : "#9aa1ae"; g.font = `500 ${Math.min(ch * 0.15, cw * 0.13)}px ${F}`;
+      g.fillText(s2, rtl ? cx + pad : cx + cw - pad, cy + ch * 0.24); }
+    const labels = hol.concat(ev); g.textAlign = "center"; let ly = cy + ch * 0.62;
+    labels.slice(0, 2).forEach((t, k) => { g.fillStyle = k < hol.length ? S.c : opt.dark ? "#fff" : "#374151"; let fs = Math.min(ch * 0.15, cw * 0.12); g.font = `600 ${fs}px ${F}`;
+      while(g.measureText(t).width > cw * 0.92 && fs > 8){ fs--; g.font = `600 ${fs}px ${F}`; } g.fillText(t, cx + cw / 2, ly); ly += fs * 1.25; });
+  }
+}
+function header(g, W, y, h, y0, m, opt){
+  const F = FONT(), rtl = $("lang").value === "ar", L = rtl ? "right" : "left", X = rtl ? W - opt.pad : opt.pad;
+  g.textBaseline = "alphabetic"; g.textAlign = L; g.fillStyle = opt.dark ? "#fff" : "#111827";
+  const big = opt.serif && $("lang").value === "en" ? `700 ${h * 0.62}px 'Playfair Display', Georgia, serif` : `800 ${h * 0.58}px ${F}`;
+  g.font = big; g.fillText(monthName(y0, m), X, y + h * 0.72);
+  g.textAlign = rtl ? "left" : "right"; g.fillStyle = opt.dark ? "#fff" : S.c; g.font = `800 ${h * 0.42}px ${F}`; g.fillText(num(y0), rtl ? opt.pad : W - opt.pad, y + h * 0.72);
+  if($("second").value !== "none"){ const a = new Date(y0, m, 1), b = new Date(y0, m + 1, 0); let t;
+    if($("second").value === "hijri"){ const f = new Intl.DateTimeFormat(LOC() + "-u-ca-islamic-umalqura", {month: "long", year: "numeric"}); t = f.format(a) === f.format(b) ? f.format(a) : f.format(a).replace(/\s*\d+.*$/, "").replace(/\s*[٠-٩০-৯]+.*$/, "") + " – " + f.format(b); }
+    else { const ba = bangla(a), bb = bangla(b), bn = $("lang").value === "bn", nm = bn ? BMON : BMON_EN; t = nm[ba.m] + " – " + nm[bb.m] + " " + (bn ? num(bb.y) : bb.y); }
+    g.textAlign = L; g.fillStyle = opt.dark ? "rgba(255,255,255,.65)" : "#6b7280"; g.font = `500 ${h * 0.2}px ${F}`; g.fillText(t, X, y + h * 1.05); }
+}
+function footer(g, W, H, pad, dark){
+  const t = $("title").value.trim(); g.textBaseline = "middle";
+  if(IMG.logo){ const lh = H * 0.03, lw = Math.min(lh * IMG.logo.width / IMG.logo.height, W * 0.25); g.drawImage(IMG.logo, pad, H - pad * 0.62 - lh / 2, lw, lh); }
+  if(t){ g.fillStyle = dark ? "rgba(255,255,255,.75)" : "#6b7280"; g.font = `600 ${H * 0.014}px ${FONT()}`; g.textAlign = IMG.logo ? "right" : "center"; g.fillText(t, IMG.logo ? W - pad : W / 2, H - pad * 0.62); }
+}
+function page(c, y0, m){
+  const [W, H] = paper(); c.width = Math.round(W); c.height = Math.round(H); const g = c.getContext("2d"), land = W > H, pad = W * 0.05, tpl = S.tpl, dark = tpl === "bold";
+  g.fillStyle = dark ? "#151922" : "#fff"; g.fillRect(0, 0, W, H);
+  const ph = IMG.months[m] || IMG.photo;
+  if(tpl === "photo"){
+    if(land){ const pw = W * 0.42; if(ph) cover(g, ph, 0, 0, pw, H); else { g.fillStyle = tint(S.c, 0.8); g.fillRect(0, 0, pw, H); }
+      g.fillStyle = S.c; g.fillRect(pw, 0, W * 0.008, H);
+      g.save(); g.translate(pw, 0);
+      header(g, W - pw, H * 0.03, H * 0.11, y0, m, {pad: pad * 0.8}); g.restore();
+      grid(g, y0, m, pw + pad * 0.8, H * 0.2, W - pw - pad * 1.6, H * 0.72, {head: H * 0.05}); footer(g, W, H, pad, false); return; }
+    const ph_h = H * 0.4; if(ph) cover(g, ph, 0, 0, W, ph_h); else { const gr = g.createLinearGradient(0, 0, W, ph_h); gr.addColorStop(0, S.c); gr.addColorStop(1, tint(S.c, 0.55)); g.fillStyle = gr; g.fillRect(0, 0, W, ph_h); }
+    g.fillStyle = S.c; g.fillRect(0, ph_h, W, H * 0.008);
+    header(g, W, ph_h + H * 0.02, H * 0.075, y0, m, {pad});
+    grid(g, y0, m, pad, ph_h + H * 0.125, W - pad * 2, H - ph_h - H * 0.125 - pad * 1.2, {head: H * 0.035}); footer(g, W, H, pad, false); return;
+  }
+  if(tpl === "minimal"){
+    g.fillStyle = S.c; g.fillRect(pad, pad * 0.9, W * 0.08, H * 0.006);
+    header(g, W, pad * 1.1, H * 0.11, y0, m, {pad, serif: true});
+    if(ph){ const s = land ? H * 0.28 : W * 0.3; g.save(); g.beginPath(); g.arc(W - pad - s / 2, pad + H * 0.24, s / 2, 0, 7); g.clip(); cover(g, ph, W - pad - s, pad + H * 0.24 - s / 2, s, s); g.restore(); }
+    const top = pad + H * (ph ? (land ? 0.42 : 0.36) : 0.2);
+    grid(g, y0, m, pad, top, W - pad * 2, H - top - pad * 1.2, {head: H * 0.035}); footer(g, W, H, pad, false); return;
+  }
+  /* bold */
+  g.fillStyle = S.c; g.beginPath(); g.moveTo(0, 0); g.lineTo(W, 0); g.lineTo(W, H * 0.16); g.lineTo(0, H * 0.22); g.fill();
+  if(ph){ g.save(); g.globalAlpha = 0.35; cover(g, ph, 0, 0, W, H * 0.22); g.restore(); }
+  header(g, W, H * 0.04, H * 0.11, y0, m, {pad, dark: true});
+  grid(g, y0, m, pad, H * 0.27, W - pad * 2, H * 0.66, {head: H * 0.04, dark: true}); footer(g, W, H, pad, true);
+}
+function yearPage(c, y0){
+  const [W, H] = paper(); c.width = Math.round(W); c.height = Math.round(H); const g = c.getContext("2d"), pad = W * 0.05, land = W > H, dark = S.tpl === "bold", F = FONT();
+  g.fillStyle = dark ? "#151922" : "#fff"; g.fillRect(0, 0, W, H);
+  const hh = H * 0.12; if(S.tpl !== "minimal"){ g.fillStyle = S.c; g.fillRect(0, 0, W, hh); if(IMG.photo){ g.save(); g.globalAlpha = 0.3; cover(g, IMG.photo, 0, 0, W, hh); g.restore(); } }
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = S.tpl === "minimal" ? "#111827" : "#fff"; g.font = `800 ${hh * 0.5}px ${F}`; g.fillText(num(y0), W / 2, hh * 0.46);
+  if($("title").value.trim()){ g.font = `600 ${hh * 0.16}px ${F}`; g.fillText($("title").value.trim(), W / 2, hh * 0.82); }
+  const cols = land ? 4 : 3, rows = 12 / cols, gw = (W - pad * 2) / cols, gh = (H - hh - pad * 1.8) / rows;
+  for(let m = 0; m < 12; m++){ const cx = pad + (m % cols) * gw, cy = hh + pad * 0.8 + Math.floor(m / cols) * gh;
+    g.textAlign = "center"; g.fillStyle = S.c; g.font = `800 ${gh * 0.085}px ${F}`; g.textBaseline = "middle"; g.fillText(monthName(y0, m), cx + gw / 2, cy + gh * 0.07);
+    grid(g, y0, m, cx + gw * 0.05, cy + gh * 0.14, gw * 0.9, gh * 0.8, {head: gh * 0.1, mini: true, dark}); }
+  footer(g, W, H, pad, dark);
+}
+function pages(){ const y = +$("year").value || now.getFullYear(); if(S.mode === "month") return [[y, +$("month").value]]; if(S.mode === "year1") return [[y, -1]]; return [...Array(12)].map((_, m) => [y, m]); }
+function render(c, p){ if(p[1] < 0) yearPage(c, p[0]); else page(c, p[0], p[1]); }
+function draw(){ const P = pages(); S.view = Math.min(S.view, P.length - 1); render($("cv"), P[S.view]);
+  $("pg").textContent = P[S.view][1] < 0 ? num(P[0][0]) : monthName(P[S.view][0], P[S.view][1]) + " " + num(P[S.view][0]) + (P.length > 1 ? "  (" + (S.view + 1) + "/" + P.length + ")" : "");
+  $("prev").disabled = S.view === 0; $("next").disabled = S.view >= P.length - 1; }
+$("prev").onclick = () => { S.view--; draw(); }; $("next").onclick = () => { S.view++; draw(); };
+function img(id, set){ $(id).onchange = e => { const f = e.target.files[0]; if(!f) return; const im = new Image(); im.onload = () => { set(im); draw(); }; im.src = URL.createObjectURL(f); }; }
+img("photo", im => IMG.photo = im); img("logo", im => IMG.logo = im); img("mphoto", im => { const P = pages()[S.view]; if(P[1] >= 0) IMG.months[P[1]] = im; });
+document.querySelector(".form").addEventListener("input", e => { if(e.target.id === "month") S.view = 0; draw(); });
+$("png").onclick = () => $("cv").toBlob(b => DPLResult.file(b, "calendar-" + $("pg").textContent.replace(/\s*\(.*\)/, "").replace(/\s+/g, "-") + ".png"), "image/png");
+$("pdf").onclick = async () => {
+  const P = pages(), doc = await PDFLib.PDFDocument.create(), [W, H] = paper(), k = 72 / 200, c = document.createElement("canvas");
+  for(const p of P){ render(c, p); const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+    const im = await doc.embedJpg(await blob.arrayBuffer()); doc.addPage([W * k, H * k]).drawImage(im, {x: 0, y: 0, width: W * k, height: H * k}); }
+  DPLResult.file(await doc.save(), "calendar-" + P[0][0] + (S.mode === "month" ? "-" + String(P[0][1] + 1).padStart(2, "0") : "") + ".pdf");
+};
+addEv(); draw();
+document.fonts && document.fonts.ready.then(draw);
+</script>

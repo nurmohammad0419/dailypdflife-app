@@ -9,6 +9,7 @@ LIBS = {
            '<script>pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>',
   "pdflib": '<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>',
   "jszip": '<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>',
+  "qr": '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>',
   "adhan": '<script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>',
 }
 HEAD = """<!DOCTYPE html>

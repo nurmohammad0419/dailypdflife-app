@@ -59,13 +59,16 @@
     ["Document makers", [
       ["CV maker", "cv-maker.html", "📄", "#7b3fe4", "Build a clean CV and download it as a PDF."],
       ["Invoice & quotation", "invoice-maker.html", "🧾", "#0b7285", "Create professional invoices and quotations."],
-      ["Cover letter", "cover-letter.html", "✉", "#c2255c", "Write a cover letter for a job application."]
+      ["Cover letter", "cover-letter.html", "✉", "#c2255c", "Write a cover letter for a job application."],
+      ["ID card maker", "id-card-maker.html", "🪪", "#1c4fa1", "Design employee, student and event ID cards, front and back."],
+      ["Calendar maker", "calendar-maker.html", "📆", "#e5322d", "Make a printable calendar with your photos, holidays and Hijri or Bangla dates."]
     ]],
     ["Smart tools", [
       ["OCR", "ocr.html", "🔍", "#e8590c", "Pull text out of a photo or a scanned PDF."],
       ["QR code", "qr-code.html", "🔳", "#212529", "Make QR codes for links, WhatsApp and WiFi."],
       ["Hijri date converter", "hijri-converter.html", "☪", "#0ca678", "Convert between Hijri (Umm al-Qura) and Gregorian dates."],
-      ["Prayer times", "prayer-times.html", "🕌", "#0b7285", "Today's salah times for your city, with a countdown."]
+      ["Prayer times", "prayer-times.html", "🕌", "#0b7285", "Today's salah times for your city, with a countdown."],
+      ["Emergency numbers", "emergency-numbers.html", "🆘", "#e03131", "Police, ambulance and fire numbers for your country and city."]
     ]],
     ["Calculators", [
       ["VAT calculator", "vat-calculator.html", "%", "#0b7285", "Add or remove VAT for Saudi Arabia, UAE and more."],

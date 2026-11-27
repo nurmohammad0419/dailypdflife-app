@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>ID Card Maker Online Free – Employee, Student &amp; Event Cards | DailyPdfLife</title>
+<meta name="description" content="Design ID cards for employees, students, events and visitors with photo, logo, QR code and signature. Front and back, standard CR80 size, print-ready PDF.">
+<link rel="canonical" href="https://dailypdflife.com/id-card-maker">
+<meta property="og:title" content="ID Card Maker Online Free – Employee, Student &amp; Event Cards | DailyPdfLife">
+<meta property="og:description" content="Design ID cards for employees, students, events and visitors with photo, logo, QR code and signature. Front and back, standard CR80 size, print-ready PDF.">
+<meta property="og:url" content="https://dailypdflife.com/id-card-maker">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="result.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3528972294042151"
+     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@500;600;700&display=swap");
+  .idwrap{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:18px;align-items:start}
+  .form input,.form select,.form textarea{width:100%;margin:4px 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#f1f3f7;border-radius:14px;padding:4px}
+  .seg button{border:0 !important;background:transparent;padding:8px 4px !important;border-radius:10px !important;font-size:12.5px}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .seg2{grid-template-columns:1fr 1fr}
+  .colors{display:flex;gap:8px;flex-wrap:wrap}
+  .colors button{width:30px;height:30px;padding:0 !important;border-radius:50% !important;border:3px solid #fff !important;box-shadow:0 0 0 1px #d0d5dd}
+  .colors button.on{box-shadow:0 0 0 2px #111827}
+  .note2{font-size:12.5px;color:var(--ink-3);margin:2px 0 6px}
+  .stage{background:#e9ecf3 !important}
+  .cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .cards figure{margin:0;text-align:center}
+  .cards canvas{display:block;border-radius:14px;box-shadow:0 10px 30px rgba(20,25,40,.22);background:#fff}
+  .cards figcaption{font-size:12.5px;color:var(--ink-3);margin-top:8px;font-weight:600}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center}
+  .pri{background:#e5322d;color:#fff;border:0;padding:12px 20px !important}
+  @media(max-width:1000px){.idwrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="idwrap">
+<div class="form">
+  <h3 style="margin-top:0 !important">1. Card type &amp; design</h3>
+  <div class="seg" id="kind"><button data-k="staff" class="on">Employee</button><button data-k="student">Student</button><button data-k="event">Event</button><button data-k="visitor">Visitor</button></div>
+  <h3>Design</h3>
+  <div class="seg" id="tpl"><button data-t="wave" class="on">Wave</button><button data-t="band">Band</button><button data-t="bold">Bold</button><button data-t="clean">Clean</button></div>
+  <h3>Shape</h3>
+  <div class="seg seg2" id="ori"><button data-o="p" class="on">▯ Portrait</button><button data-o="l">▭ Landscape</button></div>
+  <h3>Colour</h3>
+  <div class="colors" id="colors"></div>
+  <h3>2. Organisation</h3>
+  <input id="org" placeholder="Company, school or event name">
+  <input id="tag" placeholder="Short line, e.g. website or slogan">
+  <label class="note2">Logo <input type="file" id="logo" accept="image/*"></label>
+  <h3>3. Person</h3>
+  <label class="note2">Photo <input type="file" id="photo" accept="image/*"></label>
+  <input id="name" placeholder="Full name">
+  <input id="role" placeholder="Job title, class or role">
+  <div class="two"><input id="idno" placeholder="ID number"><input id="dept" placeholder="Department / section"></div>
+  <div class="two"><input id="blood" placeholder="Blood group"><input id="phone" placeholder="Phone"></div>
+  <div class="two"><input id="issue" placeholder="Issued, e.g. 01/2026"><input id="expiry" placeholder="Valid until, e.g. 12/2027"></div>
+  <h3>4. Back of the card</h3>
+  <textarea id="addr" placeholder="Address of the organisation"></textarea>
+  <input id="emerg" placeholder="Emergency contact">
+  <textarea id="terms" placeholder="Note on the back">This card is the property of the organisation. If found, please return it to the address above.</textarea>
+  <input id="qr" placeholder="QR code text or link (empty = name + ID)">
+  <label class="note2">Authorised signature (image) <input type="file" id="sig" accept="image/*"></label>
+</div>
+<div class="box stage">
+  <div class="cards"><figure><canvas id="front"></canvas><figcaption>Front</figcaption></figure><figure><canvas id="back"></canvas><figcaption>Back</figcaption></figure></div>
+  <div class="acts">
+    <button class="pri" id="pdf1">⬇ PDF (card size, front + back)</button>
+    <button id="pdf8">⬇ A4 print sheet (8 cards)</button>
+    <button id="png">⬇ PNG images</button>
+  </div>
+  <p class="note" style="text-align:center">Standard ID card size: 85.6 × 54 mm (CR80), at 300 dpi. Print on thick paper or PVC card at a print shop, then laminate.</p>
+</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+const W = 1011, H = 638;                     /* 85.6 x 54 mm at 300 dpi */
+const COLORS = ["#1c4fa1", "#0b7285", "#2b8a3e", "#e5322d", "#c2255c", "#6741d9", "#e67700", "#1f2430"];
+const S = {kind: "staff", tpl: "wave", ori: "p", c: "#1c4fa1"};
+const IMG = {photo: null, logo: null, sig: null};
+const FONT = "Inter, 'Hind Siliguri', 'Segoe UI', Arial, sans-serif";
+const LABELS = {staff: ["EMPLOYEE", "Employee ID"], student: ["STUDENT", "Student ID"], event: ["EVENT PASS", "Pass no."], visitor: ["VISITOR", "Visitor no."]};
+function seg(id, key){ $(id).querySelectorAll("button").forEach(b => b.onclick = () => { S[key] = b.dataset[Object.keys(b.dataset)[0]]; $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); draw(); save(); }); }
+seg("kind", "kind"); seg("tpl", "tpl"); seg("ori", "ori");
+COLORS.forEach(c => { const b = document.createElement("button"); b.style.background = c; b.dataset.c = c; b.onclick = () => { S.c = c; [...$("colors").children].forEach(x => x.classList.toggle("on", x === b)); draw(); save(); }; $("colors").appendChild(b); });
+const val = id => $(id).value.trim();
+function shade(hex, k){ const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const f = v => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+function rr(g, x, y, w, h, r){ g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); }
+function fitText(g, text, max, size, weight){ let s = size; g.font = `${weight} ${s}px ${FONT}`; while(g.measureText(text).width > max && s > 14){ s -= 2; g.font = `${weight} ${s}px ${FONT}`; } return s; }
+function cover(g, im, x, y, w, h){ const k = Math.max(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * k) / 2, y + (h - im.height * k) / 2, im.width * k, im.height * k); }
+function contain(g, im, x, y, w, h){ const k = Math.min(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * k) / 2, y + (h - im.height * k) / 2, im.width * k, im.height * k); }
+function photoBox(g, x, y, w, h, shape){
+  g.save(); if(shape === "circle"){ g.beginPath(); g.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2); } else rr(g, x, y, w, h, 22); g.clip();
+  if(IMG.photo) cover(g, IMG.photo, x, y, w, h); else { g.fillStyle = "#e9ecf3"; g.fillRect(x, y, w, h); g.fillStyle = "#b8c0cf";
+    g.beginPath(); g.arc(x + w / 2, y + h * 0.4, w * 0.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x + w / 2, y + h * 1.02, w * 0.38, h * 0.36, 0, 0, 7); g.fill(); }
+  g.restore(); g.save(); g.lineWidth = 8; g.strokeStyle = "#fff"; if(shape === "circle"){ g.beginPath(); g.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2); } else rr(g, x, y, w, h, 22); g.stroke(); g.restore();
+}
+function qrDraw(g, text, x, y, size){
+  if(!window.qrcode || !text) return; const q = qrcode(0, "M"); q.addData(unescape(encodeURIComponent(text))); q.make();
+  const n = q.getModuleCount(), m = size / (n + 2); g.fillStyle = "#fff"; g.fillRect(x, y, size, size); g.fillStyle = "#111827";
+  for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r, c)) g.fillRect(x + (c + 1) * m, y + (r + 1) * m, Math.ceil(m), Math.ceil(m));
+}
+function header(g, w, h, hh){
+  const c = S.c;
+  if(S.tpl === "wave"){ const gr = g.createLinearGradient(0, 0, w, hh); gr.addColorStop(0, c); gr.addColorStop(1, shade(c, -0.35)); g.fillStyle = gr;
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(w, 0); g.lineTo(w, hh * 0.78); g.bezierCurveTo(w * 0.7, hh * 1.15, w * 0.35, hh * 0.55, 0, hh * 0.95); g.closePath(); g.fill();
+    g.fillStyle = shade(c, 0.75); g.globalAlpha = 0.35; g.beginPath(); g.moveTo(0, hh * 1.02); g.bezierCurveTo(w * 0.35, hh * 0.62, w * 0.7, hh * 1.22, w, hh * 0.85); g.lineTo(w, hh * 0.78); g.bezierCurveTo(w * 0.7, hh * 1.15, w * 0.35, hh * 0.55, 0, hh * 0.95); g.fill(); g.globalAlpha = 1; }
+  else if(S.tpl === "band"){ g.fillStyle = c; g.fillRect(0, 0, w, hh); g.fillStyle = shade(c, 0.6); g.fillRect(0, hh, w, 10); }
+  else if(S.tpl === "bold"){ g.fillStyle = "#111827"; g.fillRect(0, 0, w, h); g.fillStyle = c; g.beginPath(); g.moveTo(0, 0); g.lineTo(w, 0); g.lineTo(w, hh * 0.7); g.lineTo(0, hh * 1.15); g.fill(); }
+  else { g.fillStyle = c; g.fillRect(0, 0, w, 16); }
+}
+const onDark = () => S.tpl !== "clean";
+function orgLine(g, x, y, maxW, align, color){
+  const org = val("org") || TT("Your Organisation"); let lx = x;
+  if(IMG.logo){ const s = 64; const lw = Math.min(s * IMG.logo.width / IMG.logo.height, 160);
+    if(align === "center"){ g.font = `800 ${fitText(g, org, maxW - lw - 16, 40, 800)}px ${FONT}`; const tw = g.measureText(org).width; lx = x - (lw + 14 + tw) / 2; contain(g, IMG.logo, lx, y - s / 2, lw, s); lx += lw + 14; g.textAlign = "left"; }
+    else { contain(g, IMG.logo, x, y - s / 2, lw, s); lx = x + lw + 14; g.textAlign = "left"; } }
+  else g.textAlign = align;
+  g.fillStyle = color; g.textBaseline = "middle"; const fs = fitText(g, org, IMG.logo ? maxW - 90 : maxW, 40, 800);
+  g.font = `800 ${fs}px ${FONT}`; g.fillText(org, lx, y - (val("tag") ? 12 : 0));
+  if(val("tag")){ g.font = `500 22px ${FONT}`; g.globalAlpha = 0.85; g.fillText(val("tag"), lx, y + 24); g.globalAlpha = 1; }
+  g.textAlign = "left";
+}
+function fields(){ const L = LABELS[S.kind]; return [[L[1], val("idno")], ["Department", val("dept")], ["Blood group", val("blood")], ["Phone", val("phone")], ["Valid until", val("expiry")]].filter(f => f[1]); }
+function front(){
+  const cv = $("front"), P = S.ori === "p", w = P ? H : W, h = P ? W : H; cv.width = w; cv.height = h; const g = cv.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); const dark = S.tpl === "bold", ink = dark ? "#fff" : "#111827", sub = dark ? "rgba(255,255,255,.7)" : "#6b7280";
+  const L = LABELS[S.kind], hh = P ? 240 : 150; header(g, w, h, hh);
+  const hc = S.tpl === "clean" ? "#111827" : "#fff";
+  if(P){
+    orgLine(g, w / 2, S.tpl === "clean" ? 80 : 86, w - 80, "center", hc);
+    const ps = 300, px = (w - ps) / 2, py = S.tpl === "clean" ? 150 : 170; photoBox(g, px, py, ps, ps, S.tpl === "band" || S.tpl === "clean" ? "round" : "circle");
+    let y = py + ps + 66; g.textAlign = "center"; g.fillStyle = ink;
+    g.font = `800 ${fitText(g, val("name") || TT("Full Name"), w - 60, 50, 800)}px ${FONT}`; g.fillText(val("name") || TT("Full Name"), w / 2, y);
+    y += 44; g.fillStyle = S.tpl === "bold" ? shade(S.c, 0.4) : S.c; g.font = `600 ${fitText(g, val("role") || TT("Role"), w - 80, 30, 600)}px ${FONT}`; g.fillText(val("role") || TT("Role"), w / 2, y);
+    y += 40; g.font = `500 25px ${FONT}`;
+    fields().forEach(f => { y += 36; g.fillStyle = sub; g.textAlign = "right"; g.fillText(TT(f[0]) + ":", w / 2 - 10, y); g.fillStyle = ink; g.textAlign = "left"; g.font = `700 25px ${FONT}`; g.fillText(f[1], w / 2 + 6, y); g.font = `500 25px ${FONT}`; });
+    g.fillStyle = S.c; g.fillRect(0, h - 70, w, 70); g.fillStyle = "#fff"; g.textAlign = "center"; g.font = `800 30px ${FONT}`; g.fillText(TT(L[0]), w / 2, h - 34);
+  } else {
+    orgLine(g, 40, S.tpl === "clean" ? 66 : 68, w - 80, "left", hc);
+    const ps = 270, px = 44, py = S.tpl === "clean" ? 130 : 180; photoBox(g, px, py, ps * 0.82, ps, S.tpl === "wave" || S.tpl === "bold" ? "round" : "round");
+    let x = px + ps * 0.82 + 40, y = py + 46; g.textAlign = "left"; g.fillStyle = ink;
+    g.font = `800 ${fitText(g, val("name") || TT("Full Name"), w - x - 40, 48, 800)}px ${FONT}`; g.fillText(val("name") || TT("Full Name"), x, y);
+    y += 42; g.fillStyle = S.tpl === "bold" ? shade(S.c, 0.4) : S.c; g.font = `600 ${fitText(g, val("role") || TT("Role"), w - x - 40, 30, 600)}px ${FONT}`; g.fillText(val("role") || TT("Role"), x, y);
+    y += 16; g.font = `500 24px ${FONT}`;
+    fields().forEach(f => { y += 36; g.fillStyle = sub; g.font = `500 22px ${FONT}`; g.fillText(TT(f[0]), x, y); g.fillStyle = ink; g.font = `700 24px ${FONT}`; g.fillText(f[1], x + 200, y); });
+    g.fillStyle = S.c; g.fillRect(0, h - 56, w, 56); g.fillStyle = "#fff"; g.font = `800 28px ${FONT}`; g.textAlign = "right"; g.fillText(TT(L[0]), w - 36, h - 27);
+  }
+}
+function back(){
+  const cv = $("back"), P = S.ori === "p", w = P ? H : W, h = P ? W : H; cv.width = w; cv.height = h; const g = cv.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = S.c; g.fillRect(0, 0, w, 16); g.fillRect(0, h - 16, w, 16);
+  const qrText = val("qr") || [val("name"), val("idno") && LABELS[S.kind][1] + ": " + val("idno"), val("org")].filter(Boolean).join("\n");
+  const pad = 46; let y = 76; g.textBaseline = "alphabetic";
+  const qs = P ? 230 : 210; const qx = P ? (w - qs) / 2 : w - qs - pad, qy = P ? h - qs - 150 : 70;
+  if(qrText) qrDraw(g, qrText, qx, qy, qs);
+  const tw = P ? w - pad * 2 : w - qs - pad * 3;
+  g.fillStyle = "#111827"; g.font = `800 30px ${FONT}`; g.textAlign = "left"; g.fillText(val("org") || TT("Your Organisation"), pad, y);
+  const wrap = (text, size, color, weight, gap) => { g.fillStyle = color; g.font = `${weight} ${size}px ${FONT}`;
+    text.split("\n").forEach(par => { let line = ""; par.split(" ").forEach(word => { const t = line ? line + " " + word : word; if(g.measureText(t).width > tw && line){ y += size * 1.35; g.fillText(line, pad, y); line = word; } else line = t; });
+      if(line){ y += size * 1.35; g.fillText(line, pad, y); } }); y += gap; };
+  if(val("addr")) wrap(val("addr"), 23, "#4b5563", 500, 10);
+  if(val("emerg")){ y += 18; g.fillStyle = S.c; g.font = `700 20px ${FONT}`; g.fillText(TT("EMERGENCY CONTACT"), pad, y); y += 4; wrap(val("emerg"), 23, "#111827", 600, 14); }
+  if(val("issue") || val("expiry")){ y += 30; g.fillStyle = "#6b7280"; g.font = `500 21px ${FONT}`; g.fillText([val("issue") && TT("Issued") + ": " + val("issue"), val("expiry") && TT("Valid until") + ": " + val("expiry")].filter(Boolean).join("   ·   "), pad, y); y += 8; }
+  if(val("terms")){ y += 14; wrap(val("terms"), 19, "#6b7280", 500, 0); }
+  const sy = P ? h - 70 : h - 70, sx = P ? pad : pad;
+  if(IMG.sig) contain(g, IMG.sig, sx, sy - 120, 280, 100);
+  g.strokeStyle = "#9aa1ae"; g.lineWidth = 2; g.beginPath(); g.moveTo(sx, sy - 14); g.lineTo(sx + 280, sy - 14); g.stroke();
+  g.fillStyle = "#6b7280"; g.font = `500 19px ${FONT}`; g.fillText(TT("Authorised signature"), sx, sy + 12);
+}
+function draw(){ front(); back(); fitView(); }
+function fitView(){ const box = document.querySelector(".cards"), max = Math.min(box.clientWidth, 900);
+  const P = S.ori === "p", each = P ? Math.min(300, (max - 40) / 2) : Math.min(420, max >= 900 ? (max - 40) / 2 : max - 10);
+  ["front", "back"].forEach(id => $(id).style.width = each + "px"); }
+addEventListener("resize", fitView);
+function readImg(id, key, square){ $(id).onchange = e => { const f = e.target.files[0]; if(!f) return; const im = new Image(); im.onload = () => {
+  const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = im.width * k; c.height = im.height * k; c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+  if(key === "sig"){ const g = c.getContext("2d"), d = g.getImageData(0, 0, c.width, c.height); for(let i = 0; i < d.data.length; i += 4){ const l = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3; if(l > 200) d.data[i+3] = 0; } g.putImageData(d, 0, 0); }
+  const out = new Image(); out.onload = () => { IMG[key] = out; draw(); save(); }; out.src = c.toDataURL(key === "photo" ? "image/jpeg" : "image/png", 0.9); }; im.src = URL.createObjectURL(f); }; }
+readImg("photo", "photo"); readImg("logo", "logo"); readImg("sig", "sig");
+const F = ["org", "tag", "name", "role", "idno", "dept", "blood", "phone", "issue", "expiry", "addr", "emerg", "terms", "qr"];
+document.querySelector(".form").addEventListener("input", () => { draw(); save(); });
+function save(){ try{ localStorage.setItem("dpl_idcard", JSON.stringify({S, f: Object.fromEntries(F.map(k => [k, $(k).value])), img: Object.fromEntries(Object.entries(IMG).map(([k, v]) => [k, v ? v.src : ""]))})); }catch(e){} }
+function load(){ let s = null; try{ s = JSON.parse(localStorage.getItem("dpl_idcard") || "null"); }catch(e){}
+  if(s){ Object.assign(S, s.S || {}); F.forEach(k => { if(s.f && s.f[k] != null) $(k).value = s.f[k]; });
+    Object.entries(s.img || {}).forEach(([k, src]) => { if(src){ const im = new Image(); im.onload = () => { IMG[k] = im; draw(); }; im.src = src; } }); }
+  [["kind", "k"], ["tpl", "t"], ["ori", "o"]].forEach(([id, d]) => $(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset[d] === S[id])));
+  [...$("colors").children].forEach(b => b.classList.toggle("on", b.dataset.c === S.c)); draw(); }
+const png = id => new Promise(r => $(id).toBlob(b => r(b), "image/png"));
+const base = () => (val("name") || "id-card").replace(/[^\wঀ-৿ -]/g, "").trim().replace(/\s+/g, "-");
+$("png").onclick = async () => DPLResult.files([{blob: await png("front"), name: base() + "-front.png"}, {blob: await png("back"), name: base() + "-back.png"}], TT("ID card images"));
+const MM = 72 / 25.4;
+$("pdf1").onclick = async () => {
+  const doc = await PDFLib.PDFDocument.create(), P = S.ori === "p", w = (P ? 54 : 85.6) * MM, h = (P ? 85.6 : 54) * MM;
+  for(const id of ["front", "back"]){ const im = await doc.embedPng(await (await png(id)).arrayBuffer()); doc.addPage([w, h]).drawImage(im, {x: 0, y: 0, width: w, height: h}); }
+  DPLResult.file(await doc.save(), base() + "-id-card.pdf");
+};
+$("pdf8").onclick = async () => {
+  const doc = await PDFLib.PDFDocument.create(), P = S.ori === "p", cw = (P ? 54 : 85.6) * MM, ch = (P ? 85.6 : 54) * MM, A4 = [595.28, 841.89];
+  const cols = Math.floor((A4[0] - 40) / (cw + 14)), rows = Math.floor((A4[1] - 40) / (ch + 14)), n = Math.min(8, cols * rows);
+  const gx = (A4[0] - cols * cw - (cols - 1) * 14) / 2, gy = (A4[1] - Math.ceil(n / cols) * ch - (Math.ceil(n / cols) - 1) * 14) / 2;
+  for(const id of ["front", "back"]){
+    const im = await doc.embedPng(await (await png(id)).arrayBuffer()), page = doc.addPage(A4);
+    for(let i = 0; i < n; i++){ let c = i % cols; const r = Math.floor(i / cols); if(id === "back") c = cols - 1 - c;   /* mirror so backs line up when printed double-sided */
+      const x = gx + c * (cw + 14), y = A4[1] - gy - (r + 1) * ch - r * 14;
+      page.drawImage(im, {x, y, width: cw, height: ch});
+      page.drawRectangle({x, y, width: cw, height: ch, borderColor: PDFLib.rgb(0.75, 0.77, 0.8), borderWidth: 0.4}); }
+    page.drawText(id === "front" ? "Fronts - cut along the grey lines" : "Backs - print on the reverse side (flip on long edge)", {x: 20, y: 18, size: 8, color: PDFLib.rgb(0.5, 0.5, 0.55)});
+  }
+  DPLResult.file(await doc.save(), base() + "-id-cards-A4.pdf");
+};
+load();
+document.fonts && document.fonts.ready.then(draw);
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About the ID card maker</h2>
+  <p>Make professional ID cards without design software. Choose Employee, Student, Event or Visitor, pick one of four designs in portrait or landscape, add the organisation logo, the person's photo and details, and the back of the card with address, emergency contact, a QR code and an authorised signature. Cards are made at the standard 85.6 × 54 mm (CR80) size at 300 dpi, so they print sharp.</p>
+  <h2>How to make an ID card</h2>
+  <ol><li>Choose the card type, design, shape and colour.</li><li>Type the organisation name and add the logo.</li><li>Add the photo, name, role, ID number and other details.</li><li>Fill in the back: address, emergency contact and a note. The QR code is made from the name and ID unless you type your own text or link.</li><li>Download a card-size PDF, an A4 sheet with 8 cards for printing, or PNG images.</li></ol>
+  <h2>Printing tips</h2>
+  <p>Print the A4 sheet at 100% (“Actual size”) on thick card paper, 250 to 300 gsm, then cut along the grey lines and laminate. For double-sided cards, print the fronts, put the sheet back in the printer and print the backs; the backs are mirrored so they line up. Many print shops can also print PVC cards from the PNG files. Use a clear, front-facing photo; the <a href="passport-photo">Passport photo</a> tool can make one with a plain background.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>What size is a standard ID card?</summary><p>85.6 × 54 mm, the same as a bank card (CR80).</p></details><details><summary>Can I make cards for many people?</summary><p>Yes: make one, download it, then change the name, photo and ID for the next. Your design is remembered.</p></details><details><summary>Can I put a QR code on the card?</summary><p>Yes, it's on the back. Type a link or text, or leave it empty to use the name and ID.</p></details><details><summary>Is the information uploaded?</summary><p>No, cards are made on your device.</p></details>
+  <p class="links">Related tools: <a href="passport-photo">Passport photo</a> <a href="qr-code">QR code</a> <a href="remove-bg">Remove background</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What size is a standard ID card?", "acceptedAnswer": {"@type": "Answer", "text": "85.6 × 54 mm, the same as a bank card (CR80)."}}, {"@type": "Question", "name": "Can I make cards for many people?", "acceptedAnswer": {"@type": "Answer", "text": "Yes: make one, download it, then change the name, photo and ID for the next. Your design is remembered."}}, {"@type": "Question", "name": "Can I put a QR code on the card?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, it's on the back. Type a link or text, or leave it empty to use the name and ID."}}, {"@type": "Question", "name": "Is the information uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No, cards are made on your device."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>

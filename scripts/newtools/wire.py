@@ -18,7 +18,11 @@ NEW = {
   ["Signature maker", "signature-maker.html", "✒", "#1a3fb0", "Draw or type a signature and save it as a transparent PNG.", "signature sign png transparent"],
   ["Photo enhancer", "photo-enhancer.html", "✨", "#7b3fe4", "Brighten, sharpen and fix the colours of a photo.", "enhance brighten sharpen fix colour quality"],
   ["Meme maker", "meme-maker.html", "😂", "#f59f00", "Make a meme with top and bottom text or a caption.", "meme funny caption"]],
+ "Document makers": [
+  ["ID card maker", "id-card-maker.html", "🪪", "#1c4fa1", "Design employee, student and event ID cards, front and back.", "id card identity badge employee student pass"],
+  ["Calendar maker", "calendar-maker.html", "📆", "#e5322d", "Make a printable calendar with your photos, holidays and Hijri or Bangla dates.", "calendar planner year month print photo hijri bangla"]],
  "Smart tools": [
+  ["Emergency numbers", "emergency-numbers.html", "🆘", "#e03131", "Police, ambulance and fire numbers for your country and city.", "emergency police ambulance fire hospital helpline 999 911"],
   ["Prayer times", "prayer-times.html", "🕌", "#0b7285", "Today's salah times for your city, with a countdown.", "prayer salah namaz times azan fajr maghrib"]],
  "Calculators": [
   ["End of service (gratuity)", "gratuity-calculator.html", "💼", "#087f5b", "Saudi and UAE end-of-service benefit for your years of work.", "gratuity end of service eosb benefit saudi uae"],

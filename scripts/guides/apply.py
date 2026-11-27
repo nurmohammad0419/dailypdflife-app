@@ -6,9 +6,10 @@ from g1 import G as A
 from g2 import G as B
 from g3 import G as C
 from g4 import G as D
+from g5 import G as E
 
 SITE = sys.argv[1]
-G = {**A, **B, **C, **D}
+G = {**A, **B, **C, **D, **E}
 BASE = "https://dailypdflife.com/"
 
 def strip(s):

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DailyPdfLife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Emergency Numbers – Saudi, UAE, Bangladesh, Gulf &amp; More | DailyPdfLife</title>
+<meta name="description" content="Police, ambulance, fire and helpline numbers for Saudi Arabia, the UAE, Gulf countries, Bangladesh, India, Pakistan and more, with tap-to-call and nearest hospital on the map.">
+<link rel="canonical" href="https://dailypdflife.com/emergency-numbers">
+<meta property="og:title" content="Emergency Numbers – Saudi, UAE, Bangladesh, Gulf &amp; More | DailyPdfLife">
+<meta property="og:description" content="Police, ambulance, fire and helpline numbers for Saudi Arabia, the UAE, Gulf countries, Bangladesh, India, Pakistan and more, with tap-to-call and nearest hospital on the map.">
+<meta property="og:url" content="https://dailypdflife.com/emergency-numbers">
+<meta property="og:image" content="https://dailypdflife.com/banner.png">
+<link rel="stylesheet" href="app.css">
+<script src="lang.js"></script>
+<script src="app-shell.js"></script>
+<script src="result.js"></script>
+
+<style>
+  .pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pick label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650;color:var(--ink)}
+  .big{display:flex;align-items:center;gap:18px;border-radius:22px;padding:20px 22px;background:linear-gradient(135deg,#e03131,#a51111);color:#fff;text-decoration:none;margin-bottom:12px;box-shadow:0 12px 30px rgba(224,49,49,.3)}
+  .big .n{font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1}
+  .big b{display:block;font-size:18px} .big span{opacity:.9;font-size:14px}
+  .big .call{margin-left:auto;background:#fff;color:#c92a2a;border-radius:999px;padding:12px 20px;font-weight:800;font-size:16px;white-space:nowrap}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .num{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:#fff;text-decoration:none;color:var(--ink)}
+  .num:hover{border-color:#f0a19c;box-shadow:0 6px 18px rgba(16,24,40,.08)}
+  .num .ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+  .num .t{flex:1;min-width:0} .num .t b{display:block;font-size:15px} .num .t span{display:block;font-size:13px;color:var(--ink-3);line-height:1.35}
+  .num .d{font-size:20px;font-weight:800;color:#c92a2a;white-space:nowrap}
+  .cityNote{border-radius:14px;background:#fff8e6;color:#7a4b00;padding:12px 14px;font-size:14px;margin:0 0 12px}
+  .near{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .near a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;border-radius:16px;background:#f7f8fa;text-decoration:none;color:var(--ink);font-weight:650;font-size:14px;text-align:center}
+  .near a span{font-size:28px}
+  .near a:hover{background:#fff1f0}
+  .share{width:100%;background:#25d366;color:#fff;border:0;padding:14px !important;font-size:16px;margin-top:12px}
+  .tips li{margin:6px 0}
+  .checked{font-size:12.5px;color:var(--ink-3);margin-top:10px}
+  @media(max-width:600px){.pick{grid-template-columns:1fr}.big .n{font-size:40px}.big .call{padding:10px 14px;font-size:14px}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="pick">
+    <label>Country <select id="country"></select></label>
+    <label>City <select id="city"></select></label>
+  </div>
+</div>
+<div class="box">
+  <a class="big" id="main" href="#"><div class="n" id="mainN"></div><div><b id="mainT"></b><span id="mainS"></span></div><span class="call">📞 Call</span></a>
+  <p class="cityNote" id="cityNote" hidden></p>
+  <div class="list" id="list"></div>
+  <p class="checked" id="checked"></p>
+</div>
+<div class="box">
+  <h3>Find the nearest</h3>
+  <div class="near" id="near"></div>
+  <button class="share" id="share">📍 Send my location on WhatsApp</button>
+  <p class="note" id="locNote">Your location is used only on your phone, to open the map or the message. It is not sent to DailyPdfLife.</p>
+</div>
+<div class="box">
+  <h3>When you call</h3>
+  <ol class="tips">
+    <li>Stay calm and say what happened: fire, accident, someone is unconscious, a crime.</li>
+    <li>Give the exact location: city, district, street, a landmark, or share your live location.</li>
+    <li>Say how many people are hurt and if anyone is not breathing or bleeding heavily.</li>
+    <li>Don't hang up until the operator tells you to. Keep your phone free for their call back.</li>
+    <li>In most countries you can call the emergency number even with no credit or no SIM card.</li>
+  </ol>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TT = s => (window.T ? T(s) : s);
+/* icon, colour */
+const K = {all: ["🆘", "#e03131"], police: ["🚓", "#1c4fa1"], amb: ["🚑", "#e03131"], fire: ["🚒", "#e8590c"], traffic: ["🚦", "#e67700"], road: ["🛣", "#495057"], health: ["🩺", "#0b7285"],
+  women: ["🛡", "#c2255c"], child: ["🧒", "#6741d9"], coast: ["⚓", "#1971c2"], power: ["⚡", "#f08c00"], info: ["ℹ", "#495057"], rescue: ["⛑", "#2b8a3e"], mental: ["💬", "#2b8a3e"], legal: ["⚖", "#495057"], gas: ["🔥", "#e8590c"]};
+const DB = {
+ sa: {name: "Saudi Arabia", main: ["911", "Unified emergency", "Police, ambulance and civil defence"], cities: {
+   "Riyadh": "911", "Jeddah": "911", "Makkah": "911", "Taif": "911", "Madinah": "911", "Dammam": "911", "Khobar": "911", "Jubail": "911", "Al Ahsa": "911",
+   "Abha": "old", "Khamis Mushait": "old", "Tabuk": "old", "Buraidah": "old", "Hail": "old", "Jazan": "old", "Najran": "old", "Al Baha": "old", "Arar": "old", "Sakaka": "old"},
+   note911: "911 works in the Riyadh, Makkah, Madinah and Eastern Province regions. In this city use 999 (police), 997 (ambulance) and 998 (civil defence).",
+   list: [["999", "Police", "police"], ["997", "Ambulance (Saudi Red Crescent)", "amb"], ["998", "Civil defence: fire, floods, rescue", "fire"], ["993", "Traffic police, road accidents", "traffic"],
+     ["996", "Highway security, roads between cities", "road"], ["920000560", "Najm: minor accidents with no injuries", "traffic"], ["937", "Ministry of Health: medical advice", "health"], ["992", "Passports (Jawazat)", "info"], ["940", "Balady: municipal services", "info"]]},
+ ae: {name: "United Arab Emirates", main: ["999", "Police", "For any emergency, anywhere in the UAE"], cities: {"Dubai": "", "Abu Dhabi": "", "Sharjah": "", "Ajman": "", "Ras Al Khaimah": "", "Fujairah": "", "Umm Al Quwain": "", "Al Ain": ""},
+   list: [["999", "Police", "police"], ["998", "Ambulance", "amb"], ["997", "Fire (civil defence)", "fire"], ["996", "Coastguard", "coast"], ["995", "Search and rescue", "rescue"], ["991", "Electricity failure", "power"], ["901", "Police non-emergency", "police"]]},
+ qa: {name: "Qatar", main: ["999", "Emergency", "Police, ambulance and fire"], cities: {"Doha": "", "Al Rayyan": "", "Al Wakrah": "", "Al Khor": ""}, list: [["999", "Police, ambulance, fire", "all"]]},
+ kw: {name: "Kuwait", main: ["112", "Emergency", "Police, ambulance and fire"], cities: {"Kuwait City": "", "Hawalli": "", "Farwaniya": "", "Jahra": "", "Ahmadi": ""}, list: [["112", "Police, ambulance, fire", "all"]]},
+ om: {name: "Oman", main: ["9999", "Emergency", "Royal Oman Police, ambulance and fire"], cities: {"Muscat": "", "Salalah": "", "Sohar": "", "Nizwa": "", "Sur": ""}, list: [["9999", "Police, ambulance, fire", "all"]]},
+ bh: {name: "Bahrain", main: ["999", "Emergency", "Police, ambulance and fire"], cities: {"Manama": "", "Muharraq": "", "Riffa": "", "Hamad Town": ""}, list: [["999", "Police, ambulance, fire", "all"]]},
+ bd: {name: "Bangladesh", main: ["999", "National emergency service", "Police, fire service and ambulance, free from any phone"], cities: {"Dhaka": "", "Chattogram": "", "Sylhet": "", "Khulna": "", "Rajshahi": "", "Barishal": "", "Rangpur": "", "Mymensingh": "", "Cumilla": "", "Noakhali": "", "Feni": "", "Gazipur": "", "Narayanganj": "", "Cox's Bazar": ""},
+   list: [["999", "Police, fire, ambulance", "all"], ["109", "Violence against women and children", "women"], ["1098", "Child helpline", "child"], ["333", "Government information and services", "info"],
+     ["16263", "Shastho Batayon: health advice from doctors", "health"], ["16430", "Government legal aid", "legal"], ["106", "Anti-Corruption Commission", "legal"]]},
+ in: {name: "India", main: ["112", "Emergency response", "Police, fire and ambulance"], cities: {"Delhi": "", "Mumbai": "", "Kolkata": "", "Chennai": "", "Bengaluru": "", "Hyderabad": "", "Kerala (all cities)": ""},
+   list: [["112", "All emergencies", "all"], ["100", "Police", "police"], ["101", "Fire", "fire"], ["108", "Ambulance (most states)", "amb"], ["102", "Ambulance, mother and child", "amb"], ["1091", "Women helpline", "women"], ["1098", "Child helpline", "child"]]},
+ pk: {name: "Pakistan", main: ["15", "Police", "Madadgar police emergency"], cities: {"Karachi": "", "Lahore": "", "Islamabad": "", "Rawalpindi": "", "Faisalabad": "", "Peshawar": "", "Multan": "", "Quetta": ""},
+   list: [["15", "Police", "police"], ["1122", "Rescue 1122: ambulance, fire, rescue", "rescue"], ["115", "Edhi ambulance", "amb"], ["16", "Fire brigade", "fire"]]},
+ np: {name: "Nepal", main: ["100", "Police", "Nepal Police"], cities: {"Kathmandu": "", "Pokhara": "", "Lalitpur": ""}, list: [["100", "Police", "police"], ["101", "Fire", "fire"], ["102", "Ambulance", "amb"]]},
+ lk: {name: "Sri Lanka", main: ["119", "Police", "Police emergency"], cities: {"Colombo": "", "Kandy": "", "Galle": ""}, list: [["119", "Police", "police"], ["1990", "Suwa Seriya ambulance", "amb"], ["110", "Fire and rescue", "fire"]]},
+ my: {name: "Malaysia", main: ["999", "Emergency", "Police, ambulance and fire"], cities: {"Kuala Lumpur": "", "Johor Bahru": "", "Penang": ""}, list: [["999", "Police, ambulance, fire", "all"], ["112", "From a mobile phone", "all"]]},
+ eg: {name: "Egypt", main: ["122", "Police", "Police emergency"], cities: {"Cairo": "", "Alexandria": "", "Giza": ""}, list: [["122", "Police", "police"], ["123", "Ambulance", "amb"], ["180", "Fire", "fire"]]},
+ jo: {name: "Jordan", main: ["911", "Emergency", "Police, ambulance and fire"], cities: {"Amman": "", "Irbid": "", "Zarqa": "", "Aqaba": ""}, list: [["911", "Police, ambulance, fire", "all"]]},
+ tr: {name: "Turkey", main: ["112", "Emergency", "Police, ambulance and fire"], cities: {"Istanbul": "", "Ankara": "", "Izmir": "", "Antalya": ""}, list: [["112", "All emergencies", "all"]]},
+ gb: {name: "United Kingdom", main: ["999", "Emergency", "Police, ambulance, fire and coastguard"], cities: {"London": "", "Manchester": "", "Birmingham": "", "Glasgow": ""},
+   list: [["999", "All emergencies (112 also works)", "all"], ["111", "NHS non-emergency medical help (England, Scotland, Wales)", "health"], ["101", "Police non-emergency", "police"]]},
+ us: {name: "United States", main: ["911", "Emergency", "Police, ambulance and fire"], cities: {"New York": "", "Los Angeles": "", "Chicago": "", "Houston": "", "Dallas": ""},
+   list: [["911", "All emergencies", "all"], ["988", "Suicide and crisis lifeline", "mental"]]},
+};
+const ORDER = ["sa", "ae", "qa", "kw", "om", "bh", "bd", "in", "pk", "np", "lk", "my", "eg", "jo", "tr", "gb", "us"];
+ORDER.forEach(k => { const o = document.createElement("option"); o.value = k; o.textContent = TT(DB[k].name); $("country").appendChild(o); });
+function guess(){ try{ const s = localStorage.getItem("dpl_em"); if(s){ const j = JSON.parse(s); if(DB[j.c]) return j; } }catch(e){}
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  const m = {"Asia/Riyadh": "sa", "Asia/Dubai": "ae", "Asia/Qatar": "qa", "Asia/Kuwait": "kw", "Asia/Muscat": "om", "Asia/Bahrain": "bh", "Asia/Dhaka": "bd", "Asia/Kolkata": "in", "Asia/Calcutta": "in",
+    "Asia/Karachi": "pk", "Asia/Kathmandu": "np", "Asia/Colombo": "lk", "Asia/Kuala_Lumpur": "my", "Africa/Cairo": "eg", "Asia/Amman": "jo", "Europe/Istanbul": "tr", "Europe/London": "gb"}[tz];
+  return {c: m || (tz.startsWith("America/") ? "us" : "sa")}; }
+function cities(){ const d = DB[$("country").value]; $("city").innerHTML = ""; Object.keys(d.cities).forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = TT(c); $("city").appendChild(o); }); }
+function card(n, t, k){ const [ic, col] = K[k] || K.info; const a = document.createElement("a"); a.className = "num"; a.href = "tel:" + n;
+  a.innerHTML = `<span class="ic" style="background:${col}1a;color:${col}">${ic}</span><span class="t"><b></b><span></span></span><span class="d"></span>`;
+  a.querySelector("b").textContent = TT(t); a.querySelector(".t span").textContent = TT("Tap to call"); a.querySelector(".d").textContent = n; return a; }
+function render(){
+  const k = $("country").value, d = DB[k], city = $("city").value, mode = d.cities[city];
+  let main = d.main, note = "";
+  if(k === "sa" && mode === "old"){ main = ["999", "Police", "997 ambulance · 998 civil defence"]; note = d.note911; }
+  $("main").href = "tel:" + main[0]; $("mainN").textContent = main[0]; $("mainT").textContent = TT(main[1]); $("mainS").textContent = TT(main[2]);
+  $("cityNote").hidden = !note; $("cityNote").textContent = TT(note);
+  $("list").innerHTML = ""; d.list.filter(x => x[0] !== main[0] || x[2] !== "all").forEach(x => $("list").appendChild(card(x[0], x[1], x[2])));
+  $("checked").textContent = TT("Numbers checked in November 2026 against official and published sources. Services can change; if a number doesn't connect, try the main emergency number or 112 from a mobile.");
+  const q = encodeURIComponent(city + ", " + d.name);
+  $("near").innerHTML = [["🏥", "Hospital", "hospital"], ["🚓", "Police station", "police station"], ["💊", "Pharmacy", "pharmacy"], ["🚒", "Fire station", "fire station"], ["🏛", "Embassy", "embassy"], ["⛽", "Petrol station", "petrol station"]]
+    .map(x => `<a target="_blank" rel="noopener" data-q="${x[2]}" href="https://www.google.com/maps/search/${encodeURIComponent(x[2])}+near+${q}"><span>${x[0]}</span>${TT(x[1])}</a>`).join("");
+  try{ localStorage.setItem("dpl_em", JSON.stringify({c: k, city})); }catch(e){}
+}
+let here = null;
+function locate(cb){ if(here) return cb(here); if(!navigator.geolocation) return cb(null);
+  $("locNote").textContent = TT("Finding your location…");
+  navigator.geolocation.getCurrentPosition(p => { here = {lat: p.coords.latitude.toFixed(5), lng: p.coords.longitude.toFixed(5)}; $("locNote").textContent = "✓ " + here.lat + ", " + here.lng; cb(here); },
+    () => { $("locNote").textContent = TT("Location permission was not given, so the map searches by city instead."); cb(null); }, {enableHighAccuracy: true, timeout: 12000}); }
+/* nearest places: use the phone's location if allowed, otherwise search by city */
+$("near").addEventListener("click", e => { const a = e.target.closest("a"); if(!a) return; e.preventDefault(); const w = window.open("", "_blank");
+  locate(p => { const url = p ? `https://www.google.com/maps/search/${encodeURIComponent(a.dataset.q)}/@${p.lat},${p.lng},15z` : a.href; if(w) w.location = url; else location.href = url; }); });
+$("share").onclick = () => locate(p => {
+  const where = p ? `https://maps.google.com/?q=${p.lat},${p.lng}` : $("city").value + ", " + DB[$("country").value].name;
+  location.href = "https://wa.me/?text=" + encodeURIComponent(TT("I need help. My location:") + " " + where); });
+$("country").onchange = () => { cities(); render(); };
+$("city").onchange = render;
+const g = guess(); $("country").value = g.c; cities(); if(g.city && DB[g.c].cities[g.city] !== undefined) $("city").value = g.city; render();
+</script>
+<section class="box seo guide" data-notr>
+  <h2>About Emergency numbers</h2>
+  <p>In an emergency there is no time to search. Choose your country and city to see the main emergency number in large print and every other important line: police, ambulance, fire, traffic accidents, health advice and helplines for women and children. Tap any number to call it. The page also finds the nearest hospital, police station, pharmacy or embassy on the map and can send your exact location to family on WhatsApp.</p>
+  <h2>How to use it</h2>
+  <ol><li>Choose your country and city. Your choice is remembered on this phone.</li><li>Tap the big red number for the main emergency service, or any other line below it.</li><li>Under <b>Find the nearest</b>, tap a place to open it on the map near you.</li><li>Tap <b>Send my location on WhatsApp</b> to share your exact position.</li></ol>
+  <h2>Important for Saudi Arabia</h2>
+  <p>The unified number 911 works in the Riyadh, Makkah, Madinah and Eastern Province regions. In other regions, call 999 for police, 997 for an ambulance and 998 for civil defence; the page shows the right numbers for the city you pick. For minor road accidents with no injuries, call Najm. Add this page to your home screen so it opens even without internet, and save the main numbers in your phone's contacts.</p>
+  <h2>Frequently asked questions</h2>
+  <details><summary>Can I call without credit or a SIM card?</summary><p>In most countries the emergency number works from any mobile, even without credit.</p></details><details><summary>What is the emergency number in Bangladesh?</summary><p>999 for police, fire service and ambulance; it is free.</p></details><details><summary>Which number is for ambulances in the UAE?</summary><p>998. Police is 999 and fire is 997.</p></details><details><summary>Is my location shared with DailyPdfLife?</summary><p>No, it is used only on your phone to open the map or WhatsApp.</p></details>
+  <p class="links">Related tools: <a href="prayer-times.html">Prayer times</a> <a href="hijri-converter.html">Hijri converter</a> <a href="unit-converter.html">Unit converter</a></p>
+</section>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I call without credit or a SIM card?", "acceptedAnswer": {"@type": "Answer", "text": "In most countries the emergency number works from any mobile, even without credit."}}, {"@type": "Question", "name": "What is the emergency number in Bangladesh?", "acceptedAnswer": {"@type": "Answer", "text": "999 for police, fire service and ambulance; it is free."}}, {"@type": "Question", "name": "Which number is for ambulances in the UAE?", "acceptedAnswer": {"@type": "Answer", "text": "998. Police is 999 and fire is 997."}}, {"@type": "Question", "name": "Is my location shared with DailyPdfLife?", "acceptedAnswer": {"@type": "Answer", "text": "No, it is used only on your phone to open the map or WhatsApp."}}]}</script>
+<script src="nav.js"></script>
+<script src="install.js"></script>
+</body>
+</html>
